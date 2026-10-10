@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="hy">
 <head>
@@ -11,266 +10,68 @@
 <link rel="manifest" href='data:application/manifest+json,{"name":"Yerevan 3D","short_name":"Yerevan","display":"fullscreen","orientation":"landscape","start_url":".","background_color":"#0a1020","theme_color":"#0a1020"}'>
 <title>Երևան · 3D</title>
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   GLOBAL RESET + FULLSCREEN FIX
-   ═══════════════════════════════════════════════════════════════ */
-*{
-  margin:0;padding:0;box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-  user-select:none;-webkit-user-select:none;
-  font-family:system-ui,-apple-system,'Segoe UI',sans-serif
-}
-html,body{
-  width:100vw;height:100vh;height:100dvh;
-  overflow:hidden;background:#0a1020;color:#fff;
-  touch-action:none;overscroll-behavior:none;
-  position:fixed;inset:0
-}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
+html,body{width:100vw;height:100vh;height:100dvh;overflow:hidden;background:#0a1020;color:#fff;touch-action:none;overscroll-behavior:none;position:fixed;inset:0}
 #app{position:fixed;inset:0;overflow:hidden}
 canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
-
-/* ═══════════════════════════════════════════════════════════════
-   HUD
-   ═══════════════════════════════════════════════════════════════ */
 #hud{position:absolute;inset:0;pointer-events:none;z-index:10}
-.panel{
-  background:linear-gradient(165deg,rgba(255,255,255,.94),rgba(230,238,250,.88));
-  border:1px solid rgba(30,60,110,.2);
-  border-radius:14px;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  box-shadow:0 6px 20px rgba(0,20,60,.2);
-  color:#0a1a30
-}
-
-#topLeft{
-  position:absolute;
-  top:calc(12px + env(safe-area-inset-top));
-  left:calc(12px + env(safe-area-inset-left));
-  padding:9px 16px;z-index:12
-}
+.panel{background:linear-gradient(165deg,rgba(255,255,255,.94),rgba(230,238,250,.88));border:1px solid rgba(30,60,110,.2);border-radius:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 20px rgba(0,20,60,.2);color:#0a1a30}
+#topLeft{position:absolute;top:calc(12px + env(safe-area-inset-top));left:calc(12px + env(safe-area-inset-left));padding:9px 16px;z-index:12}
 #lvlName{font-size:10px;letter-spacing:2.5px;color:#3a6ea5;font-weight:800}
 #locName{font-size:19px;font-weight:800;margin-top:2px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-#topRight{
-  position:absolute;
-  top:calc(12px + env(safe-area-inset-top));
-  right:calc(12px + env(safe-area-inset-right));
-  padding:9px 16px;text-align:right;min-width:120px;z-index:12
-}
+#topRight{position:absolute;top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));padding:9px 16px;text-align:right;min-width:120px;z-index:12}
 #spdVal{font-size:32px;font-weight:900;line-height:1;color:#0a1a30}
 #spdUnit{font-size:10px;color:#3a6ea5;letter-spacing:3px;font-weight:700;margin-top:1px}
-
-#minimapWrap{
-  position:absolute;
-  top:calc(80px + env(safe-area-inset-top));
-  left:calc(12px + env(safe-area-inset-left));
-  width:132px;height:132px;
-  border-radius:14px;overflow:hidden;
-  border:2px solid rgba(255,255,255,.85);
-  box-shadow:0 4px 16px rgba(0,20,60,.35);
-  background:#1a2a3a;z-index:12
-}
+#minimapWrap{position:absolute;top:calc(80px + env(safe-area-inset-top));left:calc(12px + env(safe-area-inset-left));width:132px;height:132px;border-radius:14px;overflow:hidden;border:2px solid rgba(255,255,255,.85);box-shadow:0 4px 16px rgba(0,20,60,.35);background:#1a2a3a;z-index:12}
 #minimap{width:100%;height:100%;display:block}
-
-#compass{
-  position:absolute;
-  top:calc(226px + env(safe-area-inset-top));
-  left:calc(12px + env(safe-area-inset-left));
-  padding:6px 12px;text-align:center;z-index:12
-}
+#compass{position:absolute;top:calc(226px + env(safe-area-inset-top));left:calc(12px + env(safe-area-inset-left));padding:6px 12px;text-align:center;z-index:12}
 #compassArrow{font-size:20px;color:#0a1a30;display:block;transition:transform .1s}
 #compassN{font-size:9px;font-weight:900;color:#e11d48;letter-spacing:2px}
-
-/* ═══════════════════════════════════════════════════════════════
-   CONTROLS
-   ═══════════════════════════════════════════════════════════════ */
 #controls{position:absolute;inset:0;z-index:20;pointer-events:none}
-.btn{
-  position:absolute;pointer-events:auto;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:50%;
-  background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(210,225,245,.92));
-  border:2.5px solid rgba(50,90,150,.45);
-  box-shadow:0 8px 22px rgba(0,20,60,.3),inset 0 2px 0 rgba(255,255,255,.8);
-  color:#1a3050;font-weight:900;
-  transition:transform .08s,background .12s;
-  touch-action:none;font-family:system-ui,sans-serif
-}
-.btn:active,.btn.on{
-  transform:scale(.94);
-  background:linear-gradient(160deg,rgba(120,180,255,.96),rgba(70,130,220,.96));
-  border-color:rgba(30,80,160,.9);color:#fff
-}
-#btnL{
-  left:calc(20px + env(safe-area-inset-left));
-  bottom:calc(24px + env(safe-area-inset-bottom));
-  width:96px;height:96px;font-size:36px
-}
-#btnR{
-  left:calc(128px + env(safe-area-inset-left));
-  bottom:calc(24px + env(safe-area-inset-bottom));
-  width:96px;height:96px;font-size:36px
-}
-#btnGas{
-  right:calc(20px + env(safe-area-inset-right));
-  bottom:calc(20px + env(safe-area-inset-bottom));
-  width:112px;height:112px;font-size:15px;letter-spacing:2px;
-  border-color:rgba(40,160,80,.55);color:#0a6030
-}
+.btn{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(210,225,245,.92));border:2.5px solid rgba(50,90,150,.45);box-shadow:0 8px 22px rgba(0,20,60,.3),inset 0 2px 0 rgba(255,255,255,.8);color:#1a3050;font-weight:900;transition:transform .08s,background .12s;touch-action:none;font-family:system-ui,sans-serif}
+.btn:active,.btn.on{transform:scale(.94);background:linear-gradient(160deg,rgba(120,180,255,.96),rgba(70,130,220,.96));border-color:rgba(30,80,160,.9);color:#fff}
+#btnL{left:calc(20px + env(safe-area-inset-left));bottom:calc(24px + env(safe-area-inset-bottom));width:96px;height:96px;font-size:36px}
+#btnR{left:calc(128px + env(safe-area-inset-left));bottom:calc(24px + env(safe-area-inset-bottom));width:96px;height:96px;font-size:36px}
+#btnGas{right:calc(20px + env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));width:112px;height:112px;font-size:15px;letter-spacing:2px;border-color:rgba(40,160,80,.55);color:#0a6030}
 #btnGas:active,#btnGas.on{background:linear-gradient(160deg,rgba(70,220,120,.96),rgba(30,150,70,.96));color:#fff}
-#btnRev{
-  right:calc(148px + env(safe-area-inset-right));
-  bottom:calc(28px + env(safe-area-inset-bottom));
-  width:88px;height:88px;font-size:13px;letter-spacing:1.5px;
-  border-color:rgba(200,60,60,.55);color:#a02020
-}
+#btnRev{right:calc(148px + env(safe-area-inset-right));bottom:calc(28px + env(safe-area-inset-bottom));width:88px;height:88px;font-size:13px;letter-spacing:1.5px;border-color:rgba(200,60,60,.55);color:#a02020}
 #btnRev:active,#btnRev.on{background:linear-gradient(160deg,rgba(255,80,80,.96),rgba(180,30,30,.96));color:#fff}
-
-/* Camera drag zone — upper-right quadrant */
-#camZone{
-  position:absolute;top:0;right:0;
-  width:62%;height:56%;
-  z-index:11;pointer-events:auto;touch-action:none
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LOADER
-   ═══════════════════════════════════════════════════════════════ */
-#loader{
-  position:absolute;inset:0;z-index:100;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:22px;
-  background:radial-gradient(ellipse at 50% 40%,#16264a,#040810 75%);
-  transition:opacity .6s ease-out
-}
+#camZone{position:absolute;top:0;right:0;width:62%;height:56%;z-index:11;pointer-events:auto;touch-action:none}
+#loader{position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:radial-gradient(ellipse at 50% 40%,#16264a,#040810 75%);transition:opacity .6s ease-out}
 #loader.done{opacity:0;pointer-events:none}
-#loaderTitle{
-  font-size:clamp(34px,7vw,58px);font-weight:900;letter-spacing:14px;
-  background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6,#7dd3fc);
-  background-size:300% 100%;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:shine 3s linear infinite;
-  text-shadow:0 0 60px rgba(120,180,255,.5)
-}
+#loaderTitle{font-size:clamp(34px,7vw,58px);font-weight:900;letter-spacing:14px;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6,#7dd3fc);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 3s linear infinite;text-shadow:0 0 60px rgba(120,180,255,.5)}
 @keyframes shine{to{background-position:300% 0}}
 #loaderSub{font-size:11px;letter-spacing:7px;color:#8ea8c8;font-weight:700}
-#barWrap{
-  width:280px;height:6px;border-radius:3px;
-  background:rgba(255,255,255,.13);overflow:hidden;
-  box-shadow:0 0 24px rgba(120,180,255,.35);margin-top:8px
-}
-#barFill{
-  height:100%;width:0%;
-  background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6);
-  border-radius:3px;transition:width .15s linear;
-  box-shadow:0 0 14px rgba(120,180,255,.9)
-}
+#barWrap{width:280px;height:6px;border-radius:3px;background:rgba(255,255,255,.13);overflow:hidden;box-shadow:0 0 24px rgba(120,180,255,.35);margin-top:8px}
+#barFill{height:100%;width:0%;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6);border-radius:3px;transition:width .15s linear;box-shadow:0 0 14px rgba(120,180,255,.9)}
 #barText{font-size:11px;letter-spacing:3px;color:#a8c0dc;font-weight:600;min-height:14px;margin-top:4px}
-
-#playBtn{
-  position:absolute;bottom:80px;left:50%;transform:translateX(-50%);
-  padding:18px 54px;border-radius:60px;
-  background:linear-gradient(160deg,#7dd3fc,#3b82f6);color:#fff;
-  font-size:18px;font-weight:900;letter-spacing:6px;
-  border:none;cursor:pointer;
-  box-shadow:0 10px 40px rgba(59,130,246,.55),inset 0 2px 0 rgba(255,255,255,.3);
-  display:none;font-family:system-ui,sans-serif;z-index:110;pointer-events:auto
-}
+#playBtn{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);padding:18px 54px;border-radius:60px;background:linear-gradient(160deg,#7dd3fc,#3b82f6);color:#fff;font-size:18px;font-weight:900;letter-spacing:6px;border:none;cursor:pointer;box-shadow:0 10px 40px rgba(59,130,246,.55),inset 0 2px 0 rgba(255,255,255,.3);display:none;font-family:system-ui,sans-serif;z-index:110;pointer-events:auto}
 #playBtn:active{transform:translateX(-50%) scale(.95)}
 #playBtn.show{display:block;animation:pop .4s ease-out}
-@keyframes pop{
-  0%{opacity:0;transform:translateX(-50%) scale(.8)}
-  100%{opacity:1;transform:translateX(-50%) scale(1)}
-}
-#playHint{
-  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
-  color:#8ea8c8;font-size:11px;letter-spacing:4px;font-weight:700;
-  display:none
-}
+@keyframes pop{0%{opacity:0;transform:translateX(-50%) scale(.8)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
+#playHint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);color:#8ea8c8;font-size:11px;letter-spacing:4px;font-weight:700;display:none}
 #playHint.show{display:block}
-
-#errorBox{
-  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
-  background:rgba(200,30,30,.9);color:#fff;
-  padding:10px 20px;border-radius:10px;
-  font-size:12px;font-family:monospace;
-  max-width:90vw;display:none;z-index:200;word-break:break-all
-}
-
-#rotatePrompt{
-  position:absolute;inset:0;background:rgba(4,8,16,.95);
-  display:none;align-items:center;justify-content:center;
-  flex-direction:column;gap:16px;
-  z-index:500;text-align:center;padding:30px
-}
-#rotatePrompt.show{display:flex}
-#rotatePrompt .rot{font-size:52px;animation:rotateAnim 2s ease-in-out infinite}
-@keyframes rotateAnim{
-  0%,100%{transform:rotate(0)}
-  50%{transform:rotate(90deg)}
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   DEBUG / PERF OVERLAY
-   ═══════════════════════════════════════════════════════════════ */
-#perfInfo{
-  position:absolute;
-  top:calc(80px + env(safe-area-inset-top));
-  right:calc(12px + env(safe-area-inset-right));
-  padding:6px 10px;
-  border-radius:8px;
-  background:rgba(10,20,40,.7);
-  color:#7dd3fc;
-  font-size:9px;
-  font-family:monospace;
-  letter-spacing:1px;
-  display:none;
-  z-index:15;
-  pointer-events:none
-}
+#errorBox{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(200,30,30,.9);color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;font-family:monospace;max-width:90vw;display:none;z-index:200;word-break:break-all}
+#perfInfo{position:absolute;top:calc(80px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));padding:6px 10px;border-radius:8px;background:rgba(10,20,40,.7);color:#7dd3fc;font-size:9px;font-family:monospace;letter-spacing:1px;display:none;z-index:15;pointer-events:none}
 </style>
 </head>
 <body>
 <div id="app">
   <canvas id="c"></canvas>
-
-  <!-- ══════════════════════════════════════════════════════════
-       HUD
-       ══════════════════════════════════════════════════════════ -->
   <div id="hud">
-    <div class="panel" id="topLeft">
-      <div id="lvlName">ԵՐԵՎԱՆ · 3D</div>
-      <div id="locName">Երևան</div>
-    </div>
-    <div class="panel" id="topRight">
-      <div id="spdVal">0</div>
-      <div id="spdUnit">ԿՄ/Ժ</div>
-    </div>
-    <div id="minimapWrap">
-      <canvas id="minimap" width="264" height="264"></canvas>
-    </div>
-    <div class="panel" id="compass">
-      <span id="compassArrow">↑</span>
-      <span id="compassN">N</span>
-    </div>
+    <div class="panel" id="topLeft"><div id="lvlName">ԵՐԵՎԱՆ · 3D</div><div id="locName">Երևան</div></div>
+    <div class="panel" id="topRight"><div id="spdVal">0</div><div id="spdUnit">ԿՄ/Ժ</div></div>
+    <div id="minimapWrap"><canvas id="minimap" width="264" height="264"></canvas></div>
+    <div class="panel" id="compass"><span id="compassArrow">↑</span><span id="compassN">N</span></div>
     <div id="perfInfo">—</div>
   </div>
-
-  <!-- ══════════════════════════════════════════════════════════
-       CONTROLS
-       ══════════════════════════════════════════════════════════ -->
   <div id="controls">
     <div class="btn" id="btnL">◀</div>
     <div class="btn" id="btnR">▶</div>
     <div class="btn" id="btnGas">ԳԱԶ</div>
     <div class="btn" id="btnRev">ՀԵՏ</div>
   </div>
-
   <div id="camZone"></div>
-
-  <!-- ══════════════════════════════════════════════════════════
-       LOADER
-       ══════════════════════════════════════════════════════════ -->
   <div id="loader">
     <div id="loaderTitle">ԵՐԵՎԱՆ</div>
     <div id="loaderSub">3D · ՔԱՂԱՔ · ՌԵԼԻԵՖ</div>
@@ -279,2374 +80,1124 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
     <button id="playBtn">ՍԿՍԵԼ</button>
     <div id="playHint">Խաղը լիաէկրան կբացվի</div>
   </div>
-
-  <div id="rotatePrompt">
-    <div class="rot">📱</div>
-    <div style="font-size:14px;letter-spacing:3px;font-weight:800">
-      ԽՆԴՐՈՒՄ ԵՆՔ ՊՏՏԵՔ ՀԵՌԱԽՈՍԸ
-    </div>
-  </div>
-
   <div id="errorBox"></div>
 </div>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     LOADER SCRIPT
-     ═══════════════════════════════════════════════════════════════ -->
 <script>
-window.__gameStartFn = null;
-window.__gameReady = false;
-
-window.addEventListener('error', function(e){
-  var eb = document.getElementById('errorBox');
-  if(eb){
-    eb.style.display = 'block';
-    eb.textContent = 'ՍԽԱԼ՝ ' + (e.message || '') + ' @' + (e.lineno || '?');
-  }
-});
-
+window.__gameStartFn=null;window.__gameReady=false;
+window.addEventListener('error',function(e){var eb=document.getElementById('errorBox');if(eb){eb.style.display='block';eb.textContent='ՍԽԱԼ՝ '+(e.message||'')+' @'+(e.lineno||'?');}});
 (function(){
-  var fill = document.getElementById('barFill');
-  var text = document.getElementById('barText');
-  var loader = document.getElementById('loader');
-  var playBtn = document.getElementById('playBtn');
-  var playHint = document.getElementById('playHint');
-  var p = 0;
-
-  var iv = setInterval(function(){
-    p += 8 + Math.random() * 8;
-    if(p > 100) p = 100;
-    if(fill) fill.style.width = p + '%';
-    if(text){
-      if(p < 35) text.textContent = 'ՄԻԱՑՈՒՄ...';
-      else if(p < 70) text.textContent = 'ԿԱՌՈՒՑՈՒՄ...';
-      else if(p < 100) text.textContent = 'ՊԱՏՐԱՍՏՎՈՒՄ...';
-      else text.textContent = 'ՊԱՏՐԱՍՏ Է';
-    }
-    if(p >= 100){
-      clearInterval(iv);
-      if(window.__gameReady){
-        playBtn.classList.add('show');
-        playHint.classList.add('show');
-      }
-    }
-  }, 40);
-
-  setInterval(function(){
-    if(window.__gameReady && p >= 100){
-      playBtn.classList.add('show');
-      playHint.classList.add('show');
-    }
-  }, 100);
-
+  var fill=document.getElementById('barFill'),text=document.getElementById('barText'),loader=document.getElementById('loader'),playBtn=document.getElementById('playBtn'),playHint=document.getElementById('playHint'),p=0;
+  var iv=setInterval(function(){p+=8+Math.random()*8;if(p>100)p=100;if(fill)fill.style.width=p+'%';
+    if(text){if(p<35)text.textContent='ՄԻԱՑՈՒՄ...';else if(p<70)text.textContent='ԿԱՌՈՒՑՈՒՄ...';else if(p<100)text.textContent='ՊԱՏՐԱՍՏՎՈՒՄ...';else text.textContent='ՊԱՏՐԱՍՏ Է';}
+    if(p>=100){clearInterval(iv);if(window.__gameReady){playBtn.classList.add('show');playHint.classList.add('show');}}
+  },40);
+  setInterval(function(){if(window.__gameReady&&p>=100){playBtn.classList.add('show');playHint.classList.add('show');}},100);
   function enterFullscreenAndStart(){
-    var el = document.documentElement;
-    var req = el.requestFullscreen
-      || el.webkitRequestFullscreen
-      || el.mozRequestFullScreen
-      || el.msRequestFullscreen;
-    if(req){
-      try {
-        var res = req.call(el, { navigationUI: 'hide' });
-        if(res && res.catch) res.catch(function(){});
-      } catch(e){}
-    }
-    try {
-      if(screen.orientation && screen.orientation.lock){
-        screen.orientation.lock('landscape').catch(function(){});
-      }
-    } catch(e){}
-
-    setTimeout(function(){ window.scrollTo(0, 1); }, 100);
-    setTimeout(function(){ window.scrollTo(0, 1); }, 500);
-    setTimeout(function(){ window.scrollTo(0, 1); }, 1500);
-
-    setTimeout(function(){
-      if(window.__gameStartFn){
-        try { window.__gameStartFn(); }
-        catch(err){ console.error(err); }
-      }
-      loader.classList.add('done');
-    }, 250);
+    var el=document.documentElement;var req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+    if(req){try{var res=req.call(el,{navigationUI:'hide'});if(res&&res.catch)res.catch(function(){});}catch(e){}}
+    try{if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('landscape').catch(function(){});}}catch(e){}
+    setTimeout(function(){window.scrollTo(0,1);},100);setTimeout(function(){window.scrollTo(0,1);},500);setTimeout(function(){window.scrollTo(0,1);},1500);
+    setTimeout(function(){if(window.__gameStartFn){try{window.__gameStartFn();}catch(err){console.error(err);}}loader.classList.add('done');},250);
   }
-
-  playBtn.addEventListener('click', enterFullscreenAndStart);
-  playBtn.addEventListener('touchend', function(e){
-    e.preventDefault();
-    enterFullscreenAndStart();
-  }, {passive: false});
+  playBtn.addEventListener('click',enterFullscreenAndStart);
+  playBtn.addEventListener('touchend',function(e){e.preventDefault();enterFullscreenAndStart();},{passive:false});
 })();
 </script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     MAIN GAME
-     ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
 'use strict';
+var MAX_KMH=110,MAX_REV_KMH=25,HASH_SIZE=50,TERRAIN_SIZE=1400,TERRAIN_RES=80,WORLD_LIMIT=600;
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 1 — CONSTANTS
-   ═══════════════════════════════════════════════════════════════════ */
-var MAX_KMH          = 110;   // Max forward speed
-var MAX_REV_KMH      = 25;    // Max reverse speed
-var HASH_SIZE        = 50;    // Spatial hash cell size (world units)
-var TERRAIN_SIZE     = 1400;  // Full terrain plane size
-var TERRAIN_RES      = 60;    // Grid subdivisions (lower = faster)
-var WORLD_LIMIT      = 660;   // Car movement clamp
-var CASCADE_Z        = 420;   // Cascade peak z-coordinate
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 2 — TERRAIN HEIGHT FUNCTION
-   ───────────────────────────────────────────────────────────────
-   The terrain is a mathematical function sampled at build time.
-   Layout (looking from above, +z = north, +x = east):
-     · City plain:    z ∈ [-460, 200]  →  mostly flat with gentle waves
-     · Cascade slope: z ∈ [200, 420]   →  rises to +55 (peak)
-     · Cascade back:  z > 420          →  gently descends (background)
-     · Matenadaran knoll (NW): (−420, 260),  +24 height
-     · Opera knoll (W): (−230, 80),  +8 height
-   ═══════════════════════════════════════════════════════════════════ */
-function terrainHeight(x, z){
-  var y = 0;
-
-  /* ── Base gentle wave pattern across the entire plain ── */
-  y += 0.9 * Math.sin(x * 0.010) * Math.cos(z * 0.008);
-  y += 0.5 * Math.sin(x * 0.021 + z * 0.014);
-
-  /* ── Cascade hill — peaks exactly at z = CASCADE_Z ──
-     t = 0 at z=200 (base), 1 at z=420 (peak)
-     pow(t, 1.8) gives a smooth curve that accelerates upward. */
-  var t = (z - 200) / 220;
-  if(t > 0){
-    if(t > 1) t = 1;
-    y += Math.pow(t, 1.8) * 55;
+/* ═══════════════════════════════════════════════════════
+   TERRAIN — Cascade is a real hill, 140 units tall
+   ═══════════════════════════════════════════════════════ */
+function terrainHeight(x,z){
+  var y=0;
+  y+=0.4*Math.sin(x*0.008)*Math.cos(z*0.006);
+  // CASCADE HILL — centered x=0, rises from z=280, peaks z=560
+  var t=(z-280)/280;
+  if(t>0){
+    if(t>1)t=1;
+    var xF=Math.exp(-(x*x)/50000);
+    y+=Math.pow(t,1.6)*130*xF;
   }
-
-  /* ── Beyond Cascade: gently descend ──
-     This ensures the Cascade peak is the HIGHEST point in the map. */
-  if(z > CASCADE_Z){
-    var pz = z - CASCADE_Z;
-    y -= Math.min(pz * 0.02, 15);
-  }
-
-  /* ── Matenadaran knoll (northwest) ── */
-  var dmx = x + 420, dmz = z - 260;
-  y += 24 * Math.exp(-(dmx*dmx + dmz*dmz) / 20000);
-
-  /* ── Opera gentle knoll ── */
-  var dox = x + 230, doz = z - 80;
-  y += 8 * Math.exp(-(dox*dox + doz*doz) / 16000);
-
+  // Beyond cascade, gentle descent
+  if(z>560){var pz=z-560;y-=Math.min(pz*0.04,20);}
+  // Matenadaran hill (NW)
+  var dx1=x+330,dz1=z-240;
+  y+=42*Math.exp(-(dx1*dx1+dz1*dz1)/22000);
+  // Opera mild mound
+  var dx2=x+200,dz2=z-100;
+  y+=6*Math.exp(-(dx2*dx2+dz2*dz2)/14000);
   return y;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 3 — RENDERER  (heavy perf tuning for mobile)
-   ═══════════════════════════════════════════════════════════════════ */
-var app = document.getElementById('app');
-var cvs = document.getElementById('c');
+/* ═══════════════════════════════════════════════════════
+   RENDERER
+   ═══════════════════════════════════════════════════════ */
+var app=document.getElementById('app');var cvs=document.getElementById('c');
+var renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:false,powerPreference:'high-performance',stencil:false,depth:true,alpha:false});
+renderer.setPixelRatio(1);
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.05;
+renderer.shadowMap.enabled=false;
+renderer.setClearColor(0xa8c8e8,1);
+var scene=new THREE.Scene();
+scene.background=new THREE.Color(0xa8c8e8);
+scene.fog=new THREE.Fog(0xc0d8e8,300,900);
+var camera=new THREE.PerspectiveCamera(60,16/9,0.5,2500);
 
-var renderer = new THREE.WebGLRenderer({
-  canvas:           cvs,
-  antialias:        false,               // ⚡ OFF — MSAA is a killer
-  powerPreference:  'high-performance',
-  stencil:          false,
-  depth:            true,
-  alpha:            false
-});
-renderer.setPixelRatio(1);               // ⚡ always 1, never devicePixelRatio
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
-renderer.shadowMap.enabled = false;       // ⚡ NO shadows — biggest win
-renderer.setClearColor(0xa8c8e8, 1);
-
-var scene = new THREE.Scene();
-scene.background = new THREE.Color(0xa8c8e8);
-scene.fog = new THREE.Fog(0xc0d8e8, 260, 720);
-
-var camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.5, 2000);
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 4 — SKY + ARARAT
-   ───────────────────────────────────────────────────────────────
-   Ararat is placed NORTH (behind Cascade) so it appears in the
-   background from the city. Cone silhouette, no fog applied.
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   SKY + ARARAT (north, behind Cascade)
+   ═══════════════════════════════════════════════════════ */
 (function(){
-  /* ── Sky dome with 3-stop gradient shader ── */
-  var skyGeo = new THREE.SphereGeometry(1500, 32, 16);
-  var skyMat = new THREE.ShaderMaterial({
-    uniforms: {
-      cTop: { value: new THREE.Color(0x2a72c8) },
-      cMid: { value: new THREE.Color(0x9cc0e0) },
-      cHor: { value: new THREE.Color(0xf4dcb0) }
-    },
-    vertexShader: [
-      'varying vec3 vP;',
-      'void main(){',
-      '  vP = position;',
-      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);',
-      '}'
-    ].join('\n'),
-    fragmentShader: [
-      'uniform vec3 cTop; uniform vec3 cMid; uniform vec3 cHor;',
-      'varying vec3 vP;',
-      'void main(){',
-      '  float h = normalize(vP).y;',
-      '  vec3 col = h > 0.0 ? mix(cMid, cTop, pow(h, 0.65)) : cMid;',
-      '  float hor = exp(-abs(h) * 5.5);',
-      '  col = mix(col, cHor, hor * 0.7);',
-      '  gl_FragColor = vec4(col, 1.0);',
-      '}'
-    ].join('\n'),
-    side: THREE.BackSide,
-    depthWrite: false,
-    fog: false
+  var skyGeo=new THREE.SphereGeometry(1800,32,16);
+  var skyMat=new THREE.ShaderMaterial({
+    uniforms:{cTop:{value:new THREE.Color(0x2a72c8)},cMid:{value:new THREE.Color(0x9cc0e0)},cHor:{value:new THREE.Color(0xf4dcb0)}},
+    vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader:['uniform vec3 cTop;uniform vec3 cMid;uniform vec3 cHor;','varying vec3 vP;','void main(){','float h=normalize(vP).y;','vec3 col=h>0.0?mix(cMid,cTop,pow(h,0.65)):cMid;','float hor=exp(-abs(h)*5.5);','col=mix(col,cHor,hor*0.7);','gl_FragColor=vec4(col,1.0);','}'].join('\n'),
+    side:THREE.BackSide,depthWrite:false,fog:false
   });
-  scene.add(new THREE.Mesh(skyGeo, skyMat));
-
-  /* ── Ararat — main peak (north, behind Cascade) ── */
-  var mtnMat = new THREE.MeshBasicMaterial({ color: 0xc8d0e0, fog: false });
-  var mtnMatDark = new THREE.MeshBasicMaterial({ color: 0xa8b4c8, fog: false });
-
-  var ararat1 = new THREE.Mesh(new THREE.ConeGeometry(220, 180, 6), mtnMat);
-  ararat1.position.set(320, 20, 950);
-  ararat1.rotation.y = 0.3;
-  scene.add(ararat1);
-
-  /* ── Ararat — smaller sister peak (a bit west) ── */
-  var ararat2 = new THREE.Mesh(new THREE.ConeGeometry(140, 120, 6), mtnMat);
-  ararat2.position.set(180, 15, 920);
-  ararat2.rotation.y = -0.2;
-  scene.add(ararat2);
-
-  /* ── Snow caps on both peaks (small cones in white) ── */
-  var snowMat = new THREE.MeshBasicMaterial({ color: 0xf0f4f8, fog: false });
-  var cap1 = new THREE.Mesh(new THREE.ConeGeometry(75, 60, 6), snowMat);
-  cap1.position.set(320, 100, 950);
-  cap1.rotation.y = 0.3;
-  scene.add(cap1);
-
-  var cap2 = new THREE.Mesh(new THREE.ConeGeometry(48, 40, 6), snowMat);
-  cap2.position.set(180, 80, 920);
-  cap2.rotation.y = -0.2;
-  scene.add(cap2);
+  scene.add(new THREE.Mesh(skyGeo,skyMat));
+  var mtnMat=new THREE.MeshBasicMaterial({color:0xb8c4d8,fog:false});
+  var snowMat=new THREE.MeshBasicMaterial({color:0xf0f4f8,fog:false});
+  // Big Ararat (Masis)
+  var a1=new THREE.Mesh(new THREE.ConeGeometry(280,220,6),mtnMat);
+  a1.position.set(280,40,1350);a1.rotation.y=0.4;scene.add(a1);
+  var c1=new THREE.Mesh(new THREE.ConeGeometry(95,75,6),snowMat);
+  c1.position.set(280,145,1350);c1.rotation.y=0.4;scene.add(c1);
+  // Small Ararat (Sis)
+  var a2=new THREE.Mesh(new THREE.ConeGeometry(180,150,6),mtnMat);
+  a2.position.set(120,30,1300);a2.rotation.y=-0.2;scene.add(a2);
+  var c2=new THREE.Mesh(new THREE.ConeGeometry(62,50,6),snowMat);
+  c2.position.set(120,100,1300);c2.rotation.y=-0.2;scene.add(c2);
+  // Secondary distant ridge
+  var a3=new THREE.Mesh(new THREE.ConeGeometry(150,90,6),new THREE.MeshBasicMaterial({color:0xc0cad8,fog:false}));
+  a3.position.set(-250,20,1380);scene.add(a3);
 })();
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 5 — LIGHTS  (no shadow maps)
-   ═══════════════════════════════════════════════════════════════════ */
-scene.add(new THREE.HemisphereLight(0xd0e4f8, 0x8a7a5a, 0.95));
+/* ═══════════════════════════════════════════════════════
+   LIGHTS
+   ═══════════════════════════════════════════════════════ */
+scene.add(new THREE.HemisphereLight(0xd0e4f8,0x8a7a5a,0.95));
+var sun=new THREE.DirectionalLight(0xfff0d0,1.1);sun.position.set(-100,200,120);scene.add(sun);
+var fillLight=new THREE.DirectionalLight(0xc8d8ff,0.25);fillLight.position.set(150,60,-120);scene.add(fillLight);
 
-var sun = new THREE.DirectionalLight(0xfff0d0, 1.1);
-sun.position.set(-100, 200, 120);
-scene.add(sun);
-
-var fillLight = new THREE.DirectionalLight(0xc8d8ff, 0.25);
-fillLight.position.set(150, 60, -120);
-scene.add(fillLight);
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 6 — TERRAIN MESH
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   TERRAIN MESH — grass texture with darker patches
+   ═══════════════════════════════════════════════════════ */
 function makeGrassTexture(){
-  var cv = document.createElement('canvas');
-  cv.width = 128; cv.height = 128;
-  var x = cv.getContext('2d');
-  x.fillStyle = '#7a9a55';
-  x.fillRect(0, 0, 128, 128);
-  for(var i = 0; i < 2400; i++){
-    var r = Math.random();
-    x.fillStyle = r > 0.66 ? '#8aaa60' : (r > 0.33 ? '#6a8a48' : '#5a7a3a');
-    x.fillRect(Math.random() * 128, Math.random() * 128, 1.5, 2);
-  }
-  var t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(60, 60);
-  t.encoding = THREE.sRGBEncoding;
-  t.anisotropy = 1;
-  return t;
+  var cv=document.createElement('canvas');cv.width=256;cv.height=256;
+  var x=cv.getContext('2d');
+  x.fillStyle='#7a9a55';x.fillRect(0,0,256,256);
+  for(var i=0;i<6000;i++){var r=Math.random();
+    x.fillStyle=r>0.66?'#8aaa60':(r>0.33?'#6a8a48':'#5a7a3a');
+    x.fillRect(Math.random()*256,Math.random()*256,2,3);}
+  for(var j=0;j<40;j++){x.fillStyle='rgba(90,120,60,0.15)';
+    x.beginPath();x.arc(Math.random()*256,Math.random()*256,10+Math.random()*30,0,Math.PI*2);x.fill();}
+  var t=new THREE.CanvasTexture(cv);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(80,80);t.encoding=THREE.sRGBEncoding;t.anisotropy=1;return t;
 }
-
-var terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_RES, TERRAIN_RES);
-terrainGeo.rotateX(-Math.PI / 2);
-(function(){
-  var pos = terrainGeo.attributes.position;
-  for(var i = 0; i < pos.count; i++){
-    pos.setY(i, terrainHeight(pos.getX(i), pos.getZ(i)));
-  }
-  pos.needsUpdate = true;
-  terrainGeo.computeVertexNormals();
-})();
-var terrainMesh = new THREE.Mesh(
-  terrainGeo,
-  new THREE.MeshStandardMaterial({
-    map: makeGrassTexture(),
-    roughness: 1,
-    metalness: 0
-  })
-);
+var terrainGeo=new THREE.PlaneGeometry(TERRAIN_SIZE,TERRAIN_SIZE,TERRAIN_RES,TERRAIN_RES);
+terrainGeo.rotateX(-Math.PI/2);
+(function(){var pos=terrainGeo.attributes.position;
+  for(var i=0;i<pos.count;i++){pos.setY(i,terrainHeight(pos.getX(i),pos.getZ(i)));}
+  pos.needsUpdate=true;terrainGeo.computeVertexNormals();})();
+var terrainMesh=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({map:makeGrassTexture(),roughness:1,metalness:0}));
 scene.add(terrainMesh);
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 7 — ROAD NETWORK  (node + edge graph)
-   ═══════════════════════════════════════════════════════════════════ */
-var ROAD_NODES = {
-  /* ── Main N-S axis (Mashtots Ave) ── */
-  s1: { x: 0,    z: -420 },   // far south (Marriott approach)
-  s2: { x: 6,    z: -280 },   // Marriott intersection
-  s3: { x: -4,   z: -140 },
-  s4: { x: 0,    z: 0    },   // Republic Square
-  s5: { x: 4,    z: 130  },
-  s6: { x: -2,   z: 250  },   // Cascade base
-
-  /* ── West axis (Tumanyan) ── */
-  w1: { x: -140, z: -6   },
-  w2: { x: -280, z: -30  },
-  w3: { x: -410, z: -60  },
-
-  /* ── NW branch to Matenadaran ── */
-  w4: { x: -260, z: 100  },
-  w5: { x: -410, z: 230  },
-  w6: { x: -420, z: 380  },
-
-  /* ── East axis (Northern Ave) ── */
-  e1: { x: 140,  z: 30   },
-  e2: { x: 270,  z: 80   },
-  e3: { x: 400,  z: 130  },
-
-  /* ── South-west diagonal ── */
-  d1: { x: -190, z: -190 },
-  d2: { x: -340, z: -300 },
-  d3: { x: -110, z: 60   },
-
-  /* ── South-east diagonal ── */
-  e4: { x: 190,  z: -190 },
-  e5: { x: 340,  z: -290 },
-  e6: { x: 140,  z: 160  }
-};
-
-var ROAD_EDGES = [
-  ['s1','s2', 18], ['s2','s3', 18], ['s3','s4', 20], ['s4','s5', 20], ['s5','s6', 18],
-  ['s4','w1', 16], ['w1','w2', 14], ['w2','w3', 12],
-  ['w1','w4', 12], ['w4','w5', 12], ['w5','w6', 12],
-  ['s4','e1', 16], ['e1','e2', 14], ['e2','e3', 12],
-  ['s3','d1', 12], ['d1','d2', 12], ['d2','w2', 12],
-  ['s5','e4', 12], ['e4','e5', 12], ['e5','e2', 12],
-  ['w1','d3', 12], ['d3','s4', 12],
-  ['e1','e6', 12], ['e6','s5', 12]
-];
-
+/* ═══════════════════════════════════════════════════════
+   ROADS — a few CURVED important streets + ring around square
+   ═══════════════════════════════════════════════════════ */
 function makeAsphaltTexture(){
-  var cv = document.createElement('canvas');
-  cv.width = 128; cv.height = 256;
-  var x = cv.getContext('2d');
-  x.fillStyle = '#3a3d42';
-  x.fillRect(0, 0, 128, 256);
-  for(var i = 0; i < 1500; i++){
-    x.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.07)';
-    x.fillRect(Math.random() * 128, Math.random() * 256, 1.5, 1.5);
+  var cv=document.createElement('canvas');cv.width=128;cv.height=256;var x=cv.getContext('2d');
+  x.fillStyle='#3a3d42';x.fillRect(0,0,128,256);
+  for(var i=0;i<1500;i++){x.fillStyle=Math.random()>0.5?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.07)';x.fillRect(Math.random()*128,Math.random()*256,1.5,1.5);}
+  x.fillStyle='#e0b030';for(var yy=0;yy<256;yy+=40){x.fillRect(62,yy+4,2,16);x.fillRect(65,yy+4,2,16);}
+  var t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;return t;
+}
+var asphaltMat=new THREE.MeshLambertMaterial({map:makeAsphaltTexture()});
+
+/* Road geometry accumulator */
+var ROAD_VERTS=[],ROAD_UVS=[],ROAD_IDX=[];
+function addRoad(path,width){
+  // path: array of {x,z}
+  var pts=[];
+  for(var i=0;i<path.length;i++)pts.push(new THREE.Vector3(path[i].x,0,path[i].z));
+  var curve=new THREE.CatmullRomCurve3(pts,false,'catmullrom',0.5);
+  var len=curve.getLength();
+  var N=Math.max(8,Math.ceil(len/6));
+  var sampled=curve.getSpacedPoints(N);
+  var startIdx=ROAD_VERTS.length/3;
+  for(var i=0;i<=N;i++){
+    var p=sampled[i];
+    var iPrev=Math.max(0,i-1),iNext=Math.min(N,i+1);
+    var pPrev=sampled[iPrev],pNext=sampled[iNext];
+    var tdx=pNext.x-pPrev.x,tdz=pNext.z-pPrev.z;
+    var tl=Math.sqrt(tdx*tdx+tdz*tdz)||1;
+    var px=-tdz/tl,pz=tdx/tl;
+    var lx=p.x+px*width/2,lz=p.z+pz*width/2;
+    var rx=p.x-px*width/2,rz=p.z-pz*width/2;
+    ROAD_VERTS.push(lx,terrainHeight(lx,lz)+0.25,lz,rx,terrainHeight(rx,rz)+0.25,rz);
+    var v=i*(len/N)*0.08;ROAD_UVS.push(0,v,1,v);
   }
-  x.fillStyle = '#e0b030';
-  for(var yy = 0; yy < 256; yy += 40){
-    x.fillRect(62, yy + 4, 2, 16);
-    x.fillRect(65, yy + 4, 2, 16);
-  }
-  var t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.encoding = THREE.sRGBEncoding;
-  return t;
+  for(var j=0;j<N;j++){var a=startIdx+j*2;ROAD_IDX.push(a,a+1,a+2,a+1,a+3,a+2);}
 }
 
-var asphaltTex = makeAsphaltTexture();
-var asphaltMat = new THREE.MeshLambertMaterial({ map: asphaltTex });
-
-/* ── Road ribbon geometry accumulator ── */
-var ROAD_VERTS = [], ROAD_UVS = [], ROAD_IDX = [];
-
-function addRoadRibbon(ax, az, bx, bz, width, bend){
-  var dx = bx - ax, dz = bz - az;
-  var len = Math.sqrt(dx * dx + dz * dz);
-  if(len < 0.5) return;
-
-  var nx = -dz / len, nz = dx / len;
-  var b = bend || 0;
-  var mx = (ax + bx) * 0.5 + nx * b;
-  var mz = (az + bz) * 0.5 + nz * b;
-
-  var curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(ax, 0, az),
-    new THREE.Vector3(mx, 0, mz),
-    new THREE.Vector3(bx, 0, bz)
-  ], false, 'catmullrom', 0.5);
-
-  var N = Math.max(6, Math.ceil(len / 8));
-  var pts = curve.getSpacedPoints(N);
-  var startIdx = ROAD_VERTS.length / 3;
-
-  for(var i = 0; i <= N; i++){
-    var p = pts[i];
-    var iPrev = Math.max(0, i - 1);
-    var iNext = Math.min(N, i + 1);
-    var pPrev = pts[iPrev], pNext = pts[iNext];
-    var tdx = pNext.x - pPrev.x, tdz = pNext.z - pPrev.z;
-    var tl = Math.sqrt(tdx * tdx + tdz * tdz) || 1;
-    var px = -tdz / tl, pz = tdx / tl;
-
-    var lx = p.x + px * width / 2, lz = p.z + pz * width / 2;
-    var rx = p.x - px * width / 2, rz = p.z - pz * width / 2;
-    var ly = terrainHeight(lx, lz) + 0.25;
-    var ry = terrainHeight(rx, rz) + 0.25;
-
-    ROAD_VERTS.push(lx, ly, lz, rx, ry, rz);
-    var v = i * (len / N) * 0.08;
-    ROAD_UVS.push(0, v, 1, v);
-  }
-  for(var j = 0; j < N; j++){
-    var a = startIdx + j * 2;
-    ROAD_IDX.push(a, a+1, a+2, a+1, a+3, a+2);
-  }
-}
-
-for(var ei = 0; ei < ROAD_EDGES.length; ei++){
-  var e = ROAD_EDGES[ei];
-  var A = ROAD_NODES[e[0]], B = ROAD_NODES[e[1]];
-  var bend = (Math.random() - 0.5) * Math.min(20, e[2] * 1.2);
-  addRoadRibbon(A.x, A.z, B.x, B.z, e[2], bend);
-}
-
-/* ── Intersection pads ── */
-var INTER_VERTS = [], INTER_UVS = [], INTER_IDX = [];
-
-function addIntersection(cx, cz, size){
-  var h = size / 2;
-  var base = INTER_VERTS.length / 3;
-  var c = [
-    [cx - h, cz - h], [cx + h, cz - h],
-    [cx + h, cz + h], [cx - h, cz + h]
-  ];
-  for(var i = 0; i < 4; i++){
-    INTER_VERTS.push(c[i][0], terrainHeight(c[i][0], c[i][1]) + 0.28, c[i][1]);
-    INTER_UVS.push(0, 0);
-  }
-  INTER_IDX.push(base, base+1, base+2, base, base+2, base+3);
-}
-
-for(var nodeK in ROAD_NODES){
-  addIntersection(ROAD_NODES[nodeK].x, ROAD_NODES[nodeK].z, 22);
-}
-
-function buildGeometry(verts, uvs, idx, mat){
-  var g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  g.computeBoundingSphere();
-  return new THREE.Mesh(g, mat);
-}
-
-scene.add(buildGeometry(ROAD_VERTS, ROAD_UVS, ROAD_IDX, asphaltMat));
-scene.add(buildGeometry(INTER_VERTS, INTER_UVS, INTER_IDX, asphaltMat));
-
-/* ── Winding road up Cascade ── */
-var WINDING_PATH = [
-  { x: -2,   z: 250 },
-  { x: 60,   z: 285 },
-  { x: 140,  z: 320 },
-  { x: 210,  z: 355 },
-  { x: 250,  z: 405 },
-  { x: 230,  z: 460 },
-  { x: 160,  z: 500 },
-  { x: 80,   z: 530 },
-  { x: 20,   z: 555 },
-  { x: 0,    z: 585 },
-  { x: -30,  z: 620 },
-  { x: -20,  z: 660 }
-];
-
+/* ─── ROAD NETWORK — the essential 8 streets ─── */
+// 1. Ring around Republic Square (circular, radius 78)
 (function(){
-  var wWinding = 11;
-  var N = WINDING_PATH.length;
-  var pts = [];
-  for(var i = 0; i < N; i++){
-    pts.push(new THREE.Vector3(WINDING_PATH[i].x, 0, WINDING_PATH[i].z));
+  var ringPts=[];
+  for(var i=0;i<=32;i++){
+    var a=(i/32)*Math.PI*2;
+    ringPts.push({x:Math.cos(a)*78,z:Math.sin(a)*78});
   }
-  var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
-  var len = curve.getLength();
-  var segs = Math.max(40, Math.ceil(len / 8));
-  var sampled = curve.getSpacedPoints(segs);
-
-  var verts = [], uvs = [], idx = [];
-  for(var i = 0; i <= segs; i++){
-    var p = sampled[i];
-    var iPrev = Math.max(0, i - 1), iNext = Math.min(segs, i + 1);
-    var pPrev = sampled[iPrev], pNext = sampled[iNext];
-    var tdx = pNext.x - pPrev.x, tdz = pNext.z - pPrev.z;
-    var tl = Math.sqrt(tdx * tdx + tdz * tdz) || 1;
-    var px = -tdz / tl, pz = tdx / tl;
-
-    var lx = p.x + px * wWinding / 2, lz = p.z + pz * wWinding / 2;
-    var rx = p.x - px * wWinding / 2, rz = p.z - pz * wWinding / 2;
-
-    verts.push(lx, terrainHeight(lx, lz) + 0.28, lz);
-    verts.push(rx, terrainHeight(rx, rz) + 0.28, rz);
-    var v = i * (len / segs) * 0.08;
-    uvs.push(0, v, 1, v);
-  }
-  for(var j = 0; j < segs; j++){
-    var a = j * 2;
-    idx.push(a, a+1, a+2, a+1, a+3, a+2);
-  }
-  var g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  g.computeBoundingSphere();
-  scene.add(new THREE.Mesh(g, asphaltMat));
+  addRoad(ringPts,16);
 })();
+// 2. Mashtots Ave: Square → Marriott (south)
+addRoad([{x:0,z:-78},{x:2,z:-160},{x:4,z:-240},{x:2,z:-340},{x:0,z:-420}],22);
+// 3. North Ave: Square → Cascade base (with curve)
+addRoad([{x:0,z:78},{x:8,z:150},{x:14,z:220},{x:6,z:290},{x:0,z:330}],20);
+// 4. Sayat-Nova: Square → Opera park (west curve)
+addRoad([{x:-78,z:0},{x:-140,z:-10},{x:-190,z:20},{x:-220,z:80}],16);
+// 5. Tumanyan: Opera park → Matenadaran (northwest, curving up)
+addRoad([{x:-220,z:80},{x:-260,z:150},{x:-300,z:200},{x:-330,z:240}],14);
+// 6. Northern Ave axis: Square → east
+addRoad([{x:78,z:0},{x:140,z:10},{x:200,z:50},{x:260,z:70}],16);
+// 7. University loop: east side to University
+addRoad([{x:260,z:70},{x:320,z:0},{x:340,z:-100},{x:330,z:-200},{x:300,z:-280}],14);
+// 8. West loop: Opera → Gallery → Square (creating a nice loop)
+addRoad([{x:-220,z:80},{x:-260,z:0},{x:-230,z:-100},{x:-150,z:-130},{x:-78,z:-60}],14);
 
-/* ── Sidewalks ── */
-var WALK_VERTS = [], WALK_UVS = [], WALK_IDX = [];
+function buildGeometry(verts,uvs,idx,mat){
+  var g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  g.setIndex(idx);g.computeVertexNormals();g.computeBoundingSphere();
+  return new THREE.Mesh(g,mat);
+}
+scene.add(buildGeometry(ROAD_VERTS,ROAD_UVS,ROAD_IDX,asphaltMat));
 
-function addSidewalks(ax, az, bx, bz, roadWidth, bend){
-  var dx = bx - ax, dz = bz - az;
-  var len = Math.sqrt(dx * dx + dz * dz);
-  if(len < 2) return;
-
-  var nx = -dz / len, nz = dx / len;
-  var b = bend || 0;
-  var mx = (ax + bx) * 0.5 + nx * b;
-  var mz = (az + bz) * 0.5 + nz * b;
-
-  var curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(ax, 0, az),
-    new THREE.Vector3(mx, 0, mz),
-    new THREE.Vector3(bx, 0, bz)
-  ], false, 'catmullrom', 0.5);
-  var N = Math.max(6, Math.ceil(len / 8));
-  var pts = curve.getSpacedPoints(N);
-  var sw = 2.6;
-  var startIdx = WALK_VERTS.length / 3;
-
-  for(var side = -1; side <= 1; side += 2){
-    for(var i = 0; i <= N; i++){
-      var p = pts[i];
-      var iPrev = Math.max(0, i - 1), iNext = Math.min(N, i + 1);
-      var pPrev = pts[iPrev], pNext = pts[iNext];
-      var tdx = pNext.x - pPrev.x, tdz = pNext.z - pPrev.z;
-      var tl = Math.sqrt(tdx * tdx + tdz * tdz) || 1;
-      var px = -tdz / tl, pz = tdx / tl;
-
-      var edge = roadWidth / 2;
-      var innerX = p.x + px * side * edge;
-      var innerZ = p.z + pz * side * edge;
-      var outerX = p.x + px * side * (edge + sw);
-      var outerZ = p.z + pz * side * (edge + sw);
-
-      WALK_VERTS.push(innerX, terrainHeight(innerX, innerZ) + 0.32, innerZ);
-      WALK_VERTS.push(outerX, terrainHeight(outerX, outerZ) + 0.32, outerZ);
-      var v = i * (len / N) * 0.1;
-      WALK_UVS.push(0, v, 1, v);
-    }
-    for(var j = 0; j < N; j++){
-      var a = startIdx + j * 2;
-      WALK_IDX.push(a, a+1, a+2, a+1, a+3, a+2);
-    }
-    startIdx = WALK_VERTS.length / 3;
-  }
+/* Road map for collision / placement avoidance */
+var ROAD_GRID=[
+  {x:0,z:-78,w:16},{x:2,z:-160,w:22},{x:4,z:-240,w:22},{x:2,z:-340,w:22},{x:0,z:-420,w:22},
+  {x:0,z:78,w:16},{x:8,z:150,w:20},{x:14,z:220,w:20},{x:6,z:290,w:20},{x:0,z:330,w:20},
+  {x:-78,z:0,w:16},{x:-140,z:-10,w:16},{x:-190,z:20,w:16},{x:-220,z:80,w:16},
+  {x:-220,z:80,w:14},{x:-260,z:150,w:14},{x:-300,z:200,w:14},{x:-330,z:240,w:14},
+  {x:78,z:0,w:16},{x:140,z:10,w:16},{x:200,z:50,w:16},{x:260,z:70,w:16},
+  {x:260,z:70,w:14},{x:320,z:0,w:14},{x:340,z:-100,w:14},{x:330,z:-200,w:14},{x:300,z:-280,w:14},
+  {x:-220,z:80,w:14},{x:-260,z:0,w:14},{x:-230,z:-100,w:14},{x:-150,z:-130,w:14},{x:-78,z:-60,w:14}
+];
+function isNearRoad(x,z,margin){
+  // ring around square
+  var d=Math.sqrt(x*x+z*z);
+  if(Math.abs(d-78)<12+(margin||0))return true;
+  for(var i=0;i<ROAD_GRID.length;i++){var e=ROAD_GRID[i];
+    var dd=Math.sqrt((x-e.x)*(x-e.x)+(z-e.z)*(z-e.z));
+    if(dd<e.w/2+(margin||0))return true;}
+  return false;
 }
 
-for(var si = 0; si < ROAD_EDGES.length; si++){
-  var se = ROAD_EDGES[si];
-  var sA = ROAD_NODES[se[0]], sB = ROAD_NODES[se[1]];
-  var sbend = (Math.random() - 0.5) * Math.min(20, se[2] * 1.2);
-  addSidewalks(sA.x, sA.z, sB.x, sB.z, se[2], sbend);
+/* ═══════════════════════════════════════════════════════
+   COLLISION — spatial hash, rotation-aware
+   ═══════════════════════════════════════════════════════ */
+var COL_HASH={};
+function addCollision(x,z,w,d,h,rot){
+  rot=rot||0;
+  var c=Math.abs(Math.cos(rot)),s=Math.abs(Math.sin(rot));
+  var effW=c*w+s*d,effD=s*w+c*d;
+  var b={x:x,z:z,w:effW,d:effD,h:h};
+  var x1=Math.floor((x-effW/2)/HASH_SIZE),x2=Math.floor((x+effW/2)/HASH_SIZE);
+  var z1=Math.floor((z-effD/2)/HASH_SIZE),z2=Math.floor((z+effD/2)/HASH_SIZE);
+  for(var i=x1;i<=x2;i++)for(var j=z1;j<=z2;j++){
+    var k=i+','+j;if(!COL_HASH[k])COL_HASH[k]=[];COL_HASH[k].push(b);}
 }
 
-function makeWalkTexture(){
-  var cv = document.createElement('canvas');
-  cv.width = 64; cv.height = 64;
-  var x = cv.getContext('2d');
-  x.fillStyle = '#d8ceb8';
-  x.fillRect(0, 0, 64, 64);
-  x.strokeStyle = 'rgba(140,130,115,.55)';
-  x.lineWidth = 1;
-  for(var i = 0; i <= 4; i++){
-    x.beginPath(); x.moveTo(i * 16, 0); x.lineTo(i * 16, 64); x.stroke();
-    x.beginPath(); x.moveTo(0, i * 16); x.lineTo(64, i * 16); x.stroke();
-  }
-  var t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.encoding = THREE.sRGBEncoding;
-  return t;
-}
-
-scene.add(buildGeometry(
-  WALK_VERTS, WALK_UVS, WALK_IDX,
-  new THREE.MeshLambertMaterial({ map: makeWalkTexture() })
-));
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 8 — COLLISION SYSTEM  (ROTATION-AWARE + SPATIAL HASH)
-   ───────────────────────────────────────────────────────────────
-   Fix #5: When a building is rotated 90°/270°, its footprint in
-   world-space is (d, w) not (w, d).  We compute an axis-aligned
-   bounding box that FULLY contains the rotated rectangle using:
-       effW = |cos(r)|·w + |sin(r)|·d
-       effD = |sin(r)|·w + |cos(r)|·d
-   This slightly over-estimates for diagonal rotations (45°) but is
-   always conservative — no tunneling, no phantom collisions.
-   ═══════════════════════════════════════════════════════════════════ */
-var COL_HASH = {};
-
-function addCollision(x, z, w, d, h, rot){
-  rot = rot || 0;
-  var c = Math.abs(Math.cos(rot));
-  var s = Math.abs(Math.sin(rot));
-  var effW = c * w + s * d;
-  var effD = s * w + c * d;
-
-  var b = { x: x, z: z, w: effW, d: effD, h: h };
-  var x1 = Math.floor((x - effW / 2) / HASH_SIZE);
-  var x2 = Math.floor((x + effW / 2) / HASH_SIZE);
-  var z1 = Math.floor((z - effD / 2) / HASH_SIZE);
-  var z2 = Math.floor((z + effD / 2) / HASH_SIZE);
-
-  for(var i = x1; i <= x2; i++){
-    for(var j = z1; j <= z2; j++){
-      var k = i + ',' + j;
-      if(!COL_HASH[k]) COL_HASH[k] = [];
-      COL_HASH[k].push(b);
-    }
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 9 — LANDMARKS
-   (declared early so building placement can avoid their zones)
-   ═══════════════════════════════════════════════════════════════════ */
-var LM = {
-  square:      { x: 0,    z: 0,    name: 'Հանրապետության հրապարակ', r: 90  },
-  cascades:    { x: 0,    z: 420,  name: 'Կասկադ',                    r: 100 },
-  opera:       { x: -230, z: 80,   name: 'Օպերայի շենք',               r: 80  },
-  matenadaran: { x: -410, z: 230,  name: 'Մատենադարան',                r: 70  },
-  gallery:     { x: -280, z: -30,  name: 'Ազգային պատկերասրահ',       r: 50  },
-  northAve:    { x: 270,  z: 80,   name: 'Հյուսիսային պողոտա',         r: 80  },
-  marriott:    { x: 0,    z: -260, name: 'Marriott Hotel',             r: 60  },
-  university:  { x: 340,  z: -290, name: 'Երևանի պետական համալսարան', r: 70  }
+/* ═══════════════════════════════════════════════════════
+   LANDMARKS — only these, no random city
+   ═══════════════════════════════════════════════════════ */
+var LM={
+  square:      {x:0,   z:0,   name:'Հանրապետության հրապարակ',r:90},
+  cascades:    {x:0,   z:380, name:'Կասկադ',                   r:120},
+  opera:       {x:-220,z:80,  name:'Օպերայի շենք',             r:110},
+  matenadaran: {x:-330,z:240, name:'Մատենադարան',              r:80},
+  gallery:     {x:-230,z:-100,name:'Ազգային պատկերասրահ',     r:70},
+  northAve:    {x:200, z:50,  name:'Հյուսիսային պողոտա',       r:90},
+  marriott:    {x:0,   z:-240,name:'Marriott Hotel',           r:70},
+  university:  {x:310, z:-280,name:'Երևանի պետական համալսարան',r:90}
 };
-
-function isNearLandmark(x, z, extra){
-  for(var k in LM){
-    var L = LM[k];
-    var r = (L.r || 50) + (extra || 0);
-    var dx = x - L.x, dz = z - L.z;
-    if(dx * dx + dz * dz < r * r) return true;
-  }
+function isNearLandmark(x,z,extra){
+  for(var k in LM){var L=LM[k];var r=(L.r||50)+(extra||0);
+    var dx=x-L.x,dz=z-L.z;if(dx*dx+dz*dz<r*r)return true;}
   return false;
 }
 
-function isNearRoad(x, z, margin){
-  for(var i = 0; i < ROAD_EDGES.length; i++){
-    var e = ROAD_EDGES[i];
-    var A = ROAD_NODES[e[0]], B = ROAD_NODES[e[1]];
-    var W = e[2];
-    var dx = B.x - A.x, dz = B.z - A.z;
-    var l2 = dx * dx + dz * dz;
-    var t = ((x - A.x) * dx + (z - A.z) * dz) / l2;
-    t = Math.max(0, Math.min(1, t));
-    var cx = A.x + dx * t, cz = A.z + dz * t;
-    var d = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
-    if(d < W / 2 + (margin || 6)) return true;
-  }
-  for(var i = 0; i < WINDING_PATH.length - 1; i++){
-    var A2 = WINDING_PATH[i], B2 = WINDING_PATH[i + 1];
-    var dx2 = B2.x - A2.x, dz2 = B2.z - A2.z;
-    var l22 = dx2 * dx2 + dz2 * dz2;
-    var t2 = ((x - A2.x) * dx2 + (z - A2.z) * dz2) / l22;
-    t2 = Math.max(0, Math.min(1, t2));
-    var cx2 = A2.x + dx2 * t2, cz2 = A2.z + dz2 * t2;
-    var d2 = Math.sqrt((x - cx2) * (x - cx2) + (z - cz2) * (z - cz2));
-    if(d2 < 7 + (margin || 6)) return true;
-  }
-  return false;
-}
+/* ═══════════════════════════════════════════════════════
+   SHARED GEOMETRY + MATERIALS
+   ═══════════════════════════════════════════════════════ */
+var BOX_GEO=new THREE.BoxGeometry(1,1,1);
+var CONE4=new THREE.ConeGeometry(1,1,4);
+var CONE6=new THREE.ConeGeometry(1,1,6);
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 10 — BUILDING TEXTURES + MATERIALS
-   ═══════════════════════════════════════════════════════════════════ */
-function makeTuffTexture(baseHex, windowStyle){
-  var cv = document.createElement('canvas');
-  cv.width = 128; cv.height = 256;
-  var x = cv.getContext('2d');
-  x.fillStyle = baseHex;
-  x.fillRect(0, 0, 128, 256);
-  for(var i = 0; i < 800; i++){
-    x.fillStyle = 'rgba(120,100,80,' + (Math.random() * 0.09) + ')';
-    x.fillRect(Math.random() * 128, Math.random() * 256, 3, 2);
+function makeTuffTexture(baseHex,style){
+  var cv=document.createElement('canvas');cv.width=128;cv.height=256;var x=cv.getContext('2d');
+  x.fillStyle=baseHex;x.fillRect(0,0,128,256);
+  for(var i=0;i<800;i++){x.fillStyle='rgba(120,100,80,'+(Math.random()*0.09)+')';x.fillRect(Math.random()*128,Math.random()*256,3,2);}
+  var cols,rows;
+  if(style==='modern'){cols=5;rows=12;}else if(style==='dense'){cols=4;rows=14;}else{cols=3;rows=8;}
+  var cw=128/cols,ch=256/rows;
+  for(var r=1;r<rows-0.5;r++)for(var c=0;c<cols;c++){
+    var wx=c*cw+cw*0.15,wy=r*ch+ch*0.12,ww=cw*0.7,wh=ch*0.66;
+    x.fillStyle='#2a3a4a';x.fillRect(wx,wy,ww,wh);
+    var hue=Math.random();x.fillStyle=hue>0.7?'#8ac8e8':(hue>0.4?'#6a8aa8':'#4a6a88');
+    x.fillRect(wx+1,wy+1,ww-2,wh-2);
+    x.fillStyle='rgba(255,255,255,0.35)';x.fillRect(wx+2,wy+2,ww*0.35,wh*0.4);
   }
-  var cols, rows;
-  if(windowStyle === 'modern'){ cols = 5; rows = 12; }
-  else if(windowStyle === 'dense'){ cols = 4; rows = 14; }
-  else { cols = 3; rows = 8; }
-  var cw = 128 / cols, ch = 256 / rows;
-  for(var r = 1; r < rows - 0.5; r++){
-    for(var c = 0; c < cols; c++){
-      var wx = c * cw + cw * 0.15;
-      var wy = r * ch + ch * 0.12;
-      var ww = cw * 0.7;
-      var wh = ch * 0.66;
-      x.fillStyle = '#2a3a4a';
-      x.fillRect(wx, wy, ww, wh);
-      var hue = Math.random();
-      var wc = hue > 0.7 ? '#8ac8e8' : (hue > 0.4 ? '#6a8aa8' : '#4a6a88');
-      x.fillStyle = wc;
-      x.fillRect(wx + 1, wy + 1, ww - 2, wh - 2);
-      x.fillStyle = 'rgba(255,255,255,0.35)';
-      x.fillRect(wx + 2, wy + 2, ww * 0.35, wh * 0.4);
-    }
-  }
-  var t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.encoding = THREE.sRGBEncoding;
-  return t;
+  var t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;return t;
 }
-
-/* ── 8 base materials for instanced buildings ── */
-var BLD_MATS = [
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#e8d8c0', 'normal') }),  // 0: light tuff
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#d8b090', 'normal') }),  // 1: warm tuff
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#e0c8a8', 'dense')  }),  // 2: dense windows
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#c8b8a8', 'normal') }),  // 3: stone
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#b8a088', 'normal') }),  // 4: dark stone
-  new THREE.MeshLambertMaterial({ color: 0x88a8c8, transparent: true, opacity: 0.85 }), // 5: glass
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#d8c8b0', 'modern') }),  // 6: modern tuff
-  new THREE.MeshLambertMaterial({ color: 0xd8c0a8 })                             // 7: plain
+var BLD_MATS=[
+  new THREE.MeshLambertMaterial({map:makeTuffTexture('#e8d8c0','normal')}),
+  new THREE.MeshLambertMaterial({map:makeTuffTexture('#d8b090','normal')}),
+  new THREE.MeshLambertMaterial({map:makeTuffTexture('#e0c8a8','dense')}),
+  new THREE.MeshLambertMaterial({map:makeTuffTexture('#c8b8a8','normal')}),
+  new THREE.MeshLambertMaterial({map:makeTuffTexture('#b8a088','normal')}),
+  new THREE.MeshLambertMaterial({color:0x88a8c8,transparent:true,opacity:0.85}),
+  new THREE.MeshLambertMaterial({map:makeTuffTexture('#d8c8b0','modern')}),
+  new THREE.MeshLambertMaterial({color:0xd8c0a8})
 ];
 
-/* ── Materials for rooftop details ── */
-var MAT_ROOF_TOP    = new THREE.MeshLambertMaterial({ color: 0x8a6040 });
-var MAT_ROOF_FLAT   = new THREE.MeshLambertMaterial({ color: 0xa08060 });
-var MAT_CHIMNEY     = new THREE.MeshLambertMaterial({ color: 0x8a5030 });
-var MAT_AC_UNIT     = new THREE.MeshLambertMaterial({ color: 0x909898 });
-var MAT_WATER_TANK  = new THREE.MeshLambertMaterial({ color: 0xc8c0a8 });
-var MAT_ANTENNA     = new THREE.MeshLambertMaterial({ color: 0x505050 });
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 11 — INSTANCED BUILDING SYSTEM
-   ───────────────────────────────────────────────────────────────
-   Instead of creating a Mesh per building (250+ draw calls), we:
-     1. Collect every building's (x,y,z,w,h,d,rot,matIdx) into arrays.
-     2. Group by material index.
-     3. Create ONE InstancedMesh per material.
-     4. Upload all transformation matrices at once.
-   Result: ~8 draw calls instead of ~250.  30× faster.
-
-   Same approach for rooftop props (roofs, chimneys, AC units).
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* ── Shared geometry: unit cube, unit cone ── */
-var BOX_GEO = new THREE.BoxGeometry(1, 1, 1);
-var CONE_GEO = new THREE.ConeGeometry(0.5, 1, 4);   // 4-sided pyramid
-var CYL_GEO = new THREE.CylinderGeometry(0.5, 0.5, 1, 8);
-
-/* ── Data accumulators (populated during build phase) ── */
-var BUILDING_DATA = {
-  boxes: {},       // matIdx -> [{x,y,z,w,h,d,rot}]
-  roofs: {},       // matIdx -> [{x,y,z,w,h,d,rot}]
-  cones: [],       // [{x,y,z,r,h,rotY}]     — pitched roofs
-  chimneys: [],    // [{x,y,z,r,h}]          — cylinder pipes
-  acUnits: [],     // [{x,y,z,w,h,d,rot}]    — AC boxes on flat roofs
-  waterTanks: [],  // [{x,y,z,r,h}]          — rooftop water tanks
-  antennas: []     // [{x,y,z,r,h}]          — rooftop antennas
-};
-
-/* ── Helper: ensure array exists for a given material key ── */
-function ensureArray(map, key){
-  if(!map[key]) map[key] = [];
-  return map[key];
-}
-
-/* ── Collect a single rectangular building block ── */
-function collectBox(x, z, w, h, d, rot, matIdx){
-  var y = terrainHeight(x, z);
-  var arr = ensureArray(BUILDING_DATA.boxes, matIdx);
-  arr.push({ x: x, y: y, z: z, w: w, h: h, d: d, rot: rot });
-  /* Rotation-aware collision (Fix #5) */
-  addCollision(x, z, w, d, h, rot);
+/* Instanced building accumulator */
+var BUILDING_DATA={boxes:{},roofs:{},cones:[]};
+function ensureArray(map,key){if(!map[key])map[key]=[];return map[key];}
+function collectBox(x,z,w,h,d,rot,matIdx){
+  var y=terrainHeight(x,z);
+  ensureArray(BUILDING_DATA.boxes,matIdx).push({x:x,y:y,z:z,w:w,h:h,d:d,rot:rot});
+  addCollision(x,z,w,d,h,rot);
   return y;
 }
-
-/* ── Collect a rooftop element (same geometry as box) ── */
-function collectRoofBox(x, y, z, w, h, d, rot, matIdx){
-  var arr = ensureArray(BUILDING_DATA.roofs, matIdx);
-  arr.push({ x: x, y: y, z: z, w: w, h: h, d: d, rot: rot });
+function collectRoof(x,y,z,w,h,d,rot){
+  ensureArray(BUILDING_DATA.roofs,'r').push({x:x,y:y,z:z,w:w,h:h,d:d,rot:rot});
 }
-
-/* ── Collect a pyramidal pitched roof ── */
-function collectConeRoof(x, y, z, r, h, rotY){
-  BUILDING_DATA.cones.push({ x: x, y: y, z: z, r: r, h: h, rotY: rotY || 0 });
+function collectCone(x,y,z,r,h,rotY){
+  BUILDING_DATA.cones.push({x:x,y:y,z:z,r:r,h:h,rotY:rotY||0});
 }
+function rotateOffset(lx,lz,rot){var c=Math.cos(rot),s=Math.sin(rot);return{x:c*lx+s*lz,z:-s*lx+c*lz};}
 
-/* ── Collect a rooftop chimney (cylinder) ── */
-function collectChimney(x, y, z, r, h){
-  BUILDING_DATA.chimneys.push({ x: x, y: y, z: z, r: r, h: h });
-}
-
-/* ── Collect an AC unit (small box) ── */
-function collectAC(x, y, z, w, h, d, rot){
-  BUILDING_DATA.acUnits.push({ x: x, y: y, z: z, w: w, h: h, d: d, rot: rot });
-}
-
-/* ── Collect a water tank (cylinder) ── */
-function collectWaterTank(x, y, z, r, h){
-  BUILDING_DATA.waterTanks.push({ x: x, y: y, z: z, r: r, h: h });
-}
-
-/* ── Collect an antenna (thin cylinder) ── */
-function collectAntenna(x, y, z, r, h){
-  BUILDING_DATA.antennas.push({ x: x, y: y, z: z, r: r, h: h });
-}
-
-/* ── Local-to-world offset rotation (matches three.js Y-axis rotation) ──
-   In three.js, matrix4.makeRotationY(θ) transforms (x, z) as:
-       x' = cos(θ)·x + sin(θ)·z
-       z' = -sin(θ)·x + cos(θ)·z
-   We use this for placing child boxes (L-shapes, T-shapes). */
-function rotateOffset(lx, lz, rot){
-  var c = Math.cos(rot), s = Math.sin(rot);
-  return {
-    x: c * lx + s * lz,
-    z: -s * lx + c * lz
-  };
-}
-
-/* ───────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
    BUILDING SHAPES
-   ─────────────────────────────────────────────────────────────── */
-
-/* ── Simple box, optionally with rooftop detail ── */
-function addBuildingBox(cx, cz, w, h, d, rot, matIdx, detail){
-  var y = collectBox(cx, cz, w, h, d, rot, matIdx);
-  var topY = y + h;
-
-  /* ── Rooftop detail (optional) ── */
-  if(detail !== false && h > 8){
-    /* Small flat parapet cap */
-    if(Math.random() < 0.6){
-      var capMat = Math.random() < 0.5 ? MAT_ROOF_TOP : MAT_ROOF_FLAT;
-      var capIdx = (capMat === MAT_ROOF_TOP) ? 100 : 101;
-      collectRoofBox(cx, topY + 0.4, cz, w * 0.96, 0.8, d * 0.96, rot, capIdx);
-    }
-
-    /* Pitched pyramid roof (only for low buildings) */
-    if(h < 18 && Math.random() < 0.30){
-      var cr = Math.max(w, d) * 0.72;
-      var ch = 3 + Math.random() * 4;
-      collectConeRoof(cx, topY + ch / 2, cz, cr, ch, rot + Math.PI / 4);
-    }
-
-    /* Chimney (tall brick building) */
-    if(h > 20 && Math.random() < 0.45){
-      var off = rotateOffset(w * 0.3, d * 0.3, rot);
-      collectChimney(
-        cx + off.x, topY + 1.5, cz + off.z,
-        0.4 + Math.random() * 0.2, 3 + Math.random() * 2
-      );
-    }
-
-    /* AC unit on flat roof */
-    if(h > 22 && Math.random() < 0.5){
-      var acOff = rotateOffset(
-        (Math.random() - 0.5) * w * 0.5,
-        (Math.random() - 0.5) * d * 0.5,
-        rot
-      );
-      collectAC(
-        cx + acOff.x, topY + 0.6, cz + acOff.z,
-        1.5 + Math.random(), 1.2, 1.5 + Math.random(), rot
-      );
-    }
-
-    /* Water tank */
-    if(h > 25 && Math.random() < 0.25){
-      var wtOff = rotateOffset(
-        (Math.random() - 0.5) * w * 0.4,
-        (Math.random() - 0.5) * d * 0.4,
-        rot
-      );
-      collectWaterTank(
-        cx + wtOff.x, topY + 1.5, cz + wtOff.z,
-        1.2 + Math.random() * 0.4, 2.5 + Math.random()
-      );
-    }
-
-    /* Antenna */
-    if(h > 32 && Math.random() < 0.20){
-      collectAntenna(cx, topY + 3, cz, 0.08, 6);
+   ═══════════════════════════════════════════════════════ */
+function addBuildingBox(cx,cz,w,h,d,rot,matIdx,detail){
+  var y=collectBox(cx,cz,w,h,d,rot,matIdx);
+  if(detail!==false&&h>10){
+    collectRoof(cx,y+h+0.4,cz,w*0.94,0.9,d*0.94,rot);
+    if(h<20&&Math.random()<0.35){
+      collectCone(cx,y+h+3,cz,Math.max(w,d)*0.55,3+Math.random()*3,rot+Math.PI/4);
     }
   }
 }
-
-/* ── L-shape: main block + wing attached at +X ── */
-function addBuildingL(cx, cz, baseW, baseH, baseD, rot, matIdx){
-  addBuildingBox(cx, cz, baseW, baseH, baseD, rot, matIdx, false);
-
-  var wingW = baseW * 0.65;
-  var wingD = baseD * 0.55;
-  var wingH = baseH * 0.85;
-
-  /* Wing offsets relative to main center, in local space */
-  var lx = baseW * 0.5 + wingW * 0.5 - baseW * 0.15;
-  var lz = -baseD * 0.5 + wingD * 0.5;
-
-  var off = rotateOffset(lx, lz, rot);
-  addBuildingBox(cx + off.x, cz + off.z, wingW, wingH, wingD, rot, matIdx, false);
+function addBuildingL(cx,cz,bw,bh,bd,rot,matIdx){
+  addBuildingBox(cx,cz,bw,bh,bd,rot,matIdx,false);
+  var ww=bw*0.55,wd=bd*0.55,wh=bh*0.85;
+  var off=rotateOffset(bw*0.5+ww*0.5-bw*0.1,-bd*0.5+wd*0.5,rot);
+  addBuildingBox(cx+off.x,cz+off.z,ww,wh,wd,rot,matIdx,false);
+}
+function addBuildingU(cx,cz,bw,bh,bd,rot,matIdx){
+  addBuildingBox(cx,cz,bw,bh,bd,rot,matIdx,false);
+  var ww=bw*0.4,wd=bd*0.55,wh=bh*0.9;
+  var offL=rotateOffset(-bw*0.5-ww*0.5+bw*0.1,0,rot);
+  addBuildingBox(cx+offL.x,cz+offL.z,ww,wh,wd,rot,matIdx,false);
+  var offR=rotateOffset(bw*0.5+ww*0.5-bw*0.1,0,rot);
+  addBuildingBox(cx+offR.x,cz+offR.z,ww,wh,wd,rot,matIdx,false);
 }
 
-/* ── T-shape: main block + perpendicular wing crossing at center ── */
-function addBuildingT(cx, cz, baseW, baseH, baseD, rot, matIdx){
-  addBuildingBox(cx, cz, baseW, baseH, baseD, rot, matIdx, false);
-
-  var crossW = baseW * 0.9;
-  var crossD = baseD * 0.55;
-  var crossH = baseH * 0.9;
-
-  /* Cross wing, perpendicular direction */
-  var crossRot = rot + Math.PI / 2;
-  addBuildingBox(cx, cz, crossW, crossH, crossD, crossRot, matIdx, false);
-}
-
-/* ── U-shape: main block + two wings on both sides ── */
-function addBuildingU(cx, cz, baseW, baseH, baseD, rot, matIdx){
-  addBuildingBox(cx, cz, baseW, baseH, baseD, rot, matIdx, false);
-
-  var wingW = baseW * 0.4;
-  var wingD = baseD * 0.55;
-  var wingH = baseH * 0.9;
-
-  /* Left wing */
-  var offL = rotateOffset(-baseW * 0.5 - wingW * 0.5 + baseW * 0.1, 0, rot);
-  addBuildingBox(cx + offL.x, cz + offL.z, wingW, wingH, wingD, rot, matIdx, false);
-
-  /* Right wing */
-  var offR = rotateOffset(baseW * 0.5 + wingW * 0.5 - baseW * 0.1, 0, rot);
-  addBuildingBox(cx + offR.x, cz + offR.z, wingW, wingH, wingD, rot, matIdx, false);
-}
-
-/* ── Courtyard: four thin buildings around a hollow rectangle ── */
-function addBuildingCourtyard(cx, cz, w, h, d, rot, matIdx){
-  var t = Math.min(w, d) * 0.22;   /* wall thickness */
-
-  /* North wall */
-  var offN = rotateOffset(0, -d * 0.5 + t * 0.5, rot);
-  addBuildingBox(cx + offN.x, cz + offN.z, w, h, t, rot, matIdx, false);
-
-  /* South wall */
-  var offS = rotateOffset(0, d * 0.5 - t * 0.5, rot);
-  addBuildingBox(cx + offS.x, cz + offS.z, w, h, t, rot, matIdx, false);
-
-  /* West wall */
-  var offW = rotateOffset(-w * 0.5 + t * 0.5, 0, rot);
-  addBuildingBox(cx + offW.x, cz + offW.z, t, h, d - t * 2, rot, matIdx, false);
-
-  /* East wall */
-  var offE = rotateOffset(w * 0.5 - t * 0.5, 0, rot);
-  addBuildingBox(cx + offE.x, cz + offE.z, t, h, d - t * 2, rot, matIdx, false);
-}
-
-/* ───────────────────────────────────────────────────────────────
-   FLUSH: turn collected data into InstancedMesh objects
-   ─────────────────────────────────────────────────────────────── */
-function flushInstancedGroups(){
-  var dummy = new THREE.Object3D();
-
-  /* ── 1. Building boxes grouped by material ── */
+/* ═══════════════════════════════════════════════════════
+   FLUSH instanced groups
+   ═══════════════════════════════════════════════════════ */
+function flushInstanced(){
+  var dummy=new THREE.Object3D();
   for(var matIdx in BUILDING_DATA.boxes){
-    var arr = BUILDING_DATA.boxes[matIdx];
-    if(!arr || arr.length === 0) continue;
-
-    /* Determine which material object to use (0–7 = BLD_MATS, 100+ = roof) */
-    var mi = parseInt(matIdx, 10);
-    var mat = (mi < 100) ? BLD_MATS[mi] : (mi === 100 ? MAT_ROOF_TOP : MAT_ROOF_FLAT);
-
-    var im = new THREE.InstancedMesh(BOX_GEO, mat, arr.length);
-    im.frustumCulled = false;   /* We spread across the whole map — disable culling */
-
-    for(var i = 0; i < arr.length; i++){
-      var b = arr[i];
-      dummy.position.set(b.x, b.y + b.h / 2, b.z);
-      dummy.rotation.set(0, b.rot, 0);
-      dummy.scale.set(b.w, b.h, b.d);
-      dummy.updateMatrix();
-      im.setMatrixAt(i, dummy.matrix);
-    }
-    im.instanceMatrix.needsUpdate = true;
-    scene.add(im);
+    var arr=BUILDING_DATA.boxes[matIdx];if(!arr||arr.length===0)continue;
+    var mat=BLD_MATS[parseInt(matIdx,10)];
+    var im=new THREE.InstancedMesh(BOX_GEO,mat,arr.length);im.frustumCulled=false;
+    for(var i=0;i<arr.length;i++){var b=arr[i];
+      dummy.position.set(b.x,b.y+b.h/2,b.z);dummy.rotation.set(0,b.rot,0);
+      dummy.scale.set(b.w,b.h,b.d);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix);}
+    im.instanceMatrix.needsUpdate=true;scene.add(im);
   }
-
-  /* ── 2. Roof boxes (already keyed as 100 / 101) ── */
-  for(var rMatIdx in BUILDING_DATA.roofs){
-    var rArr = BUILDING_DATA.roofs[rMatIdx];
-    if(!rArr || rArr.length === 0) continue;
-
-    var rmi = parseInt(rMatIdx, 10);
-    var rMat = (rmi === 100) ? MAT_ROOF_TOP : MAT_ROOF_FLAT;
-
-    var rIm = new THREE.InstancedMesh(BOX_GEO, rMat, rArr.length);
-    rIm.frustumCulled = false;
-
-    for(var j = 0; j < rArr.length; j++){
-      var rb = rArr[j];
-      dummy.position.set(rb.x, rb.y, rb.z);
-      dummy.rotation.set(0, rb.rot, 0);
-      dummy.scale.set(rb.w, rb.h, rb.d);
-      dummy.updateMatrix();
-      rIm.setMatrixAt(j, dummy.matrix);
-    }
-    rIm.instanceMatrix.needsUpdate = true;
-    scene.add(rIm);
+  for(var rk in BUILDING_DATA.roofs){
+    var rArr=BUILDING_DATA.roofs[rk];if(!rArr||rArr.length===0)continue;
+    var rMat=new THREE.MeshLambertMaterial({color:0x8a5030});
+    var rIm=new THREE.InstancedMesh(BOX_GEO,rMat,rArr.length);rIm.frustumCulled=false;
+    for(var j=0;j<rArr.length;j++){var rb=rArr[j];
+      dummy.position.set(rb.x,rb.y,rb.z);dummy.rotation.set(0,rb.rot,0);
+      dummy.scale.set(rb.w,rb.h,rb.d);dummy.updateMatrix();rIm.setMatrixAt(j,dummy.matrix);}
+    rIm.instanceMatrix.needsUpdate=true;scene.add(rIm);
   }
-
-  /* ── 3. Cone (pyramidal) roofs ── */
-  if(BUILDING_DATA.cones.length > 0){
-    var cArr = BUILDING_DATA.cones;
-    var cMat = new THREE.MeshLambertMaterial({ color: 0xa85030 });
-    var cIm = new THREE.InstancedMesh(CONE_GEO, cMat, cArr.length);
-    cIm.frustumCulled = false;
-
-    for(var k = 0; k < cArr.length; k++){
-      var cr = cArr[k];
-      dummy.position.set(cr.x, cr.y, cr.z);
-      dummy.rotation.set(0, cr.rotY, 0);
-      dummy.scale.set(cr.r * 2, cr.h, cr.r * 2);
-      dummy.updateMatrix();
-      cIm.setMatrixAt(k, dummy.matrix);
-    }
-    cIm.instanceMatrix.needsUpdate = true;
-    scene.add(cIm);
+  if(BUILDING_DATA.cones.length>0){
+    var cArr=BUILDING_DATA.cones;
+    var cMat=new THREE.MeshLambertMaterial({color:0xa85030});
+    var cIm=new THREE.InstancedMesh(CONE4,cMat,cArr.length);cIm.frustumCulled=false;
+    for(var k=0;k<cArr.length;k++){var cr=cArr[k];
+      dummy.position.set(cr.x,cr.y,cr.z);dummy.rotation.set(0,cr.rotY,0);
+      dummy.scale.set(cr.r,cr.h,cr.r);dummy.updateMatrix();cIm.setMatrixAt(k,dummy.matrix);}
+    cIm.instanceMatrix.needsUpdate=true;scene.add(cIm);
   }
-
-  /* ── 4. Chimneys (cylinders) ── */
-  if(BUILDING_DATA.chimneys.length > 0){
-    var chArr = BUILDING_DATA.chimneys;
-    var chIm = new THREE.InstancedMesh(CYL_GEO, MAT_CHIMNEY, chArr.length);
-    chIm.frustumCulled = false;
-
-    for(var ck = 0; ck < chArr.length; ck++){
-      var c = chArr[ck];
-      dummy.position.set(c.x, c.y, c.z);
-      dummy.rotation.set(0, 0, 0);
-      dummy.scale.set(c.r * 2, c.h, c.r * 2);
-      dummy.updateMatrix();
-      chIm.setMatrixAt(ck, dummy.matrix);
-    }
-    chIm.instanceMatrix.needsUpdate = true;
-    scene.add(chIm);
-  }
-
-  /* ── 5. AC units (small boxes) ── */
-  if(BUILDING_DATA.acUnits.length > 0){
-    var acArr = BUILDING_DATA.acUnits;
-    var acIm = new THREE.InstancedMesh(BOX_GEO, MAT_AC_UNIT, acArr.length);
-    acIm.frustumCulled = false;
-
-    for(var ak = 0; ak < acArr.length; ak++){
-      var a = acArr[ak];
-      dummy.position.set(a.x, a.y, a.z);
-      dummy.rotation.set(0, a.rot, 0);
-      dummy.scale.set(a.w, a.h, a.d);
-      dummy.updateMatrix();
-      acIm.setMatrixAt(ak, dummy.matrix);
-    }
-    acIm.instanceMatrix.needsUpdate = true;
-    scene.add(acIm);
-  }
-
-  /* ── 6. Water tanks (cylinders) ── */
-  if(BUILDING_DATA.waterTanks.length > 0){
-    var wtArr = BUILDING_DATA.waterTanks;
-    var wtIm = new THREE.InstancedMesh(CYL_GEO, MAT_WATER_TANK, wtArr.length);
-    wtIm.frustumCulled = false;
-
-    for(var wk = 0; wk < wtArr.length; wk++){
-      var w = wtArr[wk];
-      dummy.position.set(w.x, w.y, w.z);
-      dummy.rotation.set(0, 0, 0);
-      dummy.scale.set(w.r * 2, w.h, w.r * 2);
-      dummy.updateMatrix();
-      wtIm.setMatrixAt(wk, dummy.matrix);
-    }
-    wtIm.instanceMatrix.needsUpdate = true;
-    scene.add(wtIm);
-  }
-
-  /* ── 7. Antennas (thin cylinders) ── */
-  if(BUILDING_DATA.antennas.length > 0){
-    var anArr = BUILDING_DATA.antennas;
-    var anIm = new THREE.InstancedMesh(CYL_GEO, MAT_ANTENNA, anArr.length);
-    anIm.frustumCulled = false;
-
-    for(var ank = 0; ank < anArr.length; ank++){
-      var an = anArr[ank];
-      dummy.position.set(an.x, an.y, an.z);
-      dummy.rotation.set(0, 0, 0);
-      dummy.scale.set(an.r * 2, an.h, an.r * 2);
-      dummy.updateMatrix();
-      anIm.setMatrixAt(ank, dummy.matrix);
-    }
-    anIm.instanceMatrix.needsUpdate = true;
-    scene.add(anIm);
-  }
-
-  /* ── Report for debugging ── */
-  var totalBoxes = 0;
-  for(var mb in BUILDING_DATA.boxes) totalBoxes += BUILDING_DATA.boxes[mb].length;
-  console.log(
-    '[InstancedBuildings]',
-    'boxes:', totalBoxes,
-    '| roofs:', Object.keys(BUILDING_DATA.roofs).reduce(function(a, k){
-      return a + BUILDING_DATA.roofs[k].length;
-    }, 0),
-    '| cones:', BUILDING_DATA.cones.length,
-    '| chimneys:', BUILDING_DATA.chimneys.length,
-    '| AC:', BUILDING_DATA.acUnits.length,
-    '| tanks:', BUILDING_DATA.waterTanks.length,
-    '| antennas:', BUILDING_DATA.antennas.length
-  );
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 12 — CITY FABRIC POPULATION
-   ───────────────────────────────────────────────────────────────
-   Places ~140 buildings in the city plain, avoiding landmarks and
-   roads.  Each building is randomly one of five shapes:
-     · Simple box  (65%)
-     · L-shape     (12%)
-     · T-shape     (8%)
-     · U-shape     (8%)
-     · Courtyard   (7%)
-   ═══════════════════════════════════════════════════════════════════ */
-(function populateCity(){
-  var placed = 0;
-  var tries = 0;
-  var MAX_BUILDINGS = 140;
-  var MAX_TRIES = 4000;
+/* ═══════════════════════════════════════════════════════
+   LANDMARK MATERIALS
+   ═══════════════════════════════════════════════════════ */
+var MAT_TUFF=new THREE.MeshLambertMaterial({color:0xe8d6b0});
+var MAT_TUFF_DARK=new THREE.MeshLambertMaterial({color:0xc8a878});
+var MAT_STONE=new THREE.MeshLambertMaterial({color:0x9a8870});
+var MAT_STONE_LIGHT=new THREE.MeshLambertMaterial({color:0xd8ceb8});
+var MAT_GOLD=new THREE.MeshLambertMaterial({color:0xd8b050});
+var MAT_WATER=new THREE.MeshLambertMaterial({color:0x3a7ac8});
+var MAT_GLASS=new THREE.MeshLambertMaterial({color:0x7ac0e0,transparent:true,opacity:0.75});
+var MAT_TREE=new THREE.MeshLambertMaterial({color:0x2a5a20});
+var MAT_TREE_DARK=new THREE.MeshLambertMaterial({color:0x1a4a15});
+var MAT_TRUNK=new THREE.MeshLambertMaterial({color:0x4a2a14});
+var MAT_LAWN=new THREE.MeshLambertMaterial({color:0x5a8a3a});
+var MAT_PLAZA=new THREE.MeshLambertMaterial({color:0xc8b090});
+var MAT_FOUNTAIN=new THREE.MeshLambertMaterial({color:0xb8a888});
+var MAT_CASCADE=new THREE.MeshLambertMaterial({color:0xd8c8a8});
+var MAT_RED_TUFF=new THREE.MeshLambertMaterial({color:0xa86050});
 
-  while(placed < MAX_BUILDINGS && tries < MAX_TRIES){
-    tries++;
-
-    /* Random position within city bounds */
-    var x = (Math.random() - 0.5) * 1000;
-    var z = (Math.random() - 0.5) * 1000;
-
-    /* Bounds filters */
-    if(Math.hypot(x, z) > 620) continue;
-    if(isNearLandmark(x, z, 12)) continue;
-    if(isNearRoad(x, z, 9)) continue;
-    if(z > 240 && Math.abs(x) < 260) continue;   /* Cascade green zone */
-    if(z < -400) continue;                       /* Beyond Marriott */
-
-    /* Size */
-    var w = 12 + Math.random() * 22;
-    var d = 12 + Math.random() * 22;
-
-    /* Height category */
-    var r = Math.random();
-    var h;
-    if(r < 0.35) h = 10 + Math.random() * 8;
-    else if(r < 0.68) h = 16 + Math.random() * 14;
-    else if(r < 0.90) h = 28 + Math.random() * 16;
-    else h = 44 + Math.random() * 22;
-
-    /* Rotation — snap to 90° grid for a tidier city look */
-    var rot = Math.round(Math.random() * 4) * Math.PI / 2;
-
-    /* Material selection */
-    var matIdx;
-    if(h > 40 && Math.random() < 0.55) matIdx = 5;  /* Glass tower */
-    else matIdx = Math.floor(Math.random() * 8);
-
-    /* Shape selection */
-    var shapeRoll = Math.random();
-    if(shapeRoll < 0.65){
-      /* Simple box */
-      addBuildingBox(x, z, w, h, d, rot, matIdx, true);
-    } else if(shapeRoll < 0.77){
-      /* L-shape */
-      addBuildingL(x, z, w, h, d, rot, matIdx);
-    } else if(shapeRoll < 0.85){
-      /* T-shape */
-      addBuildingT(x, z, w, h, d, rot, matIdx);
-    } else if(shapeRoll < 0.93){
-      /* U-shape */
-      addBuildingU(x, z, w, h, d, rot, matIdx);
-    } else {
-      /* Courtyard */
-      addBuildingCourtyard(x, z, w, h, d, rot, matIdx);
-    }
-    placed++;
-  }
-
-  console.log('[CityFabric] Placed ' + placed + ' buildings in ' + tries + ' tries');
-})();
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 13 — LANDMARKS (detailed, unique geometry)
-   ───────────────────────────────────────────────────────────────
-   Landmarks use raw Mesh objects (not instanced) because each is
-   unique and there are only 8 of them.
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* ── Shared landmark materials ── */
-var MAT_TUFF       = new THREE.MeshLambertMaterial({ color: 0xe8d6b0 });
-var MAT_TUFF_DARK  = new THREE.MeshLambertMaterial({ color: 0xc8a878 });
-var MAT_ROOF_RED   = new THREE.MeshLambertMaterial({ color: 0xa04828 });
-var MAT_STONE      = new THREE.MeshLambertMaterial({ color: 0x9a8870 });
-var MAT_GOLD       = new THREE.MeshLambertMaterial({ color: 0xd8b050 });
-var MAT_WATER      = new THREE.MeshLambertMaterial({ color: 0x3a7ac8 });
-var MAT_GLASS_CYAN = new THREE.MeshLambertMaterial({ color: 0x7ac0e0, transparent: true, opacity: 0.75 });
-var MAT_TREE_GRN   = new THREE.MeshLambertMaterial({ color: 0x2a5a20 });
-var MAT_TRUNK      = new THREE.MeshLambertMaterial({ color: 0x4a2a14 });
-var MAT_LAWN       = new THREE.MeshLambertMaterial({ color: 0x5a8a3a });
-var MAT_FOUNTAIN   = new THREE.MeshLambertMaterial({ color: 0xb8a888 });
-
-/* ── Helpers for constructing a landmark group ── */
-function addBox(parent, x, y, z, w, h, d, mat, rot){
-  var m = new THREE.Mesh(BOX_GEO, mat);
-  m.scale.set(w, h, d);
-  m.position.set(x, y, z);
-  if(rot) m.rotation.y = rot;
-  parent.add(m);
-  return m;
+function addBox(parent,x,y,z,w,h,d,mat,rot){
+  var m=new THREE.Mesh(BOX_GEO,mat);m.scale.set(w,h,d);m.position.set(x,y,z);
+  if(rot)m.rotation.y=rot;parent.add(m);return m;
+}
+function addCyl(parent,x,y,z,r1,r2,h,mat,seg){
+  var g=new THREE.CylinderGeometry(r1,r2,h,seg||12);
+  var m=new THREE.Mesh(g,mat);m.position.set(x,y,z);parent.add(m);return m;
+}
+function addCone(parent,x,y,z,r,h,mat,seg,rotY){
+  var g=new THREE.ConeGeometry(r,h,seg||4);
+  var m=new THREE.Mesh(g,mat);m.position.set(x,y,z);
+  if(rotY)m.rotation.y=rotY;parent.add(m);return m;
+}
+function addTree(parent,x,y,z,scale){
+  scale=scale||1;
+  addCyl(parent,x,y+1.4*scale,z,0.3*scale,0.4*scale,2.8*scale,MAT_TRUNK,6);
+  addCone(parent,x,y+4.8*scale,z,1.9*scale,4.4*scale,MAT_TREE,7);
 }
 
-function addCyl(parent, x, y, z, r1, r2, h, mat, seg){
-  var g = new THREE.CylinderGeometry(r1, r2, h, seg || 12);
-  var m = new THREE.Mesh(g, mat);
-  m.position.set(x, y, z);
-  parent.add(m);
-  return m;
-}
-
-function addCone(parent, x, y, z, r, h, mat, seg, rotY){
-  var g = new THREE.ConeGeometry(r, h, seg || 4);
-  var m = new THREE.Mesh(g, mat);
-  m.position.set(x, y, z);
-  if(rotY) m.rotation.y = rotY;
-  parent.add(m);
-  return m;
-}
-
-/* ─── REPUBLIC SQUARE ─── */
+/* ═══════════════════════════════════════════════════════
+   ██ REPUBLIC SQUARE ██ — big, spacious, surrounded by tall buildings
+   ═══════════════════════════════════════════════════════ */
 function buildSquare(){
-  var g = new THREE.Group();
-  var cx = LM.square.x, cz = LM.square.z;
-  var y0 = terrainHeight(cx, cz);
+  var g=new THREE.Group();var cx=LM.square.x,cz=LM.square.z;var y0=terrainHeight(cx,cz);
 
-  /* Big plaza */
-  var plaza = new THREE.Mesh(
-    new THREE.CircleGeometry(46, 40),
-    new THREE.MeshLambertMaterial({ color: 0xc8b090 })
-  );
-  plaza.rotation.x = -Math.PI / 2;
-  plaza.position.set(0, y0 + 0.22, 0);
+  // Big paved plaza (radius 62)
+  var plaza=new THREE.Mesh(new THREE.CircleGeometry(62,48),MAT_PLAZA);
+  plaza.rotation.x=-Math.PI/2;plaza.position.set(0,y0+0.25,0);g.add(plaza);
+
+  // Inner ornamental circle
+  var inner=new THREE.Mesh(new THREE.RingGeometry(20,28,32),new THREE.MeshLambertMaterial({color:0xb8a080}));
+  inner.rotation.x=-Math.PI/2;inner.position.set(0,y0+0.3,0);g.add(inner);
+
+  // Central fountain
+  addCyl(g,0,y0+0.6,0,8.5,9.5,1.4,MAT_FOUNTAIN,24);
+  addCyl(g,0,y0+1.5,0,7.5,7.5,0.6,MAT_WATER,24);
+  addCyl(g,0,y0+4,0,0.5,0.5,5,MAT_WATER,10);
+  addCyl(g,0,y0+5.5,0,2,2,0.4,MAT_WATER,16);
+
+  // ─── 4 GOVERNMENT BUILDINGS around square ───
+  // North (History Museum) — L-shape
+  addBox(g,0,y0+15,-62,50,30,18,MAT_TUFF);
+  addBox(g,25,y0+13,-58,18,26,22,MAT_TUFF);
+  addCone(g,0,y0+34,-62,20,6,MAT_TUFF_DARK,4,Math.PI/4);
+  // North colonnade
+  for(var i=-7;i<=7;i++){addCyl(g,i*3.2,y0+8,-50,1,1,16,MAT_TUFF,10);}
+  addBox(g,0,y0+17,-50,48,2,3,MAT_TUFF_DARK);
+  // North tower
+  addBox(g,0,y0+26,-72,14,46,14,MAT_TUFF);
+  addBox(g,0,y0+51,-72,16,3,16,MAT_TUFF_DARK);
+  var clock=new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.2,0.4,20),new THREE.MeshLambertMaterial({color:0xf8f0d8}));
+  clock.rotation.x=Math.PI/2;clock.position.set(0,y0+42,-64);g.add(clock);
+  addCyl(g,0,y0+55,-72,3,2,7,MAT_RED_TUFF,6);
+  addCone(g,0,y0+60,-72,3,4,MAT_GOLD,4,Math.PI/4);
+  addCollision(cx,cz-62,50,18,30,0);
+  addCollision(cx,cz-72,14,14,46,0);
+  addCollision(cx+25,cz-58,18,22,26,0);
+
+  // South (Marriott faces north)
+  addBox(g,0,y0+18,62,55,36,20,MAT_TUFF);
+  addBox(g,0,y0+37,62,58,3,23,MAT_TUFF_DARK);
+  for(var r=0;r<5;r++)for(var c=-8;c<=8;c++){
+    var w=new THREE.Mesh(BOX_GEO,MAT_GLASS);w.scale.set(1.6,2.6,0.3);
+    w.position.set(c*2.8,y0+6+r*5.5,72);g.add(w);}
+  for(var ii=-8;ii<=8;ii++){addCyl(g,ii*3.2,y0+5,52,1,1,10,MAT_TUFF,10);}
+  addBox(g,0,y0+11,52,56,2,3,MAT_TUFF_DARK);
+  addCollision(cx,cz+62,55,20,36,0);
+
+  // West (Government building)
+  addBox(g,-62,y0+14,0,20,28,48,MAT_TUFF);
+  addBox(g,-62,y0+29,0,22,2.5,50,MAT_TUFF_DARK);
+  for(var jj=-6;jj<=6;jj++){addCyl(g,-52,y0+7,jj*3.2,0.9,0.9,14,MAT_TUFF,10);}
+  addCollision(cx-62,cz,20,48,28,0);
+
+  // East (Ministry building)
+  addBox(g,62,y0+15,0,20,30,52,MAT_TUFF);
+  addBox(g,62,y0+31,0,22,2.5,54,MAT_TUFF_DARK);
+  for(var kk=-7;kk<=7;kk++){addCyl(g,52,y0+7,kk*3.2,0.9,0.9,14,MAT_TUFF,10);}
+  addCollision(cx+62,cz,20,52,30,0);
+
+  // Trees at the plaza edges (ring of 16)
+  for(var t=0;t<16;t++){
+    var a=(t/16)*Math.PI*2;
+    var tx=Math.sin(a)*56,tz=Math.cos(a)*56;
+    addTree(g,tx,y0,tz,1.3);
+  }
+
+  // Lamp posts
+  for(var L=0;L<12;L++){
+    var la=(L/12)*Math.PI*2+0.26;
+    var lx=Math.sin(la)*44,lz=Math.cos(la)*44;
+    addCyl(g,lx,y0+3,lz,0.2,0.2,6,new THREE.MeshLambertMaterial({color:0x303030}),6);
+    var lamp=new THREE.Mesh(new THREE.SphereGeometry(0.6,8,6),new THREE.MeshBasicMaterial({color:0xfff4c0}));
+    lamp.position.set(lx,y0+6.2,lz);g.add(lamp);
+  }
+
+  g.position.set(cx,0,cz);scene.add(g);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ██ OPERA HOUSE ██ — big building + big green park
+   ═══════════════════════════════════════════════════════ */
+function buildOpera(){
+  var g=new THREE.Group();var cx=LM.opera.x,cz=LM.opera.z;var y0=terrainHeight(cx,cz);
+
+  // Big park lawn
+  var park=new THREE.Mesh(new THREE.CircleGeometry(85,40),MAT_LAWN);
+  park.rotation.x=-Math.PI/2;park.position.set(0,y0+0.28,0);g.add(park);
+
+  // Swan lake (small pond in front)
+  var pond=new THREE.Mesh(new THREE.CircleGeometry(14,24),new THREE.MeshLambertMaterial({color:0x4a8ac0}));
+  pond.rotation.x=-Math.PI/2;pond.position.set(0,y0+0.35,35);g.add(pond);
+
+  // Main oval building
+  var main=new THREE.Mesh(new THREE.CylinderGeometry(26,28,20,32),MAT_TUFF);
+  main.position.set(0,y0+10,0);main.scale.set(1,1,0.72);g.add(main);
+
+  // Upper drum
+  var cap=new THREE.Mesh(new THREE.CylinderGeometry(26.5,26.5,2.8,32),MAT_TUFF_DARK);
+  cap.position.set(0,y0+21,0);cap.scale.set(1,1,0.72);g.add(cap);
+
+  // Domes (two - one big at back, small at front)
+  var dome1=new THREE.Mesh(new THREE.SphereGeometry(15,20,14,0,Math.PI*2,0,Math.PI/2),MAT_RED_TUFF);
+  dome1.position.set(0,y0+22,0);dome1.scale.set(1,0.55,0.72);g.add(dome1);
+
+  // Columns ring (28 columns)
+  for(var i=0;i<28;i++){
+    var a=(i/28)*Math.PI*2;
+    addCyl(g,Math.cos(a)*28,y0+6,Math.sin(a)*20,0.9,0.9,14,MAT_TUFF,8);
+  }
+
+  // Entrance portico (south side)
+  for(var j=-4;j<=4;j++){addCyl(g,j*2.8,y0+6,24,0.95,0.95,12,MAT_TUFF,10);}
+  addBox(g,0,y0+13,24,25,2.5,5,MAT_TUFF_DARK);
+  addCone(g,0,y0+16,24,8,4,MAT_RED_TUFF,4,Math.PI/4);
+
+  // Colonnade steps
+  addBox(g,0,y0+1,32,30,2,10,MAT_STONE_LIGHT);
+
+  // Trees around park (30 trees)
+  for(var t=0;t<30;t++){
+    var ta=(t/30)*Math.PI*2+0.3;
+    var tr=60+Math.random()*18;
+    addTree(g,Math.cos(ta)*tr,y0,Math.sin(ta)*tr,1.2+Math.random()*0.6);
+  }
+
+  g.position.set(cx,0,cz);scene.add(g);
+  addCollision(cx,cz,55,45,26,0);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ██ CASCADE ██ — real staircase on the hill + base plaza
+   ═══════════════════════════════════════════════════════ */
+function buildCascade(){
+  var g=new THREE.Group();
+  var cx=0,cz=0;              // local coords, group positioned at origin
+  var baseZ=330;              // base at z=330 (city side)
+  var baseY=terrainHeight(0,baseZ);
+
+  // ─── BASE PLAZA (big, at foot of stairs) ───
+  var plaza=new THREE.Mesh(new THREE.CircleGeometry(70,40),MAT_PLAZA);
+  plaza.rotation.x=-Math.PI/2;
+  plaza.position.set(0,baseY+0.4,baseZ-10);
   g.add(plaza);
 
-  /* Central fountain */
-  addCyl(g, 0, y0 + 0.6, 0, 7, 7.5, 1.2, MAT_FOUNTAIN, 20);
-  addCyl(g, 0, y0 + 1.3, 0, 6, 6, 0.5, MAT_WATER, 20);
-  addCyl(g, 0, y0 + 3.5, 0, 0.3, 0.3, 4, MAT_WATER, 8);
+  // Plaza fountain
+  addCyl(g,0,baseY+0.8,baseZ-10,6,7,1.2,MAT_FOUNTAIN,20);
+  addCyl(g,0,baseY+1.6,baseZ-10,5,5,0.5,MAT_WATER,20);
 
-  /* Curved government wings on the north side */
-  for(var side = -1; side <= 1; side += 2){
-    for(var seg = 0; seg < 5; seg++){
-      var ang = side * (0.5 + seg * 0.16);
-      var rr = 40 + seg * 1.5;
-      var bx = Math.sin(ang) * rr;
-      var bz = Math.cos(ang) * rr * 0.6 - 30;
-      var bh = 15 - seg * 0.8;
-      addBox(g, bx, y0 + bh / 2, bz, 8, bh, 8, MAT_TUFF, ang);
-      var cAng = ang + Math.PI / 2;
-      for(var ci = -1; ci <= 1; ci++){
-        var ox = Math.cos(cAng) * ci * 2.2;
-        var oz = -Math.sin(cAng) * ci * 2.2;
-        addCyl(
-          g,
-          bx + ox + Math.sin(ang) * 4.2,
-          y0 + 5,
-          bz + oz + Math.cos(ang) * 4.2,
-          0.6, 0.6, 10, MAT_TUFF, 8
-        );
+  // ─── THE STAIRCASE going up the hill ───
+  // 7 terraces. Each terrace is 10 units higher, 18 units north.
+  var terraces=7;
+  var stepRise=12;
+  var stepDepth=18;
+  var baseWidth=80;
+
+  for(var s=0;s<terraces;s++){
+    var tw=baseWidth-s*6;          // narrower as we go up
+    var tz=baseZ+10+s*stepDepth;   // north of previous
+    var ty=terrainHeight(0,tz);
+    // Terrace platform (stone steps)
+    addBox(g,0,ty+3,tz,tw,6,stepDepth-2,MAT_CASCADE);
+    // Front stair treads (visual)
+    for(var st=0;st<4;st++){
+      addBox(g,0,ty+0.5+st*1.2,tz-stepDepth/2+st*1.4,tw-4,0.6,1.6,MAT_STONE_LIGHT);
+    }
+    // Side cascades (water channels)
+    for(var side=-1;side<=1;side+=2){
+      var poolX=side*(tw/2-6);
+      var pool=new THREE.Mesh(BOX_GEO,MAT_WATER);
+      pool.scale.set(4,0.8,stepDepth-6);
+      pool.position.set(poolX,ty+6.5,tz);
+      g.add(pool);
+    }
+    // Sculptures / statues on terrace edges
+    for(var sd=-1;sd<=1;sd+=2){
+      addCyl(g,sd*(tw/2+3),ty+9,tz,1.5,1.5,4,MAT_STONE,8);
+      var statue=new THREE.Mesh(new THREE.SphereGeometry(1.3,10,8),MAT_STONE_LIGHT);
+      statue.position.set(sd*(tw/2+3),ty+12,tz);g.add(statue);
+    }
+  }
+
+  // ─── TOP OF CASCADE (monument on peak) ───
+  var topZ=baseZ+10+terraces*stepDepth+15;
+  var topY=terrainHeight(0,topZ);
+  // Wide platform at top
+  addBox(g,0,topY+2,topZ,50,4,30,MAT_CASCADE);
+  // Big column (Victory column style)
+  addBox(g,0,topY+10,topZ,16,12,16,MAT_STONE);
+  addCyl(g,0,topY+34,topZ,2.5,3.5,42,MAT_STONE,14);
+  var star=new THREE.Mesh(new THREE.SphereGeometry(3.2,16,12),MAT_GOLD);
+  star.position.set(0,topY+58,topZ);g.add(star);
+  // Golden eagle silhouette (cone in gold)
+  addCone(g,0,topY+62,topZ,2.5,4,MAT_GOLD,4,0);
+
+  // ─── Green wild hillside on both sides ───
+  // (Trees on the left and right of Cascade, NOT roads)
+  for(var side2=-1;side2<=1;side2+=2){
+    for(var i=0;i<50;i++){
+      var tx=side2*(60+Math.random()*80);
+      var tz2=baseZ+20+Math.random()*200;
+      var ty2=terrainHeight(tx,tz2);
+      if(ty2>0){
+        addTree(g,tx,ty2,tz2,1+Math.random()*1.2);
       }
     }
   }
 
-  /* Clock tower */
-  addBox(g, 0, y0 + 16, -62, 9, 32, 9, MAT_TUFF);
-  addBox(g, 0, y0 + 34, -62, 11, 3, 11, MAT_TUFF_DARK);
-  var clock = new THREE.Mesh(
-    new THREE.CylinderGeometry(2.6, 2.6, 0.3, 20),
-    new THREE.MeshLambertMaterial({ color: 0xf8f0d8 })
-  );
-  clock.rotation.x = Math.PI / 2;
-  clock.position.set(0, y0 + 27, -57.5);
-  g.add(clock);
+  g.position.set(0,0,0);scene.add(g);
 
-  /* Two flanking government buildings */
-  function wing(px){
-    addBox(g, px, y0 + 10, 0, 22, 20, 30, MAT_TUFF);
-    addBox(g, px, y0 + 21, 0, 24, 2.5, 32, MAT_TUFF_DARK);
-    for(var i = -5; i <= 5; i++){
-      addCyl(g, px + i * 2.2, y0 + 6, 16, 0.75, 0.75, 12, MAT_TUFF, 10);
-    }
+  // Collisions on each terrace (block car from driving through)
+  for(var s2=0;s2<terraces;s2++){
+    var tz2=baseZ+10+s2*stepDepth;
+    var tw2=baseWidth-s2*6;
+    addCollision(0,tz2,tw2,stepDepth-2,6,0);
   }
-  wing(-38);
-  wing(38);
-
-  /* Ring of trees around plaza */
-  for(var ti = 0; ti < 18; ti++){
-    var a = (ti / 18) * Math.PI * 2;
-    var tx = Math.sin(a) * 44;
-    var tz = Math.cos(a) * 44;
-    addCyl(g, tx, y0 + 1.2, tz, 0.28, 0.35, 2.4, MAT_TRUNK, 6);
-    addCone(g, tx, y0 + 4.5, tz, 1.6, 3.6, MAT_TREE_GRN, 6);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 76, 30, 32, 0);
-  addCollision(cx, cz - 62, 12, 12, 36, 0);
 }
 
-/* ─── OPERA ─── */
-function buildOpera(){
-  var g = new THREE.Group();
-  var cx = LM.opera.x, cz = LM.opera.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* Park lawn */
-  var park = new THREE.Mesh(new THREE.CircleGeometry(58, 32), MAT_LAWN);
-  park.rotation.x = -Math.PI / 2;
-  park.position.set(0, y0 + 0.28, 0);
-  g.add(park);
-
-  /* Oval main body */
-  var main = new THREE.Mesh(new THREE.CylinderGeometry(24, 26, 18, 28), MAT_TUFF);
-  main.position.set(0, y0 + 9, 0);
-  main.scale.set(1.0, 1.0, 0.72);
-  g.add(main);
-
-  /* Dome cap */
-  var cap = new THREE.Mesh(new THREE.CylinderGeometry(24.5, 24.5, 2.5, 28), MAT_TUFF_DARK);
-  cap.position.set(0, y0 + 19.2, 0);
-  cap.scale.set(1.0, 1.0, 0.72);
-  g.add(cap);
-
-  /* Drum */
-  var drum = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 6, 20), MAT_TUFF_DARK);
-  drum.position.set(0, y0 + 23.5, 0);
-  drum.scale.set(1.0, 1.0, 0.72);
-  g.add(drum);
-
-  /* Ring of columns */
-  for(var i = 0; i < 24; i++){
-    var a = (i / 24) * Math.PI * 2;
-    addCyl(g, Math.cos(a) * 26, y0 + 6, Math.sin(a) * 18, 0.85, 0.85, 12, MAT_TUFF, 8);
-  }
-
-  /* Entrance portico */
-  for(var j = -3; j <= 3; j++){
-    addCyl(g, j * 2.6, y0 + 5, 20, 0.9, 0.9, 10, MAT_TUFF, 10);
-  }
-  addBox(g, 0, y0 + 11, 20, 20, 2, 4, MAT_TUFF_DARK);
-
-  /* Ring of trees around park */
-  for(var k = 0; k < 22; k++){
-    var ang = (k / 22) * Math.PI * 2 + 0.3;
-    addCyl(g, Math.cos(ang) * 48, y0 + 1.2, Math.sin(ang) * 48, 0.3, 0.38, 2.6, MAT_TRUNK, 6);
-    addCone(g, Math.cos(ang) * 48, y0 + 5.2, Math.sin(ang) * 48, 1.9, 4.2, MAT_TREE_GRN, 6);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 50, 40, 26, 0);
-}
-
-/* ─── MATENADARAN ─── */
+/* ═══════════════════════════════════════════════════════
+   ██ MATENADARAN ██ — on its own hill
+   ═══════════════════════════════════════════════════════ */
 function buildMatenadaran(){
-  var g = new THREE.Group();
-  var cx = LM.matenadaran.x, cz = LM.matenadaran.z;
-  var y0 = terrainHeight(cx, cz);
+  var g=new THREE.Group();var cx=LM.matenadaran.x,cz=LM.matenadaran.z;var y0=terrainHeight(cx,cz);
 
-  /* Wide base platform */
-  addBox(g, 0, y0 + 4, 0, 46, 8, 34, MAT_STONE);
-
-  /* Broad staircase front */
-  for(var s = 0; s < 8; s++){
-    var stepZ = 17 + (7 - s) * 1.5;
-    addBox(g, 0, y0 + 8.5 + s * 0.9, stepZ, 20, 0.9, 1.5, MAT_STONE);
+  // Wide base terrace
+  addBox(g,0,y0+3,0,70,6,50,MAT_STONE);
+  // Grand staircase (south side)
+  for(var s=0;s<12;s++){
+    addBox(g,0,y0+6+s*0.9,22-s*1.2,28,0.9,1.8,MAT_STONE_LIGHT);
+  }
+  // Central massive block
+  addBox(g,0,y0+20,-3,44,24,28,MAT_TUFF);
+  // Colonnade — 11 huge columns
+  for(var i=-5;i<=5;i++){addCyl(g,i*3.6,y0+18,16,1.2,1.2,18,MAT_TUFF,14);}
+  // Pediment
+  addBox(g,0,y0+32,16,46,2,7,MAT_TUFF_DARK);
+  addCone(g,0,y0+38,16,17,5,MAT_TUFF,4,Math.PI/4);
+  // Twin statues (simplified)
+  addBox(g,-15,y0+30,15,3,7,3,MAT_TUFF_DARK);
+  addBox(g,15,y0+30,15,3,7,3,MAT_TUFF_DARK);
+  // Side wing
+  addBox(g,0,y0+16,-30,30,16,20,MAT_TUFF);
+  // Trees around the hill
+  for(var t=0;t<20;t++){
+    var a=(t/20)*Math.PI*2+0.5;
+    var tx=Math.cos(a)*55,tz=Math.sin(a)*48;
+    var ty=terrainHeight(cx+tx,cz+tz);
+    addTree(g,tx,ty,tz,1.1);
   }
 
-  /* Central block */
-  addBox(g, 0, y0 + 18, -2, 34, 20, 22, MAT_TUFF);
-
-  /* Massive colonnade */
-  for(var i = -5; i <= 5; i++){
-    addCyl(g, i * 3.0, y0 + 16, 13, 1.0, 1.0, 14, MAT_TUFF, 12);
-  }
-
-  /* Roof pediment */
-  addBox(g, 0, y0 + 29, 13, 36, 1.5, 6, MAT_TUFF_DARK);
-  addCone(g, 0, y0 + 34, 13, 14, 4, MAT_TUFF, 4, Math.PI / 4);
-
-  /* Twin figures */
-  addBox(g, -12, y0 + 27, 12, 2, 5, 2, MAT_TUFF_DARK);
-  addBox(g, 12, y0 + 27, 12, 2, 5, 2, MAT_TUFF_DARK);
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 46, 34, 32, 0);
+  g.position.set(cx,0,cz);scene.add(g);
+  addCollision(cx,cz,70,50,32,0);
 }
 
-/* ─── NATIONAL GALLERY ─── */
+/* ═══════════════════════════════════════════════════════
+   ██ GALLERY ██
+   ═══════════════════════════════════════════════════════ */
 function buildGallery(){
-  var g = new THREE.Group();
-  var cx = LM.gallery.x, cz = LM.gallery.z;
-  var y0 = terrainHeight(cx, cz);
-
-  addBox(g, 0, y0 + 9, 0, 32, 18, 24, MAT_TUFF);
-  for(var i = -5; i <= 5; i++){
-    addCyl(g, i * 2.8, y0 + 5.5, 12.5, 0.8, 0.8, 11, MAT_TUFF, 10);
+  var g=new THREE.Group();var cx=LM.gallery.x,cz=LM.gallery.z;var y0=terrainHeight(cx,cz);
+  // Lawn
+  var lawn=new THREE.Mesh(new THREE.CircleGeometry(48,28),MAT_LAWN);
+  lawn.rotation.x=-Math.PI/2;lawn.position.set(0,y0+0.28,0);g.add(lawn);
+  // Main block
+  addBox(g,0,y0+11,0,40,22,28,MAT_TUFF);
+  // Front colonnade
+  for(var i=-6;i<=6;i++){addCyl(g,i*3,y0+7,15,0.9,0.9,14,MAT_TUFF,10);}
+  addBox(g,0,y0+22,15,38,2,4,MAT_TUFF_DARK);
+  addCone(g,0,y0+26,15,14,3.5,MAT_TUFF,4,Math.PI/4);
+  // Side wings
+  addBox(g,-17,y0+14,0,7,10,26,MAT_TUFF);
+  addBox(g,17,y0+14,0,7,10,26,MAT_TUFF);
+  // Trees
+  for(var t=0;t<10;t++){
+    var a=(t/10)*Math.PI*2+0.4;
+    addTree(g,Math.cos(a)*38,y0,Math.sin(a)*38,1);
   }
-  addBox(g, 0, y0 + 19, 12.5, 30, 1.5, 4, MAT_TUFF_DARK);
-  addBox(g, -14, y0 + 12, 0, 6, 8, 22, MAT_TUFF);
-  addBox(g, 14, y0 + 12, 0, 6, 8, 22, MAT_TUFF);
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 32, 24, 20, 0);
+  g.position.set(cx,0,cz);scene.add(g);
+  addCollision(cx,cz,40,28,24,0);
 }
 
-/* ─── MARRIOTT ─── */
+/* ═══════════════════════════════════════════════════════
+   ██ MARRIOTT ██
+   ═══════════════════════════════════════════════════════ */
 function buildMarriott(){
-  var g = new THREE.Group();
-  var cx = LM.marriott.x, cz = LM.marriott.z;
-  var y0 = terrainHeight(cx, cz);
-
-  addBox(g, 0, y0 + 14, 0, 30, 28, 24, MAT_TUFF);
-  addBox(g, 0, y0 + 29, 0, 26, 3, 20, MAT_TUFF_DARK);
-
-  /* Window grid — front */
-  for(var r = 0; r < 7; r++){
-    for(var c = -6; c <= 6; c++){
-      var w = new THREE.Mesh(BOX_GEO, MAT_GLASS_CYAN);
-      w.scale.set(1.4, 2.2, 0.2);
-      w.position.set(c * 2.0, y0 + 4 + r * 3.6, 12.2);
-      g.add(w);
-    }
+  var g=new THREE.Group();var cx=LM.marriott.x,cz=LM.marriott.z;var y0=terrainHeight(cx,cz);
+  // Plaza
+  var plaza=new THREE.Mesh(new THREE.CircleGeometry(45,28),MAT_PLAZA);
+  plaza.rotation.x=-Math.PI/2;plaza.position.set(0,y0+0.28,0);g.add(plaza);
+  // Main building
+  addBox(g,0,y0+16,0,36,32,30,MAT_TUFF);
+  addBox(g,0,y0+33,0,38,3,32,MAT_TUFF_DARK);
+  // Front windows (grid)
+  for(var r=0;r<7;r++)for(var c=-5;c<=5;c++){
+    var w=new THREE.Mesh(BOX_GEO,MAT_GLASS);w.scale.set(1.8,2.8,0.3);
+    w.position.set(c*2.8,y0+5+r*4,15.2);g.add(w);}
+  // Ground floor columns
+  for(var i=-5;i<=5;i++){addCyl(g,i*3.2,y0+4,15,0.9,0.9,8,MAT_TUFF,8);}
+  // Entrance canopy
+  addBox(g,0,y0+9,16,20,1,4,MAT_TUFF_DARK);
+  // Trees around
+  for(var t=0;t<12;t++){
+    var a=(t/12)*Math.PI*2+0.2;
+    addTree(g,Math.cos(a)*36,y0,Math.sin(a)*36,1);
   }
-  /* Side windows */
-  for(var r2 = 0; r2 < 7; r2++){
-    for(var c2 = -5; c2 <= 5; c2++){
-      var wL = new THREE.Mesh(BOX_GEO, MAT_GLASS_CYAN);
-      wL.scale.set(0.2, 2.2, 1.4);
-      wL.position.set(-15.2, y0 + 4 + r2 * 3.6, c2 * 2.0);
-      g.add(wL);
-      var wR = new THREE.Mesh(BOX_GEO, MAT_GLASS_CYAN);
-      wR.scale.set(0.2, 2.2, 1.4);
-      wR.position.set(15.2, y0 + 4 + r2 * 3.6, c2 * 2.0);
-      g.add(wR);
-    }
-  }
-  /* Ground floor columns */
-  for(var i = -5; i <= 5; i++){
-    addCyl(g, i * 2.6, y0 + 3, 12.5, 0.7, 0.7, 6, MAT_TUFF, 8);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 30, 24, 32, 0);
+  g.position.set(cx,0,cz);scene.add(g);
+  addCollision(cx,cz,36,30,32,0);
 }
 
-/* ─── UNIVERSITY ─── */
+/* ═══════════════════════════════════════════════════════
+   ██ UNIVERSITY ██
+   ═══════════════════════════════════════════════════════ */
 function buildUniversity(){
-  var g = new THREE.Group();
-  var cx = LM.university.x, cz = LM.university.z;
-  var y0 = terrainHeight(cx, cz);
-
-  addBox(g, 0, y0 + 3.5, 0, 44, 7, 32, MAT_STONE);
-  addBox(g, 0, y0 + 14, 0, 40, 18, 26, MAT_TUFF);
-  addBox(g, 0, y0 + 26, 0, 12, 14, 12, MAT_TUFF);
-  addBox(g, 0, y0 + 34, 0, 14, 2, 14, MAT_TUFF_DARK);
-  addCone(g, 0, y0 + 38.5, 0, 5, 7, MAT_GOLD, 4, Math.PI / 4);
-
-  for(var i = -7; i <= 7; i++){
-    addCyl(g, i * 2.5, y0 + 13, 13.5, 0.8, 0.8, 15, MAT_TUFF, 10);
+  var g=new THREE.Group();var cx=LM.university.x,cz=LM.university.z;var y0=terrainHeight(cx,cz);
+  // Big lawn
+  var lawn=new THREE.Mesh(new THREE.CircleGeometry(60,32),MAT_LAWN);
+  lawn.rotation.x=-Math.PI/2;lawn.position.set(0,y0+0.28,0);g.add(lawn);
+  // Base
+  addBox(g,0,y0+4,0,56,8,40,MAT_STONE);
+  // Main block
+  addBox(g,0,y0+18,0,50,22,32,MAT_TUFF);
+  // Central tower
+  addBox(g,0,y0+32,0,16,18,16,MAT_TUFF);
+  addBox(g,0,y0+42,0,18,3,18,MAT_TUFF_DARK);
+  addCone(g,0,y0+47,0,6,8,MAT_GOLD,4,Math.PI/4);
+  // Big colonnade
+  for(var i=-8;i<=8;i++){addCyl(g,i*3,y0+18,17,1,1,18,MAT_TUFF,10);}
+  addBox(g,0,y0+27,17,52,2,4,MAT_TUFF_DARK);
+  // Front steps
+  addBox(g,0,y0+2,22,40,3,6,MAT_STONE_LIGHT);
+  // Trees
+  for(var t=0;t<18;t++){
+    var a=(t/18)*Math.PI*2;
+    addTree(g,Math.cos(a)*50,y0,Math.sin(a)*50,1.1);
   }
-  addBox(g, 0, y0 + 21, 13.5, 40, 2, 3, MAT_TUFF_DARK);
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 44, 32, 38, 0);
+  g.position.set(cx,0,cz);scene.add(g);
+  addCollision(cx,cz,56,40,44,0);
 }
 
-/* ─── NORTHERN AVENUE ─── */
+/* ═══════════════════════════════════════════════════════
+   ██ NORTHERN AVENUE ██ — pedestrian street
+   ═══════════════════════════════════════════════════════ */
 function buildNorthAvenue(){
-  var g = new THREE.Group();
-  var cx = LM.northAve.x, cz = LM.northAve.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* Two parallel rows of buildings */
-  for(var side = -1; side <= 1; side += 2){
-    for(var i = 0; i < 6; i++){
-      var bx = side * 22;
-      var bz = (i - 2.5) * 22;
-      var bh = 12 + Math.random() * 6;
-      addBox(
-        g, bx, y0 + bh / 2, bz,
-        14, bh, 16,
-        BLD_MATS[Math.floor(Math.random() * 4)]
-      );
+  var g=new THREE.Group();var cx=LM.northAve.x,cz=LM.northAve.z;var y0=terrainHeight(cx,cz);
+  // 5 buildings on each side
+  for(var side=-1;side<=1;side+=2){
+    for(var i=0;i<5;i++){
+      var bx=side*20;
+      var bz=(i-2)*26;
+      var bh=14+Math.random()*8;
+      addBuildingBox(cx+bx,cz+bz,15,bh,22,0,Math.floor(Math.random()*4),true);
     }
   }
-
-  /* Pedestrian paving */
-  var pav = new THREE.Mesh(
-    new THREE.PlaneGeometry(24, 130),
-    new THREE.MeshLambertMaterial({ color: 0xd8c8a8 })
-  );
-  pav.rotation.x = -Math.PI / 2;
-  pav.position.set(0, y0 + 0.35, 0);
-  g.add(pav);
-
-  /* Median fountains */
-  for(var f = -2; f <= 2; f++){
-    addCyl(g, 0, y0 + 0.6, f * 22, 1.4, 1.6, 1.0, MAT_FOUNTAIN, 12);
-    addCyl(g, 0, y0 + 1.2, f * 22, 0.9, 0.9, 0.3, MAT_WATER, 12);
+  // Pedestrian paving
+  var pav=new THREE.Mesh(new THREE.PlaneGeometry(26,140),new THREE.MeshLambertMaterial({color:0xd8c8a8}));
+  pav.rotation.x=-Math.PI/2;pav.position.set(0,y0+0.4,0);g.add(pav);
+  // Small fountains along center
+  for(var f=-2;f<=2;f++){
+    addCyl(g,0,y0+0.7,f*26,1.6,1.8,1.2,MAT_FOUNTAIN,14);
+    addCyl(g,0,y0+1.5,f*26,1,1,0.4,MAT_WATER,14);
   }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx - 22, cz, 14, 130, 15, 0);
-  addCollision(cx + 22, cz, 14, 130, 15, 0);
+  g.position.set(cx,0,cz);scene.add(g);
 }
 
-/* ─── CASCADES ─── */
-function buildCascades(){
-  var g = new THREE.Group();
-  var cx = LM.cascades.x, cz = LM.cascades.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* 7 stepped tuff terraces */
-  for(var s = 0; s < 7; s++){
-    var w = 66 - s * 5;
-    var d = 22 - s * 1.5;
-    var levelY = y0 + s * 6.5;
-
-    addBox(g, 0, levelY + 3, -s * 5.5, w, 6, d, MAT_TUFF);
-
-    var pool = new THREE.Mesh(BOX_GEO, MAT_WATER);
-    pool.scale.set(w - 26, 0.7, 6);
-    pool.position.set(0, levelY + 6.5, 0);
-    g.add(pool);
-
-    for(var side = -1; side <= 1; side += 2){
-      addBox(g, side * (w / 2 + 2.5), levelY + 3, -s * 5.5, 4, 6, d * 0.7, MAT_TUFF_DARK);
-    }
-  }
-
-  /* Top monument column */
-  var topY = y0 + 7 * 6.5;
-  addBox(g, 0, topY + 5, -40, 14, 10, 14, MAT_TUFF);
-  addCyl(g, 0, topY + 28, -40, 1.8, 2.5, 38, MAT_TUFF, 12);
-  var star = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12), MAT_GOLD);
-  star.position.set(0, topY + 49, -40);
-  g.add(star);
-
-  addBox(g, 0, topY + 3, -25, 18, 6, 8, MAT_TUFF);
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-
-  /* Collisions per terrace */
-  for(var s2 = 0; s2 < 7; s2++){
-    var w2 = 66 - s2 * 5;
-    addCollision(cx, cz + (-s2 * 5.5), w2, 22, 6, 0);
-  }
-}
-
+/* ═══════════════════════════════════════════════════════
+   BUILD ALL LANDMARKS
+   ═══════════════════════════════════════════════════════ */
 buildSquare();
 buildOpera();
+buildCascade();
 buildMatenadaran();
 buildGallery();
 buildMarriott();
 buildUniversity();
 buildNorthAvenue();
-buildCascades();
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 14 — FLUSH ALL INSTANCED MESHES
-   ───────────────────────────────────────────────────────────────
-   Called ONCE after all buildings and landmarks are collected.
-   Turns ~300 building pieces into ~10 InstancedMesh objects.
-   ═══════════════════════════════════════════════════════════════════ */
-flushInstancedGroups();
+/* Flush instanced meshes */
+flushInstanced();
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 15 — TREES (already instanced)
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   TREES — grouped at landmarks and parks
+   ═══════════════════════════════════════════════════════ */
 (function(){
-  var NUM = 500;
-  var trunkGeo = new THREE.CylinderGeometry(0.22, 0.32, 2.2, 5);
-  trunkGeo.translate(0, 1.1, 0);
-  var leafGeo = new THREE.ConeGeometry(1.5, 3.4, 6);
-  leafGeo.translate(0, 3.6, 0);
-
-  var trunks = new THREE.InstancedMesh(trunkGeo, MAT_TRUNK, NUM);
-  var leaves = new THREE.InstancedMesh(leafGeo, MAT_TREE_GRN, NUM);
-  trunks.frustumCulled = false;
-  leaves.frustumCulled = false;
-
-  var dummy = new THREE.Object3D();
-  var placed = 0, tries = 0;
-  while(placed < NUM && tries < 8000){
+  var NUM=400;
+  var trunkGeo=new THREE.CylinderGeometry(0.24,0.34,2.4,5);trunkGeo.translate(0,1.2,0);
+  var leafGeo=new THREE.ConeGeometry(1.7,3.8,6);leafGeo.translate(0,4,0);
+  var trunks=new THREE.InstancedMesh(trunkGeo,MAT_TRUNK,NUM);
+  var leaves=new THREE.InstancedMesh(leafGeo,MAT_TREE,NUM);
+  trunks.frustumCulled=false;leaves.frustumCulled=false;
+  var dummy=new THREE.Object3D();var placed=0,tries=0;
+  while(placed<NUM&&tries<8000){
     tries++;
-    var x = (Math.random() - 0.5) * 1200;
-    var z = (Math.random() - 0.5) * 1200;
-
-    if(Math.hypot(x, z) < 100) continue;
-    if(isNearLandmark(x, z, 4)) continue;
-    /* Prefer near roads */
-    var nearRoad = isNearRoad(x, z, 12);
-    if(!nearRoad && Math.random() < 0.7) continue;
-
-    var y = terrainHeight(x, z);
-    var s = 0.7 + Math.random() * 0.9;
-    var rot = Math.random() * Math.PI * 2;
-
-    dummy.position.set(x, y, z);
-    dummy.rotation.set(0, rot, 0);
-    dummy.scale.set(s, s, s);
+    var x=(Math.random()-0.5)*900;
+    var z=(Math.random()-0.5)*900;
+    // Density near landmarks — sparse in between
+    var nearLM=isNearLandmark(x,z,45);
+    var onCascadeSlope=(z>280&&Math.abs(x)>60&&Math.abs(x)<200);
+    var onMatenadaranHill=(z>200&&z<320&&x<-260&&x>-420);
+    if(!nearLM&&!onCascadeSlope&&!onMatenadaranHill){
+      if(Math.random()<0.85)continue;
+    }
+    // Don't put on roads
+    if(isNearRoad(x,z,6))continue;
+    // Don't put on buildings
+    if(isNearLandmark(x,z,0)&&Math.random()<0.4)continue;
+    var y=terrainHeight(x,z);
+    var s=0.8+Math.random()*1.1;
+    var rot=Math.random()*Math.PI*2;
+    dummy.position.set(x,y,z);dummy.rotation.set(0,rot,0);dummy.scale.set(s,s,s);
     dummy.updateMatrix();
-    trunks.setMatrixAt(placed, dummy.matrix);
-    leaves.setMatrixAt(placed, dummy.matrix);
+    trunks.setMatrixAt(placed,dummy.matrix);
+    leaves.setMatrixAt(placed,dummy.matrix);
     placed++;
   }
-  trunks.count = placed;
-  leaves.count = placed;
-  trunks.instanceMatrix.needsUpdate = true;
-  leaves.instanceMatrix.needsUpdate = true;
-  scene.add(trunks);
-  scene.add(leaves);
-  console.log('[Trees] Placed ' + placed + ' trees');
+  trunks.count=placed;leaves.count=placed;
+  trunks.instanceMatrix.needsUpdate=true;leaves.instanceMatrix.needsUpdate=true;
+  scene.add(trunks);scene.add(leaves);
 })();
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 16 — CAR MODEL
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   CAR
+   ═══════════════════════════════════════════════════════ */
 function buildCar(colorHex){
-  var g = new THREE.Group();
-  g.rotation.order = 'YXZ';
+  var g=new THREE.Group();g.rotation.order='YXZ';
+  var bodyMat=new THREE.MeshLambertMaterial({color:colorHex});
+  var darkMat=new THREE.MeshLambertMaterial({color:0x0a0d14});
+  var chromeMat=new THREE.MeshLambertMaterial({color:0xd8dce0});
+  var glassMat=new THREE.MeshLambertMaterial({color:0x14263a,transparent:true,opacity:0.75});
+  var tireMat=new THREE.MeshLambertMaterial({color:0x0e0e12});
+  var rimMat=new THREE.MeshLambertMaterial({color:0xc0c8d0});
+  var headMat=new THREE.MeshBasicMaterial({color:0xfff4d0});
+  var tailMat=new THREE.MeshBasicMaterial({color:0xff2222});
 
-  var bodyMat   = new THREE.MeshLambertMaterial({ color: colorHex });
-  var darkMat   = new THREE.MeshLambertMaterial({ color: 0x0a0d14 });
-  var chromeMat = new THREE.MeshLambertMaterial({ color: 0xd8dce0 });
-  var glassMat  = new THREE.MeshLambertMaterial({ color: 0x14263a, transparent: true, opacity: 0.75 });
-  var tireMat   = new THREE.MeshLambertMaterial({ color: 0x0e0e12 });
-  var rimMat    = new THREE.MeshLambertMaterial({ color: 0xc0c8d0 });
-  var headMat   = new THREE.MeshBasicMaterial({ color: 0xfff4d0 });
-  var tailMat   = new THREE.MeshBasicMaterial({ color: 0xff2222 });
-
-  var chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.2, 4.7), darkMat);
-  chassis.position.y = 0.36;
-  g.add(chassis);
-
-  var body = new THREE.Mesh(new THREE.BoxGeometry(1.96, 0.6, 4.6), bodyMat);
-  body.position.y = 0.75;
-  g.add(body);
-
-  var shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.22, 4.45), bodyMat);
-  shoulder.position.y = 1.14;
-  g.add(shoulder);
-
-  var nose = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.52, 1.25), bodyMat);
-  nose.position.set(0, 0.82, 2.55);
-  g.add(nose);
-
-  var hood = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.15, 1.75), bodyMat);
-  hood.position.set(0, 1.22, 1.6);
-  g.add(hood);
-
-  var cabin = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.66, 2.35), glassMat);
-  cabin.position.set(0, 1.55, -0.35);
-  g.add(cabin);
-
-  var roof = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.11, 2.15), bodyMat);
-  roof.position.set(0, 1.92, -0.35);
-  g.add(roof);
-
-  [-0.87, 0.87].forEach(function(px){
-    var pA = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.22), darkMat);
-    pA.position.set(px, 1.55, 0.78);
-    pA.rotation.x = -0.3;
-    g.add(pA);
-
-    var pB = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.14), darkMat);
-    pB.position.set(px, 1.55, -0.35);
-    g.add(pB);
-
-    var pC = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.2), darkMat);
-    pC.position.set(px, 1.55, -1.42);
-    pC.rotation.x = 0.28;
-    g.add(pC);
+  var chassis=new THREE.Mesh(new THREE.BoxGeometry(2,0.2,4.7),darkMat);chassis.position.y=0.36;g.add(chassis);
+  var body=new THREE.Mesh(new THREE.BoxGeometry(1.96,0.6,4.6),bodyMat);body.position.y=0.75;g.add(body);
+  var shoulder=new THREE.Mesh(new THREE.BoxGeometry(1.86,0.22,4.45),bodyMat);shoulder.position.y=1.14;g.add(shoulder);
+  var nose=new THREE.Mesh(new THREE.BoxGeometry(1.78,0.52,1.25),bodyMat);nose.position.set(0,0.82,2.55);g.add(nose);
+  var hood=new THREE.Mesh(new THREE.BoxGeometry(1.86,0.15,1.75),bodyMat);hood.position.set(0,1.22,1.6);g.add(hood);
+  var cabin=new THREE.Mesh(new THREE.BoxGeometry(1.74,0.66,2.35),glassMat);cabin.position.set(0,1.55,-0.35);g.add(cabin);
+  var roof=new THREE.Mesh(new THREE.BoxGeometry(1.68,0.11,2.15),bodyMat);roof.position.set(0,1.92,-0.35);g.add(roof);
+  [-0.87,0.87].forEach(function(px){
+    var pA=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.68,0.22),darkMat);pA.position.set(px,1.55,0.78);pA.rotation.x=-0.3;g.add(pA);
+    var pB=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.68,0.14),darkMat);pB.position.set(px,1.55,-0.35);g.add(pB);
+    var pC=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.68,0.2),darkMat);pC.position.set(px,1.55,-1.42);pC.rotation.x=0.28;g.add(pC);
   });
-
-  var fB = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.34, 0.44), darkMat);
-  fB.position.set(0, 0.62, 2.98);
-  g.add(fB);
-
-  var rB = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.32, 0.42), darkMat);
-  rB.position.set(0, 0.62, -2.4);
-  g.add(rB);
-
-  var grille = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.36, 0.06), chromeMat);
-  grille.position.set(0, 0.74, 3.2);
-  g.add(grille);
-
-  var trunk = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.15, 1.25), bodyMat);
-  trunk.position.set(0, 1.18, -1.95);
-  g.add(trunk);
-
-  var spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.09, 0.55), darkMat);
-  spoiler.position.set(0, 1.36, -2.2);
-  g.add(spoiler);
-
-  [-1.02, 1.02].forEach(function(x){
-    var arm = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.05, 0.09), darkMat);
-    arm.position.set(x * 0.95, 1.48, 0.78);
-    g.add(arm);
-
-    var mir = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.1, 0.15), bodyMat);
-    mir.position.set(x * 1.15, 1.45, 0.78);
-    g.add(mir);
+  var fB=new THREE.Mesh(new THREE.BoxGeometry(2.02,0.34,0.44),darkMat);fB.position.set(0,0.62,2.98);g.add(fB);
+  var rB=new THREE.Mesh(new THREE.BoxGeometry(2.02,0.32,0.42),darkMat);rB.position.set(0,0.62,-2.4);g.add(rB);
+  var grille=new THREE.Mesh(new THREE.BoxGeometry(1.55,0.36,0.06),chromeMat);grille.position.set(0,0.74,3.2);g.add(grille);
+  var trunk=new THREE.Mesh(new THREE.BoxGeometry(1.86,0.15,1.25),bodyMat);trunk.position.set(0,1.18,-1.95);g.add(trunk);
+  var spoiler=new THREE.Mesh(new THREE.BoxGeometry(1.72,0.09,0.55),darkMat);spoiler.position.set(0,1.36,-2.2);g.add(spoiler);
+  [-1.02,1.02].forEach(function(x){
+    var arm=new THREE.Mesh(new THREE.BoxGeometry(0.17,0.05,0.09),darkMat);arm.position.set(x*0.95,1.48,0.78);g.add(arm);
+    var mir=new THREE.Mesh(new THREE.BoxGeometry(0.21,0.1,0.15),bodyMat);mir.position.set(x*1.15,1.45,0.78);g.add(mir);
   });
-
-  [-0.62, 0.62].forEach(function(x){
-    var h = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.24, 0.08), headMat);
-    h.position.set(x, 0.88, 3.12);
-    g.add(h);
-  });
-
-  [-0.62, 0.62].forEach(function(x){
-    var t = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.2, 0.08), tailMat);
-    t.position.set(x, 0.88, -2.5);
-    g.add(t);
-  });
-
-  /* ── Wheels ── */
+  [-0.62,0.62].forEach(function(x){var h=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.24,0.08),headMat);h.position.set(x,0.88,3.12);g.add(h);});
+  [-0.62,0.62].forEach(function(x){var t=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.2,0.08),tailMat);t.position.set(x,0.88,-2.5);g.add(t);});
   function makeWheel(){
-    var steer = new THREE.Group();
-    var roll = new THREE.Group();
-    steer.add(roll);
-
-    var tireGeo = new THREE.TorusGeometry(0.44, 0.17, 8, 16);
-    tireGeo.rotateY(Math.PI / 2);
-    var tire = new THREE.Mesh(tireGeo, tireMat);
-    roll.add(tire);
-
-    var discGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.26, 16);
-    discGeo.rotateZ(Math.PI / 2);
-    var disc = new THREE.Mesh(discGeo, rimMat);
-    roll.add(disc);
-
-    for(var sp = 0; sp < 5; sp++){
-      var a = (sp / 5) * Math.PI * 2;
-      var spoke = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.5), rimMat);
-      spoke.rotation.x = a;
-      spoke.position.y = Math.sin(a) * 0.2;
-      spoke.position.z = Math.cos(a) * 0.2;
-      roll.add(spoke);
-    }
-    return { steer: steer, roll: roll };
+    var steer=new THREE.Group();var roll=new THREE.Group();steer.add(roll);
+    var tireGeo=new THREE.TorusGeometry(0.44,0.17,8,16);tireGeo.rotateY(Math.PI/2);
+    roll.add(new THREE.Mesh(tireGeo,tireMat));
+    var discGeo=new THREE.CylinderGeometry(0.32,0.32,0.26,16);discGeo.rotateZ(Math.PI/2);
+    roll.add(new THREE.Mesh(discGeo,rimMat));
+    for(var sp=0;sp<5;sp++){var a=(sp/5)*Math.PI*2;
+      var spoke=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.06,0.5),rimMat);
+      spoke.rotation.x=a;spoke.position.y=Math.sin(a)*0.2;spoke.position.z=Math.cos(a)*0.2;roll.add(spoke);}
+    return{steer:steer,roll:roll};
   }
-
-  var wheels = [];
-  var wpos = [
-    { x: -1.02, z:  1.5, tag: 'fl' },
-    { x:  1.02, z:  1.5, tag: 'fr' },
-    { x: -1.02, z: -1.5, tag: 'rl' },
-    { x:  1.02, z: -1.5, tag: 'rr' }
-  ];
-  for(var wi = 0; wi < wpos.length; wi++){
-    var w = makeWheel();
-    w.steer.position.set(wpos[wi].x, 0.61, wpos[wi].z);
-    g.add(w.steer);
-    wheels.push({ steer: w.steer, roll: w.roll, tag: wpos[wi].tag });
-  }
-
-  /* Fake ground shadow */
-  var shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(1.6, 16),
-    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28 })
-  );
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = 0.02;
-  g.add(shadow);
-
-  return { group: g, wheels: wheels, tailMat: tailMat, bodyMat: bodyMat };
+  var wheels=[];
+  var wpos=[{x:-1.02,z:1.5,tag:'fl'},{x:1.02,z:1.5,tag:'fr'},{x:-1.02,z:-1.5,tag:'rl'},{x:1.02,z:-1.5,tag:'rr'}];
+  for(var wi=0;wi<wpos.length;wi++){var w=makeWheel();
+    w.steer.position.set(wpos[wi].x,0.61,wpos[wi].z);g.add(w.steer);
+    wheels.push({steer:w.steer,roll:w.roll,tag:wpos[wi].tag});}
+  var shadow=new THREE.Mesh(new THREE.CircleGeometry(1.6,16),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:0.28}));
+  shadow.rotation.x=-Math.PI/2;shadow.position.y=0.02;g.add(shadow);
+  return{group:g,wheels:wheels,tailMat:tailMat,bodyMat:bodyMat};
 }
+var player=buildCar(0xe03030);scene.add(player.group);
 
-var player = buildCar(0xe03030);
-scene.add(player.group);
+/* ═══════════════════════════════════════════════════════
+   STATE + PHYSICS + CAMERA + HUD
+   ═══════════════════════════════════════════════════════ */
+var S={phase:'loading',x:0,z:-320,heading:0,speed:0,steer:0,
+  camX:0,camY:0,camZ:0,camLX:0,camLY:0,camLZ:0,camYaw:0,camPitch:0.42,camDist:10.5,
+  loc:'Երևան',suspensionY:0,suspensionV:0,bodyRoll:0,bodyRollV:0,bodyPitch:0,bodyPitchV:0,lastCamDrag:0,wheelSpin:0};
+var IN={gas:false,rev:false,left:false,right:false};
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 17 — GAME STATE
-   ═══════════════════════════════════════════════════════════════════ */
-var S = {
-  phase: 'loading',
-  x: 0, z: -320,
-  heading: 0,
-  speed: 0,
-  steer: 0,
-  camX: 0, camY: 0, camZ: 0,
-  camLX: 0, camLY: 0, camLZ: 0,
-  camYaw: 0,
-  camPitch: 0.42,
-  camDist: 10.5,
-  loc: 'Երևան',
-  suspensionY: 0, suspensionV: 0,
-  bodyRoll: 0, bodyRollV: 0,
-  bodyPitch: 0, bodyPitchV: 0,
-  lastCamDrag: 0,
-  wheelSpin: 0
-};
-
-var IN = { gas: false, rev: false, left: false, right: false };
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 18 — PHYSICS
-   ═══════════════════════════════════════════════════════════════════ */
 function updatePhysics(dt){
-  /* Steering input */
-  var target = 0;
-  if(IN.left) target = -1;
-  if(IN.right) target = 1;
-
-  S.steer += (target - S.steer) * Math.min(1, 6 * dt);
-  if(!IN.left && !IN.right){
-    S.steer += (0 - S.steer) * Math.min(1, 5 * dt);
-    if(Math.abs(S.steer) < 0.003) S.steer = 0;
-  }
-
-  /* Throttle */
-  if(IN.gas) S.speed += (S.speed < 40 ? 38 : 22) * dt;
-  if(IN.rev){
-    if(S.speed > 0.5) S.speed -= 65 * dt;
-    else S.speed -= 28 * dt;
-  }
-  if(!IN.gas && !IN.rev){
-    if(S.speed > 0.05) S.speed -= 10 * dt;
-    else if(S.speed < -0.05) S.speed += 10 * dt;
-    else S.speed = 0;
-  }
-
-  /* Slope resistance */
-  var fx = Math.sin(S.heading), fz = Math.cos(S.heading);
-  var aheadH = terrainHeight(S.x + fx * 5, S.z + fz * 5);
-  var behindH = terrainHeight(S.x - fx * 5, S.z - fz * 5);
-  var slope = (aheadH - behindH) / 10;
-  S.speed -= slope * 22 * dt;
-  S.speed = Math.max(-MAX_REV_KMH, Math.min(MAX_KMH, S.speed));
-
-  /* Steering — reverses when moving backward (Fix #4) */
-  var v = S.speed / 3.6;
-  var spdFac = Math.max(-1, Math.min(1, v / 8));
-  S.heading -= S.steer * 1.9 * spdFac * dt;
-
-  /* Position update */
-  var nfx = Math.sin(S.heading), nfz = Math.cos(S.heading);
-  S.x += nfx * v * dt;
-  S.z += nfz * v * dt;
-
-  /* World limits */
-  S.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, S.x));
-  S.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, S.z));
-
-  /* ═══════ Collision using spatial hash ═══════ */
-  var hk = Math.floor(S.x / HASH_SIZE) + ',' + Math.floor(S.z / HASH_SIZE);
-  var nearby = COL_HASH[hk];
+  var target=0;
+  if(IN.left)target=-1;
+  if(IN.right)target=1;
+  S.steer+=(target-S.steer)*Math.min(1,6*dt);
+  if(!IN.left&&!IN.right){S.steer+=(0-S.steer)*Math.min(1,5*dt);if(Math.abs(S.steer)<0.003)S.steer=0;}
+  if(IN.gas)S.speed+=(S.speed<40?38:22)*dt;
+  if(IN.rev){if(S.speed>0.5)S.speed-=65*dt;else S.speed-=28*dt;}
+  if(!IN.gas&&!IN.rev){if(S.speed>0.05)S.speed-=10*dt;else if(S.speed<-0.05)S.speed+=10*dt;else S.speed=0;}
+  var fx=Math.sin(S.heading),fz=Math.cos(S.heading);
+  var aheadH=terrainHeight(S.x+fx*5,S.z+fz*5);
+  var behindH=terrainHeight(S.x-fx*5,S.z-fz*5);
+  var slope=(aheadH-behindH)/10;
+  S.speed-=slope*22*dt;
+  S.speed=Math.max(-MAX_REV_KMH,Math.min(MAX_KMH,S.speed));
+  var v=S.speed/3.6;
+  var spdFac=Math.max(-1,Math.min(1,v/8));
+  S.heading-=S.steer*1.9*spdFac*dt;
+  var nfx=Math.sin(S.heading),nfz=Math.cos(S.heading);
+  S.x+=nfx*v*dt;S.z+=nfz*v*dt;
+  S.x=Math.max(-WORLD_LIMIT,Math.min(WORLD_LIMIT,S.x));
+  S.z=Math.max(-WORLD_LIMIT,Math.min(WORLD_LIMIT,S.z));
+  var hk=Math.floor(S.x/HASH_SIZE)+','+Math.floor(S.z/HASH_SIZE);
+  var nearby=COL_HASH[hk];
   if(nearby){
-    for(var ci = 0; ci < nearby.length; ci++){
-      var b = nearby[ci];
-      var hw = b.w / 2 + 1.4;
-      var hd = b.d / 2 + 1.4;
-      var ddx = S.x - b.x;
-      var ddz = S.z - b.z;
-      if(Math.abs(ddx) < hw && Math.abs(ddz) < hd){
-        var ox = hw - Math.abs(ddx);
-        var oz = hd - Math.abs(ddz);
-        if(ox < oz) S.x = b.x + Math.sign(ddx || 1) * hw;
-        else S.z = b.z + Math.sign(ddz || 1) * hd;
-        S.speed *= 0.35;
+    for(var ci=0;ci<nearby.length;ci++){
+      var b=nearby[ci];
+      var hw=b.w/2+1.4,hd=b.d/2+1.4;
+      var ddx=S.x-b.x,ddz=S.z-b.z;
+      if(Math.abs(ddx)<hw&&Math.abs(ddz)<hd){
+        var ox=hw-Math.abs(ddx),oz=hd-Math.abs(ddz);
+        if(ox<oz)S.x=b.x+Math.sign(ddx||1)*hw;
+        else S.z=b.z+Math.sign(ddz||1)*hd;
+        S.speed*=0.35;
       }
     }
   }
-
-  /* Ground height */
-  var groundY = terrainHeight(S.x, S.z);
-
-  /* Suspension */
-  var targetSusp = -slope * 0.04;
-  S.suspensionV += (targetSusp - S.suspensionY) * 55 * dt - S.suspensionV * 9 * dt;
-  S.suspensionY += S.suspensionV * dt;
-
-  /* Terrain-following pitch and roll (Fix #7) */
-  var rx = Math.cos(S.heading), rz = -Math.sin(S.heading);
-  var hF = terrainHeight(S.x + fx * 1.6, S.z + fz * 1.6);
-  var hB = terrainHeight(S.x - fx * 1.6, S.z - fz * 1.6);
-  var hL = terrainHeight(S.x - rx * 1.1, S.z - rz * 1.1);
-  var hR = terrainHeight(S.x + rx * 1.1, S.z + rz * 1.1);
-
-  var terrainPitch = Math.atan2(hF - hB, 3.2);
-  var terrainRoll  = Math.atan2(hR - hL, 2.2);
-
-  S.bodyPitchV += (terrainPitch - S.bodyPitch) * 14 * dt - S.bodyPitchV * 8 * dt;
-  S.bodyPitch  += S.bodyPitchV * dt;
-
-  var steerRoll = -S.steer * 0.06;
-  S.bodyRollV += (terrainRoll + steerRoll - S.bodyRoll) * 14 * dt - S.bodyRollV * 8 * dt;
-  S.bodyRoll  += S.bodyRollV * dt;
-
-  /* Apply transforms */
-  player.group.position.set(S.x, groundY + S.suspensionY, S.z);
-  player.group.rotation.y = S.heading;
-  player.group.rotation.x = -S.bodyPitch;
-  player.group.rotation.z = S.bodyRoll;
-
-  /* Wheels (Fix #1 + #2) */
-  var spin = v * dt * 2.2;
-  S.wheelSpin += spin;
-  for(var wk = 0; wk < player.wheels.length; wk++){
-    var w = player.wheels[wk];
-    w.roll.rotation.x = S.wheelSpin;
-    if(w.tag === 'fl' || w.tag === 'fr'){
-      w.steer.rotation.y = -S.steer * 0.5;
-    }
+  var groundY=terrainHeight(S.x,S.z);
+  var targetSusp=-slope*0.04;
+  S.suspensionV+=(targetSusp-S.suspensionY)*55*dt-S.suspensionV*9*dt;
+  S.suspensionY+=S.suspensionV*dt;
+  var rx=Math.cos(S.heading),rz=-Math.sin(S.heading);
+  var hF=terrainHeight(S.x+fx*1.6,S.z+fz*1.6);
+  var hB=terrainHeight(S.x-fx*1.6,S.z-fz*1.6);
+  var hL=terrainHeight(S.x-rx*1.1,S.z-rz*1.1);
+  var hR=terrainHeight(S.x+rx*1.1,S.z+rz*1.1);
+  var tPitch=Math.atan2(hF-hB,3.2),tRoll=Math.atan2(hR-hL,2.2);
+  S.bodyPitchV+=(tPitch-S.bodyPitch)*14*dt-S.bodyPitchV*8*dt;
+  S.bodyPitch+=S.bodyPitchV*dt;
+  var steerRoll=-S.steer*0.06;
+  S.bodyRollV+=(tRoll+steerRoll-S.bodyRoll)*14*dt-S.bodyRollV*8*dt;
+  S.bodyRoll+=S.bodyRollV*dt;
+  player.group.position.set(S.x,groundY+S.suspensionY,S.z);
+  player.group.rotation.y=S.heading;
+  player.group.rotation.x=-S.bodyPitch;
+  player.group.rotation.z=S.bodyRoll;
+  var spin=v*dt*2.2;S.wheelSpin+=spin;
+  for(var wk=0;wk<player.wheels.length;wk++){
+    var w=player.wheels[wk];w.roll.rotation.x=S.wheelSpin;
+    if(w.tag==='fl'||w.tag==='fr')w.steer.rotation.y=-S.steer*0.5;
   }
-
-  /* Brake light */
-  var braking = IN.rev || (!IN.gas && Math.abs(S.speed) > 4);
-  player.tailMat.color.setHex(braking ? 0xff1010 : 0xff2222);
-
+  var braking=IN.rev||(!IN.gas&&Math.abs(S.speed)>4);
+  player.tailMat.color.setHex(braking?0xff1010:0xff2222);
   updateLocationName();
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 19 — LOCATION NAME
-   ═══════════════════════════════════════════════════════════════════ */
-var lastLocName = '';
+var lastLocName='';
 function updateLocationName(){
-  var closest = 'Երևան', minD = Infinity;
-  for(var k in LM){
-    var L = LM[k];
-    var d = Math.hypot(S.x - L.x, S.z - L.z);
-    if(d < minD){ minD = d; closest = L.name; }
-  }
-  var newLoc = minD < 90 ? closest : 'Երևան';
-  if(newLoc !== lastLocName){
-    lastLocName = newLoc;
-    S.loc = newLoc;
-    var el = document.getElementById('locName');
-    if(el) el.textContent = newLoc;
-  }
+  var closest='Երևան',minD=Infinity;
+  for(var k in LM){var L=LM[k];var d=Math.hypot(S.x-L.x,S.z-L.z);if(d<minD){minD=d;closest=L.name;}}
+  var newLoc=minD<100?closest:'Երևան';
+  if(newLoc!==lastLocName){lastLocName=newLoc;S.loc=newLoc;
+    var el=document.getElementById('locName');if(el)el.textContent=newLoc;}
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 20 — CAMERA
-   ═══════════════════════════════════════════════════════════════════ */
 function updateCamera(dt){
-  /* Auto-follow when driving and not recently dragged (Fix #49) */
-  var timeSinceDrag = performance.now() - S.lastCamDrag;
-  if(Math.abs(S.speed) > 6 && timeSinceDrag > 1800){
-    var diff = S.heading - S.camYaw;
-    while(diff >  Math.PI) diff -= Math.PI * 2;
-    while(diff < -Math.PI) diff += Math.PI * 2;
-    S.camYaw += diff * Math.min(1, 1.8 * dt);
+  var timeSinceDrag=performance.now()-S.lastCamDrag;
+  if(Math.abs(S.speed)>6&&timeSinceDrag>1800){
+    var diff=S.heading-S.camYaw;
+    while(diff>Math.PI)diff-=Math.PI*2;
+    while(diff<-Math.PI)diff+=Math.PI*2;
+    S.camYaw+=diff*Math.min(1,1.8*dt);
   }
-
-  var dist = S.camDist * Math.cos(S.camPitch * 0.65);
-  var high = 1.8 + S.camDist * Math.sin(S.camPitch);
-
-  var tx = S.x - Math.sin(S.camYaw) * dist;
-  var tz = S.z - Math.cos(S.camYaw) * dist;
-  var ty = terrainHeight(tx, tz) + high;
-  var minY = terrainHeight(tx, tz) + 1.7;
-  if(ty < minY) ty = minY;
-
-  var k = 1 - Math.exp(-9 * dt);
-  S.camX += (tx - S.camX) * k;
-  S.camY += (ty - S.camY) * k;
-  S.camZ += (tz - S.camZ) * k;
-
-  var lx = S.x + Math.sin(S.heading) * 6;
-  var lz = S.z + Math.cos(S.heading) * 6;
-  var ly = terrainHeight(S.x, S.z) + 1.3;
-  var lk = 1 - Math.exp(-11 * dt);
-  S.camLX += (lx - S.camLX) * lk;
-  S.camLY += (ly - S.camLY) * lk;
-  S.camLZ += (lz - S.camLZ) * lk;
-
-  camera.position.set(S.camX, S.camY, S.camZ);
-  camera.lookAt(S.camLX, S.camLY, S.camLZ);
-
-  var tFov = 62 + Math.abs(S.speed / MAX_KMH) * 6;
-  if(Math.abs(camera.fov - tFov) > 0.2){
-    camera.fov += (tFov - camera.fov) * Math.min(1, 3 * dt);
-    camera.updateProjectionMatrix();
-  }
-
-  /* Sun follows camera for consistent lighting */
-  sun.position.set(S.x - 100, 200, S.z + 120);
-  sun.target.position.set(S.x, 0, S.z);
-  sun.target.updateMatrixWorld();
+  var dist=S.camDist*Math.cos(S.camPitch*0.65);
+  var high=1.8+S.camDist*Math.sin(S.camPitch);
+  var tx=S.x-Math.sin(S.camYaw)*dist;
+  var tz=S.z-Math.cos(S.camYaw)*dist;
+  var ty=terrainHeight(tx,tz)+high;
+  var minY=terrainHeight(tx,tz)+1.7;if(ty<minY)ty=minY;
+  var k=1-Math.exp(-9*dt);
+  S.camX+=(tx-S.camX)*k;S.camY+=(ty-S.camY)*k;S.camZ+=(tz-S.camZ)*k;
+  var lx=S.x+Math.sin(S.heading)*6;
+  var lz=S.z+Math.cos(S.heading)*6;
+  var ly=terrainHeight(S.x,S.z)+1.3;
+  var lk=1-Math.exp(-11*dt);
+  S.camLX+=(lx-S.camLX)*lk;S.camLY+=(ly-S.camLY)*lk;S.camLZ+=(lz-S.camLZ)*lk;
+  camera.position.set(S.camX,S.camY,S.camZ);
+  camera.lookAt(S.camLX,S.camLY,S.camLZ);
+  var tFov=62+Math.abs(S.speed/MAX_KMH)*6;
+  if(Math.abs(camera.fov-tFov)>0.2){camera.fov+=(tFov-camera.fov)*Math.min(1,3*dt);camera.updateProjectionMatrix();}
+  sun.position.set(S.x-100,200,S.z+120);
+  sun.target.position.set(S.x,0,S.z);sun.target.updateMatrixWorld();
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 21 — HUD + MINIMAP
-   ═══════════════════════════════════════════════════════════════════ */
-var spdEl = document.getElementById('spdVal');
-var compassEl = document.getElementById('compassArrow');
-var perfEl = document.getElementById('perfInfo');
-var lastSpd = -1;
-
-var minimapCanvas = document.getElementById('minimap');
-var mmCtx = minimapCanvas.getContext('2d');
-var MM_SIZE = 264;
-var MM_RANGE = 320;
-
-/* Frame counter for perf display */
-var fps = 0, frameCount = 0, fpsTimer = 0;
-
+var spdEl=document.getElementById('spdVal'),compassEl=document.getElementById('compassArrow'),perfEl=document.getElementById('perfInfo');
+var lastSpd=-1;
+var minimapCanvas=document.getElementById('minimap'),mmCtx=minimapCanvas.getContext('2d');
+var MM_SIZE=264,MM_RANGE=350;
+var fps=0,frameCount=0,fpsTimer=0;
 function updateHUD(dt){
-  var spd = Math.round(Math.abs(S.speed));
-  if(spd !== lastSpd){
-    spdEl.textContent = spd;
-    lastSpd = spd;
-  }
-  var deg = S.heading * 180 / Math.PI;
-  compassEl.style.transform = 'rotate(' + (-deg) + 'deg)';
-
-  /* Perf overlay */
-  frameCount++;
-  fpsTimer += dt;
-  if(fpsTimer >= 0.5){
-    fps = Math.round(frameCount / fpsTimer);
-    frameCount = 0;
-    fpsTimer = 0;
-    if(perfEl){
-      perfEl.textContent =
-        fps + ' FPS · ' +
-        renderer.info.render.calls + ' calls · ' +
-        renderer.info.render.triangles + ' tris';
-    }
-  }
-
+  var spd=Math.round(Math.abs(S.speed));if(spd!==lastSpd){spdEl.textContent=spd;lastSpd=spd;}
+  var deg=S.heading*180/Math.PI;compassEl.style.transform='rotate('+(-deg)+'deg)';
+  frameCount++;fpsTimer+=dt;
+  if(fpsTimer>=0.5){fps=Math.round(frameCount/fpsTimer);frameCount=0;fpsTimer=0;
+    if(perfEl)perfEl.textContent=fps+' FPS · '+renderer.info.render.calls+' calls · '+renderer.info.render.triangles+' tris';}
   drawMinimap();
 }
-
 function drawMinimap(){
-  var ctx = mmCtx;
-  var S2 = MM_SIZE / 2;
-  var scale = (MM_SIZE / 2) / MM_RANGE;
-  ctx.clearRect(0, 0, MM_SIZE, MM_SIZE);
-
-  ctx.fillStyle = '#1a2a3a';
-  ctx.fillRect(0, 0, MM_SIZE, MM_SIZE);
-  ctx.fillStyle = '#2a4a2a';
-  ctx.beginPath();
-  ctx.arc(S2, S2, S2 - 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.save();
-  ctx.translate(S2, S2);
-  ctx.rotate(-S.heading);
-
-  /* Roads */
-  ctx.strokeStyle = '#ffcc44';
-  ctx.lineWidth = 2.2;
-  ctx.lineCap = 'round';
-  for(var i = 0; i < ROAD_EDGES.length; i++){
-    var e = ROAD_EDGES[i];
-    var A = ROAD_NODES[e[0]], B = ROAD_NODES[e[1]];
+  var ctx=mmCtx,S2=MM_SIZE/2,scale=(MM_SIZE/2)/MM_RANGE;
+  ctx.clearRect(0,0,MM_SIZE,MM_SIZE);
+  ctx.fillStyle='#1a2a3a';ctx.fillRect(0,0,MM_SIZE,MM_SIZE);
+  ctx.fillStyle='#2a4a2a';ctx.beginPath();ctx.arc(S2,S2,S2-4,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.translate(S2,S2);ctx.rotate(-S.heading);
+  // Ring road
+  ctx.strokeStyle='#ffcc44';ctx.lineWidth=3;ctx.beginPath();
+  ctx.arc((0-S.x)*scale,(0-S.z)*scale,78*scale,0,Math.PI*2);ctx.stroke();
+  // Main roads
+  ctx.lineWidth=2.5;
+  for(var i=0;i<ROAD_GRID.length-1;i++){
+    var A=ROAD_GRID[i],B=ROAD_GRID[i+1];
     ctx.beginPath();
-    ctx.moveTo((A.x - S.x) * scale, (A.z - S.z) * scale);
-    ctx.lineTo((B.x - S.x) * scale, (B.z - S.z) * scale);
+    ctx.moveTo((A.x-S.x)*scale,(A.z-S.z)*scale);
+    ctx.lineTo((B.x-S.x)*scale,(B.z-S.z)*scale);
     ctx.stroke();
   }
-
-  /* Winding path */
-  ctx.strokeStyle = '#a08a3a';
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  for(var wi = 0; wi < WINDING_PATH.length; wi++){
-    var W = WINDING_PATH[wi];
-    var wx = (W.x - S.x) * scale;
-    var wy = (W.z - S.z) * scale;
-    if(wi === 0) ctx.moveTo(wx, wy);
-    else ctx.lineTo(wx, wy);
-  }
-  ctx.stroke();
-
-  /* Landmarks */
+  // Landmarks
   for(var k in LM){
-    var L = LM[k];
-    var lx = (L.x - S.x) * scale;
-    var ly = (L.z - S.z) * scale;
-    if(Math.hypot(lx, ly) > S2 - 8) continue;
-    ctx.fillStyle = '#ff5577';
-    ctx.beginPath();
-    ctx.arc(lx, ly, 3.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    var L=LM[k];var lx=(L.x-S.x)*scale,ly=(L.z-S.z)*scale;
+    if(Math.hypot(lx,ly)>S2-8)continue;
+    ctx.fillStyle='#ff5577';ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
   }
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('N', 0, -S2 + 16);
-
+  ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('N',0,-S2+16);
   ctx.restore();
-
-  /* Car arrow */
-  ctx.save();
-  ctx.translate(S2, S2);
-  ctx.fillStyle = '#ff3b3b';
-  ctx.beginPath();
-  ctx.moveTo(0, -9);
-  ctx.lineTo(-6, 6);
-  ctx.lineTo(0, 3);
-  ctx.lineTo(6, 6);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.strokeStyle = 'rgba(255,255,255,.5)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(S2, S2, S2 - 3, 0, Math.PI * 2);
-  ctx.stroke();
+  // Car arrow
+  ctx.save();ctx.translate(S2,S2);ctx.fillStyle='#ff3b3b';
+  ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(-6,6);ctx.lineTo(0,3);ctx.lineTo(6,6);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(S2,S2,S2-3,0,Math.PI*2);ctx.stroke();
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 22 — INPUT BINDING
-   ═══════════════════════════════════════════════════════════════════ */
-function bindHold(el, key){
-  if(!el) return;
-  var on = function(e){
-    e.preventDefault();
-    IN[key] = true;
-    el.classList.add('on');
-  };
-  var off = function(e){
-    e.preventDefault();
-    IN[key] = false;
-    el.classList.remove('on');
-  };
-  el.addEventListener('touchstart', on, {passive: false});
-  el.addEventListener('touchend', off);
-  el.addEventListener('touchcancel', off);
-  el.addEventListener('mousedown', on);
-  el.addEventListener('mouseup', off);
-  el.addEventListener('mouseleave', off);
-}
-
-bindHold(document.getElementById('btnGas'), 'gas');
-bindHold(document.getElementById('btnRev'), 'rev');
-bindHold(document.getElementById('btnL'), 'left');
-bindHold(document.getElementById('btnR'), 'right');
-
-window.addEventListener('keydown', function(e){
-  var k = e.key.toLowerCase();
-  if(e.repeat) return;
-  if(k === 'arrowup' || k === 'w') IN.gas = true;
-  if(k === 'arrowdown' || k === 's') IN.rev = true;
-  if(k === 'arrowleft' || k === 'a') IN.left = true;
-  if(k === 'arrowright' || k === 'd') IN.right = true;
-});
-window.addEventListener('keyup', function(e){
-  var k = e.key.toLowerCase();
-  if(k === 'arrowup' || k === 'w') IN.gas = false;
-  if(k === 'arrowdown' || k === 's') IN.rev = false;
-  if(k === 'arrowleft' || k === 'a') IN.left = false;
-  if(k === 'arrowright' || k === 'd') IN.right = false;
-});
-
-/* ── Camera drag zone ── */
+/* INPUT */
+function bindHold(el,key){if(!el)return;
+  var on=function(e){e.preventDefault();IN[key]=true;el.classList.add('on');};
+  var off=function(e){e.preventDefault();IN[key]=false;el.classList.remove('on');};
+  el.addEventListener('touchstart',on,{passive:false});el.addEventListener('touchend',off);
+  el.addEventListener('touchcancel',off);el.addEventListener('mousedown',on);
+  el.addEventListener('mouseup',off);el.addEventListener('mouseleave',off);}
+bindHold(document.getElementById('btnGas'),'gas');
+bindHold(document.getElementById('btnRev'),'rev');
+bindHold(document.getElementById('btnL'),'left');
+bindHold(document.getElementById('btnR'),'right');
+window.addEventListener('keydown',function(e){var k=e.key.toLowerCase();if(e.repeat)return;
+  if(k==='arrowup'||k==='w')IN.gas=true;if(k==='arrowdown'||k==='s')IN.rev=true;
+  if(k==='arrowleft'||k==='a')IN.left=true;if(k==='arrowright'||k==='d')IN.right=true;});
+window.addEventListener('keyup',function(e){var k=e.key.toLowerCase();
+  if(k==='arrowup'||k==='w')IN.gas=false;if(k==='arrowdown'||k==='s')IN.rev=false;
+  if(k==='arrowleft'||k==='a')IN.left=false;if(k==='arrowright'||k==='d')IN.right=false;});
 (function(){
-  var z = document.getElementById('camZone');
-  if(!z) return;
-  var drag = false, sx = 0, sy = 0, sYaw = 0, sPitch = 0;
-
-  var dn = function(e){
-    e.preventDefault();
-    drag = true;
-    var t = e.touches ? e.touches[0] : e;
-    sx = t.clientX;
-    sy = t.clientY;
-    sYaw = S.camYaw;
-    sPitch = S.camPitch;
-    S.lastCamDrag = performance.now();
-  };
-  var mv = function(e){
-    if(!drag) return;
-    e.preventDefault();
-    var t = e.touches ? e.touches[0] : e;
-    S.lastCamDrag = performance.now();
-    S.camYaw = sYaw - (t.clientX - sx) / 200;
-    S.camPitch = Math.max(0.05, Math.min(1.2, sPitch + (sy - t.clientY) / 280));
-  };
-  var up = function(){ drag = false; };
-
-  z.addEventListener('touchstart', dn, {passive: false});
-  z.addEventListener('touchmove', mv, {passive: false});
-  z.addEventListener('touchend', up);
-  z.addEventListener('touchcancel', up);
-  z.addEventListener('mousedown', dn);
-  window.addEventListener('mousemove', mv);
-  window.addEventListener('mouseup', up);
+  var z=document.getElementById('camZone');if(!z)return;
+  var drag=false,sx=0,sy=0,sYaw=0,sPitch=0;
+  var dn=function(e){e.preventDefault();drag=true;var t=e.touches?e.touches[0]:e;
+    sx=t.clientX;sy=t.clientY;sYaw=S.camYaw;sPitch=S.camPitch;S.lastCamDrag=performance.now();};
+  var mv=function(e){if(!drag)return;e.preventDefault();var t=e.touches?e.touches[0]:e;
+    S.lastCamDrag=performance.now();
+    S.camYaw=sYaw-(t.clientX-sx)/200;
+    S.camPitch=Math.max(0.05,Math.min(1.2,sPitch+(sy-t.clientY)/280));};
+  var up=function(){drag=false;};
+  z.addEventListener('touchstart',dn,{passive:false});z.addEventListener('touchmove',mv,{passive:false});
+  z.addEventListener('touchend',up);z.addEventListener('touchcancel',up);
+  z.addEventListener('mousedown',dn);window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up);
 })();
+document.addEventListener('gesturestart',function(e){e.preventDefault();});
+document.addEventListener('gesturechange',function(e){e.preventDefault();});
+document.addEventListener('contextmenu',function(e){e.preventDefault();});
+document.addEventListener('dblclick',function(e){e.preventDefault();});
+document.addEventListener('touchmove',function(e){if(e.touches.length>1)e.preventDefault();},{passive:false});
 
-/* ── Global gesture prevention ── */
-document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
-document.addEventListener('gesturechange', function(e){ e.preventDefault(); });
-document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-document.addEventListener('dblclick', function(e){ e.preventDefault(); });
-document.addEventListener('touchmove', function(e){
-  if(e.touches.length > 1) e.preventDefault();
-}, {passive: false});
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 23 — GAME START
-   ═══════════════════════════════════════════════════════════════════ */
+/* START */
 function startGame(){
-  /* Spawn on main road facing Cascade */
-  S.x = 0;
-  S.z = -320;
-  S.heading = 0;
-  S.speed = 0;
-  S.steer = 0;
-  S.camYaw = 0;
-  S.camPitch = 0.42;
-  S.suspensionY = 0;
-  S.suspensionV = 0;
-  S.bodyRoll = 0;
-  S.bodyRollV = 0;
-  S.bodyPitch = 0;
-  S.bodyPitchV = 0;
-  S.wheelSpin = 0;
-  S.lastCamDrag = 0;
-
-  var dist = S.camDist;
-  S.camX = S.x - Math.sin(S.camYaw) * dist;
-  S.camY = terrainHeight(S.camX, S.z - dist) + 3.2;
-  S.camZ = S.z - Math.cos(S.camYaw) * dist;
-  S.camLX = S.x;
-  S.camLY = terrainHeight(S.x, S.z) + 1.3;
-  S.camLZ = S.z + 6;
-
-  player.group.position.set(S.x, terrainHeight(S.x, S.z), S.z);
-  player.group.rotation.y = S.heading;
-  player.group.rotation.x = 0;
-  player.group.rotation.z = 0;
-
-  S.phase = 'play';
-  lastLocName = '';
-  updateLocationName();
-
-  /* Reveal perf overlay */
-  var perf = document.getElementById('perfInfo');
-  if(perf) perf.style.display = 'block';
+  S.x=0;S.z=-320;S.heading=0;S.speed=0;S.steer=0;
+  S.camYaw=0;S.camPitch=0.42;
+  S.suspensionY=0;S.suspensionV=0;S.bodyRoll=0;S.bodyRollV=0;
+  S.bodyPitch=0;S.bodyPitchV=0;S.wheelSpin=0;S.lastCamDrag=0;
+  var dist=S.camDist;
+  S.camX=S.x-Math.sin(S.camYaw)*dist;
+  S.camY=terrainHeight(S.camX,S.z-dist)+3.2;
+  S.camZ=S.z-Math.cos(S.camYaw)*dist;
+  S.camLX=S.x;S.camLY=terrainHeight(S.x,S.z)+1.3;S.camLZ=S.z+6;
+  player.group.position.set(S.x,terrainHeight(S.x,S.z),S.z);
+  player.group.rotation.y=S.heading;player.group.rotation.x=0;player.group.rotation.z=0;
+  S.phase='play';lastLocName='';updateLocationName();
+  var perf=document.getElementById('perfInfo');if(perf)perf.style.display='block';
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 24 — RESIZE
-   ═══════════════════════════════════════════════════════════════════ */
 function resize(){
-  var w = window.innerWidth;
-  var h = window.innerHeight;
-  renderer.setSize(w, h, false);
-  cvs.style.width = '100%';
-  cvs.style.height = '100%';
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+  var w=window.innerWidth,h=window.innerHeight;
+  renderer.setSize(w,h,false);cvs.style.width='100%';cvs.style.height='100%';
+  camera.aspect=w/h;camera.updateProjectionMatrix();
 }
-window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', function(){
-  setTimeout(resize, 200);
-  setTimeout(resize, 600);
-});
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', resize);
-}
+window.addEventListener('resize',resize);
+window.addEventListener('orientationchange',function(){setTimeout(resize,200);setTimeout(resize,600);});
+if(window.visualViewport){window.visualViewport.addEventListener('resize',resize);}
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 25 — MAIN LOOP
-   ═══════════════════════════════════════════════════════════════════ */
-var lastT = performance.now();
+var lastT=performance.now();
 function loop(now){
   requestAnimationFrame(loop);
-  var dt = Math.min(0.04, (now - lastT) / 1000);
-  lastT = now;
-
-  if(S.phase === 'play'){
-    updatePhysics(dt);
-  }
-  updateCamera(dt);
-  updateHUD(dt);
-  renderer.render(scene, camera);
+  var dt=Math.min(0.04,(now-lastT)/1000);lastT=now;
+  if(S.phase==='play')updatePhysics(dt);
+  updateCamera(dt);updateHUD(dt);
+  renderer.render(scene,camera);
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 26 — INIT
-   ═══════════════════════════════════════════════════════════════════ */
 resize();
-player.group.position.set(S.x, terrainHeight(S.x, S.z), S.z);
+player.group.position.set(S.x,terrainHeight(S.x,S.z),S.z);
 requestAnimationFrame(loop);
+window.__gameReady=true;
+window.__gameStartFn=startGame;
 
-/* Signal readiness to the loader */
-window.__gameReady = true;
-window.__gameStartFn = startGame;
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 27 — STARTUP REPORT (console)
-   ═══════════════════════════════════════════════════════════════════ */
-(function reportBuildStats(){
-  var totalCollision = 0;
-  for(var k in COL_HASH) totalCollision += COL_HASH[k].length;
-  console.log('──────────────────────────────────');
-  console.log('  YEREVAN 3D — BUILD COMPLETE');
-  console.log('──────────────────────────────────');
-  console.log('  Draw calls (initial): ~' + scene.children.length);
-  console.log('  Collision cells:', Object.keys(COL_HASH).length);
-  console.log('  Collision boxes:', totalCollision);
-  console.log('  Terrain verts:', terrainGeo.attributes.position.count);
-  console.log('  Pixel ratio: 1 (fixed)');
-  console.log('  Antialias: OFF');
-  console.log('  Shadows: OFF');
-  console.log('──────────────────────────────────');
-})();
+console.log('YEREVAN 3D READY');
+console.log('Draw calls:',scene.children.length);
+console.log('Landmarks:',Object.keys(LM).length);
 
 })();
 </script>
