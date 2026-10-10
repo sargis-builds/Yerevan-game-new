@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="hy">
 <head>
@@ -5,70 +6,237 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a1020">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a1020">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Yerevan 3D","short_name":"Yerevan","display":"fullscreen","orientation":"landscape","start_url":".","background_color":"#0a1020","theme_color":"#0a1020"}'>
 <title>Երևան · 3D</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
-html,body{width:100%;height:100%;overflow:hidden;background:#0a1020;color:#fff;touch-action:none;overscroll-behavior:none;position:fixed}
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL RESET + FULLSCREEN FIX
+   ═══════════════════════════════════════════════════════════════ */
+*{
+  margin:0;padding:0;box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+  font-family:system-ui,-apple-system,'Segoe UI',sans-serif
+}
+html,body{
+  width:100vw;height:100vh;height:100dvh;
+  overflow:hidden;background:#0a1020;color:#fff;
+  touch-action:none;overscroll-behavior:none;
+  position:fixed;inset:0
+}
 #app{position:fixed;inset:0;overflow:hidden}
-@media (orientation:portrait){#app{width:100vh;height:100vw;top:50%;left:50%;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center}}
 canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
 
+/* ═══════════════════════════════════════════════════════════════
+   HUD
+   ═══════════════════════════════════════════════════════════════ */
 #hud{position:absolute;inset:0;pointer-events:none;z-index:10}
 .panel{
-  background:linear-gradient(165deg,rgba(255,255,255,.95),rgba(230,238,250,.9));
-  border:1px solid rgba(30,60,110,.2);border-radius:14px;
+  background:linear-gradient(165deg,rgba(255,255,255,.94),rgba(230,238,250,.88));
+  border:1px solid rgba(30,60,110,.2);
+  border-radius:14px;
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  box-shadow:0 6px 20px rgba(0,20,60,.2);color:#0a1a30;
+  box-shadow:0 6px 20px rgba(0,20,60,.2);
+  color:#0a1a30
 }
-#topLeft{position:absolute;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));padding:9px 16px}
-#lvlName{font-size:10px;letter-spacing:2.5px;color:#3a6ea5;font-weight:800}
-#locName{font-size:19px;font-weight:800;margin-top:2px}
-#topRight{position:absolute;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));padding:9px 16px;text-align:right;min-width:130px}
-#spdVal{font-size:33px;font-weight:900;line-height:1}
-#spdUnit{font-size:10px;color:#3a6ea5;letter-spacing:3px;font-weight:700;margin-top:1px}
-#compass{position:absolute;top:calc(max(12px,env(safe-area-inset-top)) + 78px);left:max(12px,env(safe-area-inset-left));padding:8px 14px;text-align:center}
-#compassArrow{font-size:22px;color:#0a1a30;transition:transform .1s}
 
+#topLeft{
+  position:absolute;
+  top:calc(12px + env(safe-area-inset-top));
+  left:calc(12px + env(safe-area-inset-left));
+  padding:9px 16px;z-index:12
+}
+#lvlName{font-size:10px;letter-spacing:2.5px;color:#3a6ea5;font-weight:800}
+#locName{font-size:19px;font-weight:800;margin-top:2px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+#topRight{
+  position:absolute;
+  top:calc(12px + env(safe-area-inset-top));
+  right:calc(12px + env(safe-area-inset-right));
+  padding:9px 16px;text-align:right;min-width:120px;z-index:12
+}
+#spdVal{font-size:32px;font-weight:900;line-height:1;color:#0a1a30}
+#spdUnit{font-size:10px;color:#3a6ea5;letter-spacing:3px;font-weight:700;margin-top:1px}
+
+#minimapWrap{
+  position:absolute;
+  top:calc(80px + env(safe-area-inset-top));
+  left:calc(12px + env(safe-area-inset-left));
+  width:132px;height:132px;
+  border-radius:14px;overflow:hidden;
+  border:2px solid rgba(255,255,255,.85);
+  box-shadow:0 4px 16px rgba(0,20,60,.35);
+  background:#1a2a3a;z-index:12
+}
+#minimap{width:100%;height:100%;display:block}
+
+#compass{
+  position:absolute;
+  top:calc(226px + env(safe-area-inset-top));
+  left:calc(12px + env(safe-area-inset-left));
+  padding:6px 12px;text-align:center;z-index:12
+}
+#compassArrow{font-size:20px;color:#0a1a30;display:block;transition:transform .1s}
+#compassN{font-size:9px;font-weight:900;color:#e11d48;letter-spacing:2px}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTROLS
+   ═══════════════════════════════════════════════════════════════ */
 #controls{position:absolute;inset:0;z-index:20;pointer-events:none}
 .btn{
   position:absolute;pointer-events:auto;
-  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
   background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(210,225,245,.92));
   border:2.5px solid rgba(50,90,150,.45);
   box-shadow:0 8px 22px rgba(0,20,60,.3),inset 0 2px 0 rgba(255,255,255,.8);
   color:#1a3050;font-weight:900;
-  transition:transform .08s,background .12s;touch-action:none;
+  transition:transform .08s,background .12s;
+  touch-action:none;font-family:system-ui,sans-serif
 }
-.btn:active,.btn.on{transform:scale(.94);background:linear-gradient(160deg,rgba(120,180,255,.96),rgba(70,130,220,.96));border-color:rgba(30,80,160,.9);color:#fff}
-
-#btnL{left:max(18px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));width:100px;height:100px;font-size:38px}
-#btnR{left:calc(max(18px,env(safe-area-inset-left)) + 116px);bottom:max(22px,env(safe-area-inset-bottom));width:100px;height:100px;font-size:38px}
-#btnGas{right:max(20px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:116px;height:116px;font-size:15px;letter-spacing:2px;border-color:rgba(40,160,80,.55);color:#0a6030}
+.btn:active,.btn.on{
+  transform:scale(.94);
+  background:linear-gradient(160deg,rgba(120,180,255,.96),rgba(70,130,220,.96));
+  border-color:rgba(30,80,160,.9);color:#fff
+}
+#btnL{
+  left:calc(20px + env(safe-area-inset-left));
+  bottom:calc(24px + env(safe-area-inset-bottom));
+  width:96px;height:96px;font-size:36px
+}
+#btnR{
+  left:calc(128px + env(safe-area-inset-left));
+  bottom:calc(24px + env(safe-area-inset-bottom));
+  width:96px;height:96px;font-size:36px
+}
+#btnGas{
+  right:calc(20px + env(safe-area-inset-right));
+  bottom:calc(20px + env(safe-area-inset-bottom));
+  width:112px;height:112px;font-size:15px;letter-spacing:2px;
+  border-color:rgba(40,160,80,.55);color:#0a6030
+}
 #btnGas:active,#btnGas.on{background:linear-gradient(160deg,rgba(70,220,120,.96),rgba(30,150,70,.96));color:#fff}
-#btnRev{right:calc(max(20px,env(safe-area-inset-right)) + 132px);bottom:max(26px,env(safe-area-inset-bottom));width:92px;height:92px;font-size:13px;letter-spacing:1.5px;border-color:rgba(200,60,60,.55);color:#a02020}
+#btnRev{
+  right:calc(148px + env(safe-area-inset-right));
+  bottom:calc(28px + env(safe-area-inset-bottom));
+  width:88px;height:88px;font-size:13px;letter-spacing:1.5px;
+  border-color:rgba(200,60,60,.55);color:#a02020
+}
 #btnRev:active,#btnRev.on{background:linear-gradient(160deg,rgba(255,80,80,.96),rgba(180,30,30,.96));color:#fff}
 
-#camZone{position:absolute;top:0;right:0;width:55%;height:55%;z-index:12;pointer-events:auto;touch-action:none}
+/* Camera drag zone — upper-right quadrant */
+#camZone{
+  position:absolute;top:0;right:0;
+  width:62%;height:56%;
+  z-index:11;pointer-events:auto;touch-action:none
+}
 
-#loader{position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:radial-gradient(ellipse at 50% 40%,#16264a,#040810 75%);transition:opacity .6s ease-out}
+/* ═══════════════════════════════════════════════════════════════
+   LOADER
+   ═══════════════════════════════════════════════════════════════ */
+#loader{
+  position:absolute;inset:0;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:22px;
+  background:radial-gradient(ellipse at 50% 40%,#16264a,#040810 75%);
+  transition:opacity .6s ease-out
+}
 #loader.done{opacity:0;pointer-events:none}
-#loaderTitle{font-size:clamp(34px,7vw,58px);font-weight:900;letter-spacing:14px;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6,#7dd3fc);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 3s linear infinite}
+#loaderTitle{
+  font-size:clamp(34px,7vw,58px);font-weight:900;letter-spacing:14px;
+  background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6,#7dd3fc);
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shine 3s linear infinite;
+  text-shadow:0 0 60px rgba(120,180,255,.5)
+}
 @keyframes shine{to{background-position:300% 0}}
 #loaderSub{font-size:11px;letter-spacing:7px;color:#8ea8c8;font-weight:700}
-#barWrap{width:280px;height:6px;border-radius:3px;background:rgba(255,255,255,.13);overflow:hidden;margin-top:8px}
-#barFill{height:100%;width:0%;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6);border-radius:3px;transition:width .15s linear}
+#barWrap{
+  width:280px;height:6px;border-radius:3px;
+  background:rgba(255,255,255,.13);overflow:hidden;
+  box-shadow:0 0 24px rgba(120,180,255,.35);margin-top:8px
+}
+#barFill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6);
+  border-radius:3px;transition:width .15s linear;
+  box-shadow:0 0 14px rgba(120,180,255,.9)
+}
 #barText{font-size:11px;letter-spacing:3px;color:#a8c0dc;font-weight:600;min-height:14px;margin-top:4px}
-#tapHint{position:absolute;bottom:44px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;letter-spacing:5px;font-weight:800;opacity:0;animation:pulse 1.8s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
-#errorBox{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(200,30,30,.9);color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;font-family:monospace;max-width:90vw;display:none;z-index:200;word-break:break-all}
+
+#playBtn{
+  position:absolute;bottom:80px;left:50%;transform:translateX(-50%);
+  padding:18px 54px;border-radius:60px;
+  background:linear-gradient(160deg,#7dd3fc,#3b82f6);color:#fff;
+  font-size:18px;font-weight:900;letter-spacing:6px;
+  border:none;cursor:pointer;
+  box-shadow:0 10px 40px rgba(59,130,246,.55),inset 0 2px 0 rgba(255,255,255,.3);
+  display:none;font-family:system-ui,sans-serif;z-index:110;pointer-events:auto
+}
+#playBtn:active{transform:translateX(-50%) scale(.95)}
+#playBtn.show{display:block;animation:pop .4s ease-out}
+@keyframes pop{
+  0%{opacity:0;transform:translateX(-50%) scale(.8)}
+  100%{opacity:1;transform:translateX(-50%) scale(1)}
+}
+#playHint{
+  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+  color:#8ea8c8;font-size:11px;letter-spacing:4px;font-weight:700;
+  display:none
+}
+#playHint.show{display:block}
+
+#errorBox{
+  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  background:rgba(200,30,30,.9);color:#fff;
+  padding:10px 20px;border-radius:10px;
+  font-size:12px;font-family:monospace;
+  max-width:90vw;display:none;z-index:200;word-break:break-all
+}
+
+#rotatePrompt{
+  position:absolute;inset:0;background:rgba(4,8,16,.95);
+  display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;
+  z-index:500;text-align:center;padding:30px
+}
+#rotatePrompt.show{display:flex}
+#rotatePrompt .rot{font-size:52px;animation:rotateAnim 2s ease-in-out infinite}
+@keyframes rotateAnim{
+  0%,100%{transform:rotate(0)}
+  50%{transform:rotate(90deg)}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEBUG / PERF OVERLAY
+   ═══════════════════════════════════════════════════════════════ */
+#perfInfo{
+  position:absolute;
+  top:calc(80px + env(safe-area-inset-top));
+  right:calc(12px + env(safe-area-inset-right));
+  padding:6px 10px;
+  border-radius:8px;
+  background:rgba(10,20,40,.7);
+  color:#7dd3fc;
+  font-size:9px;
+  font-family:monospace;
+  letter-spacing:1px;
+  display:none;
+  z-index:15;
+  pointer-events:none
+}
 </style>
 </head>
 <body>
 <div id="app">
   <canvas id="c"></canvas>
 
+  <!-- ══════════════════════════════════════════════════════════
+       HUD
+       ══════════════════════════════════════════════════════════ -->
   <div id="hud">
     <div class="panel" id="topLeft">
       <div id="lvlName">ԵՐԵՎԱՆ · 3D</div>
@@ -78,11 +246,19 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
       <div id="spdVal">0</div>
       <div id="spdUnit">ԿՄ/Ժ</div>
     </div>
-    <div class="panel" id="compass">
-      <div id="compassArrow">↑</div>
+    <div id="minimapWrap">
+      <canvas id="minimap" width="264" height="264"></canvas>
     </div>
+    <div class="panel" id="compass">
+      <span id="compassArrow">↑</span>
+      <span id="compassN">N</span>
+    </div>
+    <div id="perfInfo">—</div>
   </div>
 
+  <!-- ══════════════════════════════════════════════════════════
+       CONTROLS
+       ══════════════════════════════════════════════════════════ -->
   <div id="controls">
     <div class="btn" id="btnL">◀</div>
     <div class="btn" id="btnR">▶</div>
@@ -92,29 +268,50 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
 
   <div id="camZone"></div>
 
+  <!-- ══════════════════════════════════════════════════════════
+       LOADER
+       ══════════════════════════════════════════════════════════ -->
   <div id="loader">
     <div id="loaderTitle">ԵՐԵՎԱՆ</div>
     <div id="loaderSub">3D · ՔԱՂԱՔ · ՌԵԼԻԵՖ</div>
     <div id="barWrap"><div id="barFill"></div></div>
     <div id="barText">ՄԻԱՑՈՒՄ...</div>
-    <div id="tapHint">ՀՊԵՔ ՍԿՍԵԼՈՒ ՀԱՄԱՐ</div>
+    <button id="playBtn">ՍԿՍԵԼ</button>
+    <div id="playHint">Խաղը լիաէկրան կբացվի</div>
+  </div>
+
+  <div id="rotatePrompt">
+    <div class="rot">📱</div>
+    <div style="font-size:14px;letter-spacing:3px;font-weight:800">
+      ԽՆԴՐՈՒՄ ԵՆՔ ՊՏՏԵՔ ՀԵՌԱԽՈՍԸ
+    </div>
   </div>
 
   <div id="errorBox"></div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════
+     LOADER SCRIPT
+     ═══════════════════════════════════════════════════════════════ -->
 <script>
 window.__gameStartFn = null;
+window.__gameReady = false;
+
 window.addEventListener('error', function(e){
   var eb = document.getElementById('errorBox');
-  if(eb){ eb.style.display = 'block'; eb.textContent = 'ՍԽԱԼ՝ ' + (e.message || '') + ' @' + (e.lineno || '?'); }
+  if(eb){
+    eb.style.display = 'block';
+    eb.textContent = 'ՍԽԱԼ՝ ' + (e.message || '') + ' @' + (e.lineno || '?');
+  }
 });
 
 (function(){
   var fill = document.getElementById('barFill');
   var text = document.getElementById('barText');
   var loader = document.getElementById('loader');
-  var p = 0, started = false;
+  var playBtn = document.getElementById('playBtn');
+  var playHint = document.getElementById('playHint');
+  var p = 0;
 
   var iv = setInterval(function(){
     p += 8 + Math.random() * 8;
@@ -124,188 +321,259 @@ window.addEventListener('error', function(e){
       if(p < 35) text.textContent = 'ՄԻԱՑՈՒՄ...';
       else if(p < 70) text.textContent = 'ԿԱՌՈՒՑՈՒՄ...';
       else if(p < 100) text.textContent = 'ՊԱՏՐԱՍՏՎՈՒՄ...';
-      else text.textContent = 'ՊԱՏՐԱՍՏ';
+      else text.textContent = 'ՊԱՏՐԱՍՏ Է';
     }
-    if(p >= 100) clearInterval(iv);
+    if(p >= 100){
+      clearInterval(iv);
+      if(window.__gameReady){
+        playBtn.classList.add('show');
+        playHint.classList.add('show');
+      }
+    }
   }, 40);
 
-  function launch(){
-    if(started) return;
-    started = true;
-    if(!window.__gameStartFn) return;
-    try { window.__gameStartFn(); } catch(e){ console.error(e); }
-    if(loader) loader.classList.add('done');
-  }
-
-  // Start on first user interaction (needed for fullscreen)
-  function onFirstTap(e){
-    // Request fullscreen from user gesture
-    try {
-      var el = document.documentElement;
-      var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-      if(fn) {
-        var r = fn.call(el);
-        if(r && r.catch) r.catch(function(){});
-      }
-      if(screen.orientation && screen.orientation.lock){
-        try { screen.orientation.lock('landscape').catch(function(){}); } catch(_){}
-      }
-      window.scrollTo(0, 1);
-      setTimeout(function(){ window.scrollTo(0, 1); }, 200);
-      setTimeout(function(){ window.scrollTo(0, 1); }, 700);
-    } catch(_){}
-
-    // Wait a tiny beat for fullscreen transition
-    setTimeout(launch, 200);
-
-    window.removeEventListener('touchstart', onFirstTap);
-    window.removeEventListener('mousedown', onFirstTap);
-  }
-
-  window.addEventListener('touchstart', onFirstTap, {passive: true});
-  window.addEventListener('mousedown', onFirstTap);
-
-  // Fallback auto-start (if user has mouse/keyboard and never taps)
-  setTimeout(function(){
-    if(!started && window.__gameStartFn){
-      // Still require gesture for fullscreen, but launch game anyway
-      setTimeout(launch, 200);
+  setInterval(function(){
+    if(window.__gameReady && p >= 100){
+      playBtn.classList.add('show');
+      playHint.classList.add('show');
     }
-  }, 5000);
+  }, 100);
+
+  function enterFullscreenAndStart(){
+    var el = document.documentElement;
+    var req = el.requestFullscreen
+      || el.webkitRequestFullscreen
+      || el.mozRequestFullScreen
+      || el.msRequestFullscreen;
+    if(req){
+      try {
+        var res = req.call(el, { navigationUI: 'hide' });
+        if(res && res.catch) res.catch(function(){});
+      } catch(e){}
+    }
+    try {
+      if(screen.orientation && screen.orientation.lock){
+        screen.orientation.lock('landscape').catch(function(){});
+      }
+    } catch(e){}
+
+    setTimeout(function(){ window.scrollTo(0, 1); }, 100);
+    setTimeout(function(){ window.scrollTo(0, 1); }, 500);
+    setTimeout(function(){ window.scrollTo(0, 1); }, 1500);
+
+    setTimeout(function(){
+      if(window.__gameStartFn){
+        try { window.__gameStartFn(); }
+        catch(err){ console.error(err); }
+      }
+      loader.classList.add('done');
+    }, 250);
+  }
+
+  playBtn.addEventListener('click', enterFullscreenAndStart);
+  playBtn.addEventListener('touchend', function(e){
+    e.preventDefault();
+    enterFullscreenAndStart();
+  }, {passive: false});
 })();
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
+<!-- ═══════════════════════════════════════════════════════════════
+     MAIN GAME
+     ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
 'use strict';
 
-/* ═════════════ CONSTANTS ═════════════ */
-var MAX_KMH = 110;
-var MAX_REV_KMH = 25;
-var ROAD_WIDTH = 14;
-var HASH_SIZE = 40;
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 1 — CONSTANTS
+   ═══════════════════════════════════════════════════════════════════ */
+var MAX_KMH          = 110;   // Max forward speed
+var MAX_REV_KMH      = 25;    // Max reverse speed
+var HASH_SIZE        = 50;    // Spatial hash cell size (world units)
+var TERRAIN_SIZE     = 1400;  // Full terrain plane size
+var TERRAIN_RES      = 60;    // Grid subdivisions (lower = faster)
+var WORLD_LIMIT      = 660;   // Car movement clamp
+var CASCADE_Z        = 420;   // Cascade peak z-coordinate
 
-var LM = {
-  square:     { x: 0,    z: 0,    name: 'Հանրապետության հրապարակ' },
-  cascades:   { x: 0,    z: 420,  name: 'Կասկադ' },
-  opera:      { x: -230, z: 80,   name: 'Օպերայի շենք' },
-  matenadaran:{ x: -420, z: 260,  name: 'Մատենադարան' },
-  gallery:    { x: -180, z: -30,  name: 'Ազգային պատկերասրահ' },
-  northAve:   { x: 130,  z: 30,   name: 'Հյուսիսային պողոտա' },
-  marriott:   { x: -20,  z: -200, name: 'Marriott Hotel' },
-  university: { x: 260,  z: -280, name: 'Երևանի պետական համալսարան' }
-};
-
-/* ═════════════ TERRAIN ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 2 — TERRAIN HEIGHT FUNCTION
+   ───────────────────────────────────────────────────────────────
+   The terrain is a mathematical function sampled at build time.
+   Layout (looking from above, +z = north, +x = east):
+     · City plain:    z ∈ [-460, 200]  →  mostly flat with gentle waves
+     · Cascade slope: z ∈ [200, 420]   →  rises to +55 (peak)
+     · Cascade back:  z > 420          →  gently descends (background)
+     · Matenadaran knoll (NW): (−420, 260),  +24 height
+     · Opera knoll (W): (−230, 80),  +8 height
+   ═══════════════════════════════════════════════════════════════════ */
 function terrainHeight(x, z){
   var y = 0;
-  // Rise to north → Cascade hill
-  var t = (z - 60) / 360;
-  if(t < 0) t = 0;
-  if(t > 1) t = 1;
-  y += Math.pow(t, 1.7) * 82;
-  if(z > 420) y += (z - 420) * 0.15;
 
-  // Matenadaran small hill
-  var dmx = x + 420, dmz = z - 260;
-  y += 22 * Math.exp(-(dmx*dmx + dmz*dmz) / 18000);
+  /* ── Base gentle wave pattern across the entire plain ── */
+  y += 0.9 * Math.sin(x * 0.010) * Math.cos(z * 0.008);
+  y += 0.5 * Math.sin(x * 0.021 + z * 0.014);
 
-  // Bumpy green hills around Cascades (wild nature)
-  var dcx = x, dcz = z - 420;
-  var dc = Math.sqrt(dcx*dcx + dcz*dcz);
-  if(dc < 320 && z > 260){
-    var str = (320 - dc) / 320;
-    y += str * str * 5 * Math.sin(x * 0.06) * Math.cos(z * 0.05);
-    y += str * str * 3 * Math.sin(x * 0.11 + z * 0.07);
+  /* ── Cascade hill — peaks exactly at z = CASCADE_Z ──
+     t = 0 at z=200 (base), 1 at z=420 (peak)
+     pow(t, 1.8) gives a smooth curve that accelerates upward. */
+  var t = (z - 200) / 220;
+  if(t > 0){
+    if(t > 1) t = 1;
+    y += Math.pow(t, 1.8) * 55;
   }
 
-  // Gentle waves
-  y += 1 * Math.sin(x * 0.012) * Math.cos(z * 0.009);
+  /* ── Beyond Cascade: gently descend ──
+     This ensures the Cascade peak is the HIGHEST point in the map. */
+  if(z > CASCADE_Z){
+    var pz = z - CASCADE_Z;
+    y -= Math.min(pz * 0.02, 15);
+  }
+
+  /* ── Matenadaran knoll (northwest) ── */
+  var dmx = x + 420, dmz = z - 260;
+  y += 24 * Math.exp(-(dmx*dmx + dmz*dmz) / 20000);
+
+  /* ── Opera gentle knoll ── */
+  var dox = x + 230, doz = z - 80;
+  y += 8 * Math.exp(-(dox*dox + doz*doz) / 16000);
+
   return y;
 }
 
-/* ═════════════ RENDERER ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 3 — RENDERER  (heavy perf tuning for mobile)
+   ═══════════════════════════════════════════════════════════════════ */
 var app = document.getElementById('app');
 var cvs = document.getElementById('c');
 
 var renderer = new THREE.WebGLRenderer({
-  canvas: cvs, antialias: true, powerPreference: 'high-performance'
+  canvas:           cvs,
+  antialias:        false,               // ⚡ OFF — MSAA is a killer
+  powerPreference:  'high-performance',
+  stencil:          false,
+  depth:            true,
+  alpha:            false
 });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+renderer.setPixelRatio(1);               // ⚡ always 1, never devicePixelRatio
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap;
-renderer.shadowMap.autoUpdate = true;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = false;       // ⚡ NO shadows — biggest win
+renderer.setClearColor(0xa8c8e8, 1);
 
 var scene = new THREE.Scene();
 scene.background = new THREE.Color(0xa8c8e8);
-scene.fog = new THREE.Fog(0xb8d4e8, 240, 600);
+scene.fog = new THREE.Fog(0xc0d8e8, 260, 720);
 
-var camera = new THREE.PerspectiveCamera(58, 16/9, 0.3, 800);
+var camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.5, 2000);
 
-/* Sky */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 4 — SKY + ARARAT
+   ───────────────────────────────────────────────────────────────
+   Ararat is placed NORTH (behind Cascade) so it appears in the
+   background from the city. Cone silhouette, no fog applied.
+   ═══════════════════════════════════════════════════════════════════ */
 (function(){
-  var g = new THREE.SphereGeometry(700, 24, 12);
-  var m = new THREE.ShaderMaterial({
+  /* ── Sky dome with 3-stop gradient shader ── */
+  var skyGeo = new THREE.SphereGeometry(1500, 32, 16);
+  var skyMat = new THREE.ShaderMaterial({
     uniforms: {
-      cT: { value: new THREE.Color(0x3a7fd0) },
-      cM: { value: new THREE.Color(0xa8cae8) },
-      cH: { value: new THREE.Color(0xf8e0b8) }
+      cTop: { value: new THREE.Color(0x2a72c8) },
+      cMid: { value: new THREE.Color(0x9cc0e0) },
+      cHor: { value: new THREE.Color(0xf4dcb0) }
     },
-    vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-    fragmentShader: 'uniform vec3 cT; uniform vec3 cM; uniform vec3 cH; varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 col = h > 0.0 ? mix(cM, cT, pow(h, 0.6)) : cM; float hor = exp(-abs(h) * 6.0); col = mix(col, cH, hor * 0.65); gl_FragColor = vec4(col, 1.0); }',
-    side: THREE.BackSide, depthWrite: false, fog: false
+    vertexShader: [
+      'varying vec3 vP;',
+      'void main(){',
+      '  vP = position;',
+      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);',
+      '}'
+    ].join('\n'),
+    fragmentShader: [
+      'uniform vec3 cTop; uniform vec3 cMid; uniform vec3 cHor;',
+      'varying vec3 vP;',
+      'void main(){',
+      '  float h = normalize(vP).y;',
+      '  vec3 col = h > 0.0 ? mix(cMid, cTop, pow(h, 0.65)) : cMid;',
+      '  float hor = exp(-abs(h) * 5.5);',
+      '  col = mix(col, cHor, hor * 0.7);',
+      '  gl_FragColor = vec4(col, 1.0);',
+      '}'
+    ].join('\n'),
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false
   });
-  scene.add(new THREE.Mesh(g, m));
+  scene.add(new THREE.Mesh(skyGeo, skyMat));
+
+  /* ── Ararat — main peak (north, behind Cascade) ── */
+  var mtnMat = new THREE.MeshBasicMaterial({ color: 0xc8d0e0, fog: false });
+  var mtnMatDark = new THREE.MeshBasicMaterial({ color: 0xa8b4c8, fog: false });
+
+  var ararat1 = new THREE.Mesh(new THREE.ConeGeometry(220, 180, 6), mtnMat);
+  ararat1.position.set(320, 20, 950);
+  ararat1.rotation.y = 0.3;
+  scene.add(ararat1);
+
+  /* ── Ararat — smaller sister peak (a bit west) ── */
+  var ararat2 = new THREE.Mesh(new THREE.ConeGeometry(140, 120, 6), mtnMat);
+  ararat2.position.set(180, 15, 920);
+  ararat2.rotation.y = -0.2;
+  scene.add(ararat2);
+
+  /* ── Snow caps on both peaks (small cones in white) ── */
+  var snowMat = new THREE.MeshBasicMaterial({ color: 0xf0f4f8, fog: false });
+  var cap1 = new THREE.Mesh(new THREE.ConeGeometry(75, 60, 6), snowMat);
+  cap1.position.set(320, 100, 950);
+  cap1.rotation.y = 0.3;
+  scene.add(cap1);
+
+  var cap2 = new THREE.Mesh(new THREE.ConeGeometry(48, 40, 6), snowMat);
+  cap2.position.set(180, 80, 920);
+  cap2.rotation.y = -0.2;
+  scene.add(cap2);
 })();
 
-/* Lights */
-scene.add(new THREE.HemisphereLight(0xc8e0f8, 0x8a7a5a, 0.85));
-var sun = new THREE.DirectionalLight(0xfff0d0, 1.15);
-sun.position.set(-60, 120, 45);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.camera.left = -80;
-sun.shadow.camera.right = 80;
-sun.shadow.camera.top = 80;
-sun.shadow.camera.bottom = -80;
-sun.shadow.camera.near = 10;
-sun.shadow.camera.far = 320;
-sun.shadow.bias = -0.0008;
-sun.shadow.normalBias = 0.04;
-scene.add(sun);
-var sunTarget = new THREE.Object3D();
-scene.add(sunTarget);
-sun.target = sunTarget;
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 5 — LIGHTS  (no shadow maps)
+   ═══════════════════════════════════════════════════════════════════ */
+scene.add(new THREE.HemisphereLight(0xd0e4f8, 0x8a7a5a, 0.95));
 
-/* ═════════════ TERRAIN MESH ═════════════ */
-function makeGrassTex(){
+var sun = new THREE.DirectionalLight(0xfff0d0, 1.1);
+sun.position.set(-100, 200, 120);
+scene.add(sun);
+
+var fillLight = new THREE.DirectionalLight(0xc8d8ff, 0.25);
+fillLight.position.set(150, 60, -120);
+scene.add(fillLight);
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 6 — TERRAIN MESH
+   ═══════════════════════════════════════════════════════════════════ */
+function makeGrassTexture(){
   var cv = document.createElement('canvas');
   cv.width = 128; cv.height = 128;
   var x = cv.getContext('2d');
   x.fillStyle = '#7a9a55';
   x.fillRect(0, 0, 128, 128);
-  for(var i = 0; i < 2000; i++){
+  for(var i = 0; i < 2400; i++){
     var r = Math.random();
     x.fillStyle = r > 0.66 ? '#8aaa60' : (r > 0.33 ? '#6a8a48' : '#5a7a3a');
     x.fillRect(Math.random() * 128, Math.random() * 128, 1.5, 2);
   }
   var t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(40, 40);
+  t.repeat.set(60, 60);
   t.encoding = THREE.sRGBEncoding;
+  t.anisotropy = 1;
   return t;
 }
 
-var TERRAIN_SIZE = 1400;
-var TERRAIN_RES = 90;
 var terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_RES, TERRAIN_RES);
 terrainGeo.rotateX(-Math.PI / 2);
-
 (function(){
   var pos = terrainGeo.attributes.position;
   for(var i = 0; i < pos.count; i++){
@@ -314,29 +582,79 @@ terrainGeo.rotateX(-Math.PI / 2);
   pos.needsUpdate = true;
   terrainGeo.computeVertexNormals();
 })();
-
-var terrainMesh = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({
-  map: makeGrassTex(), roughness: 1, metalness: 0
-}));
-terrainMesh.receiveShadow = true;
+var terrainMesh = new THREE.Mesh(
+  terrainGeo,
+  new THREE.MeshStandardMaterial({
+    map: makeGrassTexture(),
+    roughness: 1,
+    metalness: 0
+  })
+);
 scene.add(terrainMesh);
 
-/* ═════════════ ROADS (SPLINE-BASED) ═════════════ */
-function makeAsphaltTex(){
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 7 — ROAD NETWORK  (node + edge graph)
+   ═══════════════════════════════════════════════════════════════════ */
+var ROAD_NODES = {
+  /* ── Main N-S axis (Mashtots Ave) ── */
+  s1: { x: 0,    z: -420 },   // far south (Marriott approach)
+  s2: { x: 6,    z: -280 },   // Marriott intersection
+  s3: { x: -4,   z: -140 },
+  s4: { x: 0,    z: 0    },   // Republic Square
+  s5: { x: 4,    z: 130  },
+  s6: { x: -2,   z: 250  },   // Cascade base
+
+  /* ── West axis (Tumanyan) ── */
+  w1: { x: -140, z: -6   },
+  w2: { x: -280, z: -30  },
+  w3: { x: -410, z: -60  },
+
+  /* ── NW branch to Matenadaran ── */
+  w4: { x: -260, z: 100  },
+  w5: { x: -410, z: 230  },
+  w6: { x: -420, z: 380  },
+
+  /* ── East axis (Northern Ave) ── */
+  e1: { x: 140,  z: 30   },
+  e2: { x: 270,  z: 80   },
+  e3: { x: 400,  z: 130  },
+
+  /* ── South-west diagonal ── */
+  d1: { x: -190, z: -190 },
+  d2: { x: -340, z: -300 },
+  d3: { x: -110, z: 60   },
+
+  /* ── South-east diagonal ── */
+  e4: { x: 190,  z: -190 },
+  e5: { x: 340,  z: -290 },
+  e6: { x: 140,  z: 160  }
+};
+
+var ROAD_EDGES = [
+  ['s1','s2', 18], ['s2','s3', 18], ['s3','s4', 20], ['s4','s5', 20], ['s5','s6', 18],
+  ['s4','w1', 16], ['w1','w2', 14], ['w2','w3', 12],
+  ['w1','w4', 12], ['w4','w5', 12], ['w5','w6', 12],
+  ['s4','e1', 16], ['e1','e2', 14], ['e2','e3', 12],
+  ['s3','d1', 12], ['d1','d2', 12], ['d2','w2', 12],
+  ['s5','e4', 12], ['e4','e5', 12], ['e5','e2', 12],
+  ['w1','d3', 12], ['d3','s4', 12],
+  ['e1','e6', 12], ['e6','s5', 12]
+];
+
+function makeAsphaltTexture(){
   var cv = document.createElement('canvas');
   cv.width = 128; cv.height = 256;
   var x = cv.getContext('2d');
   x.fillStyle = '#3a3d42';
   x.fillRect(0, 0, 128, 256);
-  for(var i = 0; i < 1200; i++){
-    x.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.07)';
+  for(var i = 0; i < 1500; i++){
+    x.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.07)';
     x.fillRect(Math.random() * 128, Math.random() * 256, 1.5, 1.5);
   }
-  // Dashed center line
-  x.fillStyle = '#e8b830';
-  for(var y = 0; y < 256; y += 32){
-    x.fillRect(60, y, 3, 16);
-    x.fillRect(66, y, 3, 16);
+  x.fillStyle = '#e0b030';
+  for(var yy = 0; yy < 256; yy += 40){
+    x.fillRect(62, yy + 4, 2, 16);
+    x.fillRect(65, yy + 4, 2, 16);
   }
   var t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -344,111 +662,262 @@ function makeAsphaltTex(){
   return t;
 }
 
-var asphaltTex = makeAsphaltTex();
-var asphaltMat = new THREE.MeshStandardMaterial({ map: asphaltTex, roughness: 0.92, metalness: 0.02 });
+var asphaltTex = makeAsphaltTexture();
+var asphaltMat = new THREE.MeshLambertMaterial({ map: asphaltTex });
 
-/* Build a curved road ribbon from control points */
-function buildRoad(points, width, yOffset, material){
-  var v3 = [];
-  for(var i = 0; i < points.length; i++){
-    v3.push(new THREE.Vector3(points[i].x, 0, points[i].z));
-  }
-  var curve = new THREE.CatmullRomCurve3(v3, false, 'catmullrom', 0.5);
-  var len = curve.getLength();
-  var N = Math.max(24, Math.ceil(len / 6));
+/* ── Road ribbon geometry accumulator ── */
+var ROAD_VERTS = [], ROAD_UVS = [], ROAD_IDX = [];
+
+function addRoadRibbon(ax, az, bx, bz, width, bend){
+  var dx = bx - ax, dz = bz - az;
+  var len = Math.sqrt(dx * dx + dz * dz);
+  if(len < 0.5) return;
+
+  var nx = -dz / len, nz = dx / len;
+  var b = bend || 0;
+  var mx = (ax + bx) * 0.5 + nx * b;
+  var mz = (az + bz) * 0.5 + nz * b;
+
+  var curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(ax, 0, az),
+    new THREE.Vector3(mx, 0, mz),
+    new THREE.Vector3(bx, 0, bz)
+  ], false, 'catmullrom', 0.5);
+
+  var N = Math.max(6, Math.ceil(len / 8));
   var pts = curve.getSpacedPoints(N);
+  var startIdx = ROAD_VERTS.length / 3;
 
-  var pos = [], uv = [], idx = [];
   for(var i = 0; i <= N; i++){
     var p = pts[i];
-    var prev = pts[Math.max(0, i-1)];
-    var next = pts[Math.min(N, i+1)];
-    var dx = next.x - prev.x, dz = next.z - prev.z;
-    var l = Math.hypot(dx, dz) || 1;
-    var nx = -dz / l, nz = dx / l;
+    var iPrev = Math.max(0, i - 1);
+    var iNext = Math.min(N, i + 1);
+    var pPrev = pts[iPrev], pNext = pts[iNext];
+    var tdx = pNext.x - pPrev.x, tdz = pNext.z - pPrev.z;
+    var tl = Math.sqrt(tdx * tdx + tdz * tdz) || 1;
+    var px = -tdz / tl, pz = tdx / tl;
 
-    var lx = p.x + nx * width / 2, lz = p.z + nz * width / 2;
-    var rx = p.x - nx * width / 2, rz = p.z - nz * width / 2;
+    var lx = p.x + px * width / 2, lz = p.z + pz * width / 2;
+    var rx = p.x - px * width / 2, rz = p.z - pz * width / 2;
+    var ly = terrainHeight(lx, lz) + 0.25;
+    var ry = terrainHeight(rx, rz) + 0.25;
 
-    pos.push(lx, terrainHeight(lx, lz) + yOffset, lz);
-    pos.push(rx, terrainHeight(rx, rz) + yOffset, rz);
-
-    var uvY = i * (len / N) * 0.05;
-    uv.push(0, uvY, 1, uvY);
+    ROAD_VERTS.push(lx, ly, lz, rx, ry, rz);
+    var v = i * (len / N) * 0.08;
+    ROAD_UVS.push(0, v, 1, v);
   }
+  for(var j = 0; j < N; j++){
+    var a = startIdx + j * 2;
+    ROAD_IDX.push(a, a+1, a+2, a+1, a+3, a+2);
+  }
+}
+
+for(var ei = 0; ei < ROAD_EDGES.length; ei++){
+  var e = ROAD_EDGES[ei];
+  var A = ROAD_NODES[e[0]], B = ROAD_NODES[e[1]];
+  var bend = (Math.random() - 0.5) * Math.min(20, e[2] * 1.2);
+  addRoadRibbon(A.x, A.z, B.x, B.z, e[2], bend);
+}
+
+/* ── Intersection pads ── */
+var INTER_VERTS = [], INTER_UVS = [], INTER_IDX = [];
+
+function addIntersection(cx, cz, size){
+  var h = size / 2;
+  var base = INTER_VERTS.length / 3;
+  var c = [
+    [cx - h, cz - h], [cx + h, cz - h],
+    [cx + h, cz + h], [cx - h, cz + h]
+  ];
+  for(var i = 0; i < 4; i++){
+    INTER_VERTS.push(c[i][0], terrainHeight(c[i][0], c[i][1]) + 0.28, c[i][1]);
+    INTER_UVS.push(0, 0);
+  }
+  INTER_IDX.push(base, base+1, base+2, base, base+2, base+3);
+}
+
+for(var nodeK in ROAD_NODES){
+  addIntersection(ROAD_NODES[nodeK].x, ROAD_NODES[nodeK].z, 22);
+}
+
+function buildGeometry(verts, uvs, idx, mat){
+  var g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  g.computeBoundingSphere();
+  return new THREE.Mesh(g, mat);
+}
+
+scene.add(buildGeometry(ROAD_VERTS, ROAD_UVS, ROAD_IDX, asphaltMat));
+scene.add(buildGeometry(INTER_VERTS, INTER_UVS, INTER_IDX, asphaltMat));
+
+/* ── Winding road up Cascade ── */
+var WINDING_PATH = [
+  { x: -2,   z: 250 },
+  { x: 60,   z: 285 },
+  { x: 140,  z: 320 },
+  { x: 210,  z: 355 },
+  { x: 250,  z: 405 },
+  { x: 230,  z: 460 },
+  { x: 160,  z: 500 },
+  { x: 80,   z: 530 },
+  { x: 20,   z: 555 },
+  { x: 0,    z: 585 },
+  { x: -30,  z: 620 },
+  { x: -20,  z: 660 }
+];
+
+(function(){
+  var wWinding = 11;
+  var N = WINDING_PATH.length;
+  var pts = [];
   for(var i = 0; i < N; i++){
-    var b = i * 2;
-    idx.push(b, b+1, b+2, b+1, b+3, b+2);
+    pts.push(new THREE.Vector3(WINDING_PATH[i].x, 0, WINDING_PATH[i].z));
   }
+  var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
+  var len = curve.getLength();
+  var segs = Math.max(40, Math.ceil(len / 8));
+  var sampled = curve.getSpacedPoints(segs);
 
-  var geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  geo.setIndex(idx);
-  geo.computeVertexNormals();
+  var verts = [], uvs = [], idx = [];
+  for(var i = 0; i <= segs; i++){
+    var p = sampled[i];
+    var iPrev = Math.max(0, i - 1), iNext = Math.min(segs, i + 1);
+    var pPrev = sampled[iPrev], pNext = sampled[iNext];
+    var tdx = pNext.x - pPrev.x, tdz = pNext.z - pPrev.z;
+    var tl = Math.sqrt(tdx * tdx + tdz * tdz) || 1;
+    var px = -tdz / tl, pz = tdx / tl;
 
-  var mesh = new THREE.Mesh(geo, material || asphaltMat);
-  mesh.receiveShadow = true;
-  return mesh;
+    var lx = p.x + px * wWinding / 2, lz = p.z + pz * wWinding / 2;
+    var rx = p.x - px * wWinding / 2, rz = p.z - pz * wWinding / 2;
+
+    verts.push(lx, terrainHeight(lx, lz) + 0.28, lz);
+    verts.push(rx, terrainHeight(rx, rz) + 0.28, rz);
+    var v = i * (len / segs) * 0.08;
+    uvs.push(0, v, 1, v);
+  }
+  for(var j = 0; j < segs; j++){
+    var a = j * 2;
+    idx.push(a, a+1, a+2, a+1, a+3, a+2);
+  }
+  var g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  g.computeBoundingSphere();
+  scene.add(new THREE.Mesh(g, asphaltMat));
+})();
+
+/* ── Sidewalks ── */
+var WALK_VERTS = [], WALK_UVS = [], WALK_IDX = [];
+
+function addSidewalks(ax, az, bx, bz, roadWidth, bend){
+  var dx = bx - ax, dz = bz - az;
+  var len = Math.sqrt(dx * dx + dz * dz);
+  if(len < 2) return;
+
+  var nx = -dz / len, nz = dx / len;
+  var b = bend || 0;
+  var mx = (ax + bx) * 0.5 + nx * b;
+  var mz = (az + bz) * 0.5 + nz * b;
+
+  var curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(ax, 0, az),
+    new THREE.Vector3(mx, 0, mz),
+    new THREE.Vector3(bx, 0, bz)
+  ], false, 'catmullrom', 0.5);
+  var N = Math.max(6, Math.ceil(len / 8));
+  var pts = curve.getSpacedPoints(N);
+  var sw = 2.6;
+  var startIdx = WALK_VERTS.length / 3;
+
+  for(var side = -1; side <= 1; side += 2){
+    for(var i = 0; i <= N; i++){
+      var p = pts[i];
+      var iPrev = Math.max(0, i - 1), iNext = Math.min(N, i + 1);
+      var pPrev = pts[iPrev], pNext = pts[iNext];
+      var tdx = pNext.x - pPrev.x, tdz = pNext.z - pPrev.z;
+      var tl = Math.sqrt(tdx * tdx + tdz * tdz) || 1;
+      var px = -tdz / tl, pz = tdx / tl;
+
+      var edge = roadWidth / 2;
+      var innerX = p.x + px * side * edge;
+      var innerZ = p.z + pz * side * edge;
+      var outerX = p.x + px * side * (edge + sw);
+      var outerZ = p.z + pz * side * (edge + sw);
+
+      WALK_VERTS.push(innerX, terrainHeight(innerX, innerZ) + 0.32, innerZ);
+      WALK_VERTS.push(outerX, terrainHeight(outerX, outerZ) + 0.32, outerZ);
+      var v = i * (len / N) * 0.1;
+      WALK_UVS.push(0, v, 1, v);
+    }
+    for(var j = 0; j < N; j++){
+      var a = startIdx + j * 2;
+      WALK_IDX.push(a, a+1, a+2, a+1, a+3, a+2);
+    }
+    startIdx = WALK_VERTS.length / 3;
+  }
 }
 
-/* Road network - curved, organic, matches Yerevan layout */
-var ROADS = [
-  // Mashtots Ave: main N-S from south → square → cascade base
-  [ {x:10,z:-440}, {x:4,z:-320}, {x:-6,z:-180}, {x:0,z:-40},
-    {x:6,z:60}, {x:14,z:150}, {x:4,z:240}, {x:-6,z:320} ],
-
-  // Tumanyan: E-W through square
-  [ {x:-380,z:-30}, {x:-200,z:-12}, {x:-60,z:0},
-    {x:60,z:4}, {x:200,z:10}, {x:380,z:20} ],
-
-  // West ring: around Opera / Matenadaran side
-  [ {x:-120,z:180}, {x:-230,z:150}, {x:-290,z:60},
-    {x:-280,z:-40}, {x:-230,z:-140}, {x:-100,z:-220} ],
-
-  // East ring / Northern Ave side
-  [ {x:110,z:200}, {x:200,z:130}, {x:230,z:20},
-    {x:220,z:-80}, {x:180,z:-190}, {x:60,z:-260} ],
-
-  // NW to Matenadaran
-  [ {x:-280,z:-40}, {x:-360,z:60}, {x:-400,z:160}, {x:-420,z:250} ],
-
-  // NE outer
-  [ {x:230,z:20}, {x:340,z:-40}, {x:420,z:-160} ],
-
-  // SE outer
-  [ {x:180,z:-190}, {x:260,z:-280}, {x:380,z:-340} ],
-
-  // Southwest connector
-  [ {x:-230,z:-140}, {x:-300,z:-260}, {x:-380,z:-360} ]
-];
-
-for(var ri = 0; ri < ROADS.length; ri++){
-  scene.add(buildRoad(ROADS[ri], ROAD_WIDTH, 0.12));
+for(var si = 0; si < ROAD_EDGES.length; si++){
+  var se = ROAD_EDGES[si];
+  var sA = ROAD_NODES[se[0]], sB = ROAD_NODES[se[1]];
+  var sbend = (Math.random() - 0.5) * Math.min(20, se[2] * 1.2);
+  addSidewalks(sA.x, sA.z, sB.x, sB.z, se[2], sbend);
 }
 
-/* Winding road up to Cascades (from far east, snaking up the hill) */
-var WINDING = [
-  {x:380, z:100}, {x:330, z:180}, {x:260, z:240}, {x:200, z:310},
-  {x:250, z:380}, {x:210, z:440}, {x:130, z:490}, {x:70, z:530},
-  {x:30, z:560}, {x:6, z:580}
-];
-scene.add(buildRoad(WINDING, 11, 0.15));
+function makeWalkTexture(){
+  var cv = document.createElement('canvas');
+  cv.width = 64; cv.height = 64;
+  var x = cv.getContext('2d');
+  x.fillStyle = '#d8ceb8';
+  x.fillRect(0, 0, 64, 64);
+  x.strokeStyle = 'rgba(140,130,115,.55)';
+  x.lineWidth = 1;
+  for(var i = 0; i <= 4; i++){
+    x.beginPath(); x.moveTo(i * 16, 0); x.lineTo(i * 16, 64); x.stroke();
+    x.beginPath(); x.moveTo(0, i * 16); x.lineTo(64, i * 16); x.stroke();
+  }
+  var t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.encoding = THREE.sRGBEncoding;
+  return t;
+}
 
-/* ═════════════ COLLISIONS (spatial hash) ═════════════ */
+scene.add(buildGeometry(
+  WALK_VERTS, WALK_UVS, WALK_IDX,
+  new THREE.MeshLambertMaterial({ map: makeWalkTexture() })
+));
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 8 — COLLISION SYSTEM  (ROTATION-AWARE + SPATIAL HASH)
+   ───────────────────────────────────────────────────────────────
+   Fix #5: When a building is rotated 90°/270°, its footprint in
+   world-space is (d, w) not (w, d).  We compute an axis-aligned
+   bounding box that FULLY contains the rotated rectangle using:
+       effW = |cos(r)|·w + |sin(r)|·d
+       effD = |sin(r)|·w + |cos(r)|·d
+   This slightly over-estimates for diagonal rotations (45°) but is
+   always conservative — no tunneling, no phantom collisions.
+   ═══════════════════════════════════════════════════════════════════ */
 var COL_HASH = {};
 
-function addCollision(x, z, w, d, h, rotY){
-  var c = Math.abs(Math.cos(rotY || 0));
-  var s = Math.abs(Math.sin(rotY || 0));
-  var aw = w * c + d * s;
-  var ad = w * s + d * c;
-  var b = { x: x, z: z, w: aw, d: ad, h: h };
+function addCollision(x, z, w, d, h, rot){
+  rot = rot || 0;
+  var c = Math.abs(Math.cos(rot));
+  var s = Math.abs(Math.sin(rot));
+  var effW = c * w + s * d;
+  var effD = s * w + c * d;
 
-  var x1 = Math.floor((b.x - aw/2) / HASH_SIZE);
-  var x2 = Math.floor((b.x + aw/2) / HASH_SIZE);
-  var z1 = Math.floor((b.z - ad/2) / HASH_SIZE);
-  var z2 = Math.floor((b.z + ad/2) / HASH_SIZE);
+  var b = { x: x, z: z, w: effW, d: effD, h: h };
+  var x1 = Math.floor((x - effW / 2) / HASH_SIZE);
+  var x2 = Math.floor((x + effW / 2) / HASH_SIZE);
+  var z1 = Math.floor((z - effD / 2) / HASH_SIZE);
+  var z2 = Math.floor((z + effD / 2) / HASH_SIZE);
+
   for(var i = x1; i <= x2; i++){
     for(var j = z1; j <= z2; j++){
       var k = i + ',' + j;
@@ -458,29 +927,89 @@ function addCollision(x, z, w, d, h, rotY){
   }
 }
 
-/* ═════════════ BUILDINGS (VARIED) ═════════════ */
-function makeBuildingTex(baseColor){
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 9 — LANDMARKS
+   (declared early so building placement can avoid their zones)
+   ═══════════════════════════════════════════════════════════════════ */
+var LM = {
+  square:      { x: 0,    z: 0,    name: 'Հանրապետության հրապարակ', r: 90  },
+  cascades:    { x: 0,    z: 420,  name: 'Կասկադ',                    r: 100 },
+  opera:       { x: -230, z: 80,   name: 'Օպերայի շենք',               r: 80  },
+  matenadaran: { x: -410, z: 230,  name: 'Մատենադարան',                r: 70  },
+  gallery:     { x: -280, z: -30,  name: 'Ազգային պատկերասրահ',       r: 50  },
+  northAve:    { x: 270,  z: 80,   name: 'Հյուսիսային պողոտա',         r: 80  },
+  marriott:    { x: 0,    z: -260, name: 'Marriott Hotel',             r: 60  },
+  university:  { x: 340,  z: -290, name: 'Երևանի պետական համալսարան', r: 70  }
+};
+
+function isNearLandmark(x, z, extra){
+  for(var k in LM){
+    var L = LM[k];
+    var r = (L.r || 50) + (extra || 0);
+    var dx = x - L.x, dz = z - L.z;
+    if(dx * dx + dz * dz < r * r) return true;
+  }
+  return false;
+}
+
+function isNearRoad(x, z, margin){
+  for(var i = 0; i < ROAD_EDGES.length; i++){
+    var e = ROAD_EDGES[i];
+    var A = ROAD_NODES[e[0]], B = ROAD_NODES[e[1]];
+    var W = e[2];
+    var dx = B.x - A.x, dz = B.z - A.z;
+    var l2 = dx * dx + dz * dz;
+    var t = ((x - A.x) * dx + (z - A.z) * dz) / l2;
+    t = Math.max(0, Math.min(1, t));
+    var cx = A.x + dx * t, cz = A.z + dz * t;
+    var d = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
+    if(d < W / 2 + (margin || 6)) return true;
+  }
+  for(var i = 0; i < WINDING_PATH.length - 1; i++){
+    var A2 = WINDING_PATH[i], B2 = WINDING_PATH[i + 1];
+    var dx2 = B2.x - A2.x, dz2 = B2.z - A2.z;
+    var l22 = dx2 * dx2 + dz2 * dz2;
+    var t2 = ((x - A2.x) * dx2 + (z - A2.z) * dz2) / l22;
+    t2 = Math.max(0, Math.min(1, t2));
+    var cx2 = A2.x + dx2 * t2, cz2 = A2.z + dz2 * t2;
+    var d2 = Math.sqrt((x - cx2) * (x - cx2) + (z - cz2) * (z - cz2));
+    if(d2 < 7 + (margin || 6)) return true;
+  }
+  return false;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 10 — BUILDING TEXTURES + MATERIALS
+   ═══════════════════════════════════════════════════════════════════ */
+function makeTuffTexture(baseHex, windowStyle){
   var cv = document.createElement('canvas');
   cv.width = 128; cv.height = 256;
   var x = cv.getContext('2d');
-  x.fillStyle = baseColor;
+  x.fillStyle = baseHex;
   x.fillRect(0, 0, 128, 256);
-  for(var i = 0; i < 700; i++){
+  for(var i = 0; i < 800; i++){
     x.fillStyle = 'rgba(120,100,80,' + (Math.random() * 0.09) + ')';
     x.fillRect(Math.random() * 128, Math.random() * 256, 3, 2);
   }
-  var cols = 3, rows = 8;
+  var cols, rows;
+  if(windowStyle === 'modern'){ cols = 5; rows = 12; }
+  else if(windowStyle === 'dense'){ cols = 4; rows = 14; }
+  else { cols = 3; rows = 8; }
   var cw = 128 / cols, ch = 256 / rows;
-  for(var r = 1; r < rows; r++){
+  for(var r = 1; r < rows - 0.5; r++){
     for(var c = 0; c < cols; c++){
-      var wx = c * cw + 8;
-      var wy = r * ch + 8;
+      var wx = c * cw + cw * 0.15;
+      var wy = r * ch + ch * 0.12;
+      var ww = cw * 0.7;
+      var wh = ch * 0.66;
       x.fillStyle = '#2a3a4a';
-      x.fillRect(wx, wy, cw - 16, ch - 14);
-      x.fillStyle = Math.random() > 0.5 ? '#6a8aa8' : '#4a6a88';
-      x.fillRect(wx + 1, wy + 1, cw - 18, ch - 16);
-      x.fillStyle = 'rgba(255,255,255,0.4)';
-      x.fillRect(wx + 2, wy + 2, (cw - 20) * 0.35, (ch - 18) * 0.35);
+      x.fillRect(wx, wy, ww, wh);
+      var hue = Math.random();
+      var wc = hue > 0.7 ? '#8ac8e8' : (hue > 0.4 ? '#6a8aa8' : '#4a6a88');
+      x.fillStyle = wc;
+      x.fillRect(wx + 1, wy + 1, ww - 2, wh - 2);
+      x.fillStyle = 'rgba(255,255,255,0.35)';
+      x.fillRect(wx + 2, wy + 2, ww * 0.35, wh * 0.4);
     }
   }
   var t = new THREE.CanvasTexture(cv);
@@ -489,434 +1018,917 @@ function makeBuildingTex(baseColor){
   return t;
 }
 
+/* ── 8 base materials for instanced buildings ── */
 var BLD_MATS = [
-  new THREE.MeshStandardMaterial({ map: makeBuildingTex('#e0d0b8'), roughness: 0.88, metalness: 0.04 }),
-  new THREE.MeshStandardMaterial({ map: makeBuildingTex('#d8b8a0'), roughness: 0.88, metalness: 0.04 }),
-  new THREE.MeshStandardMaterial({ map: makeBuildingTex('#e8d8c8'), roughness: 0.88, metalness: 0.04 }),
-  new THREE.MeshStandardMaterial({ map: makeBuildingTex('#d0c0b0'), roughness: 0.88, metalness: 0.04 }),
-  new THREE.MeshStandardMaterial({ map: makeBuildingTex('#c8b8a8'), roughness: 0.88, metalness: 0.04 }),
-  new THREE.MeshStandardMaterial({ map: makeBuildingTex('#b8a890'), roughness: 0.9,  metalness: 0.04 }),
-  // Modern glass tower
-  new THREE.MeshStandardMaterial({ color: 0x88a8c8, roughness: 0.25, metalness: 0.6 }),
-  new THREE.MeshStandardMaterial({ color: 0xd8d0c8, roughness: 0.85, metalness: 0.05 })
+  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#e8d8c0', 'normal') }),  // 0: light tuff
+  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#d8b090', 'normal') }),  // 1: warm tuff
+  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#e0c8a8', 'dense')  }),  // 2: dense windows
+  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#c8b8a8', 'normal') }),  // 3: stone
+  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#b8a088', 'normal') }),  // 4: dark stone
+  new THREE.MeshLambertMaterial({ color: 0x88a8c8, transparent: true, opacity: 0.85 }), // 5: glass
+  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#d8c8b0', 'modern') }),  // 6: modern tuff
+  new THREE.MeshLambertMaterial({ color: 0xd8c0a8 })                             // 7: plain
 ];
 
-var BOX_GEO = new THREE.BoxGeometry(1, 1, 1);
+/* ── Materials for rooftop details ── */
+var MAT_ROOF_TOP    = new THREE.MeshLambertMaterial({ color: 0x8a6040 });
+var MAT_ROOF_FLAT   = new THREE.MeshLambertMaterial({ color: 0xa08060 });
+var MAT_CHIMNEY     = new THREE.MeshLambertMaterial({ color: 0x8a5030 });
+var MAT_AC_UNIT     = new THREE.MeshLambertMaterial({ color: 0x909898 });
+var MAT_WATER_TANK  = new THREE.MeshLambertMaterial({ color: 0xc8c0a8 });
+var MAT_ANTENNA     = new THREE.MeshLambertMaterial({ color: 0x505050 });
 
-function placeBox(x, z, w, h, d, rotY, matIdx, castShadow){
-  var m = new THREE.Mesh(BOX_GEO, BLD_MATS[matIdx]);
-  m.scale.set(w, h, d);
-  m.position.set(x, terrainHeight(x, z) + h/2, z);
-  m.rotation.y = rotY || 0;
-  if(castShadow !== false) m.castShadow = true;
-  m.receiveShadow = true;
-  scene.add(m);
-  addCollision(x, z, w, d, h, rotY);
-  return m;
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 11 — INSTANCED BUILDING SYSTEM
+   ───────────────────────────────────────────────────────────────
+   Instead of creating a Mesh per building (250+ draw calls), we:
+     1. Collect every building's (x,y,z,w,h,d,rot,matIdx) into arrays.
+     2. Group by material index.
+     3. Create ONE InstancedMesh per material.
+     4. Upload all transformation matrices at once.
+   Result: ~8 draw calls instead of ~250.  30× faster.
+
+   Same approach for rooftop props (roofs, chimneys, AC units).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Shared geometry: unit cube, unit cone ── */
+var BOX_GEO = new THREE.BoxGeometry(1, 1, 1);
+var CONE_GEO = new THREE.ConeGeometry(0.5, 1, 4);   // 4-sided pyramid
+var CYL_GEO = new THREE.CylinderGeometry(0.5, 0.5, 1, 8);
+
+/* ── Data accumulators (populated during build phase) ── */
+var BUILDING_DATA = {
+  boxes: {},       // matIdx -> [{x,y,z,w,h,d,rot}]
+  roofs: {},       // matIdx -> [{x,y,z,w,h,d,rot}]
+  cones: [],       // [{x,y,z,r,h,rotY}]     — pitched roofs
+  chimneys: [],    // [{x,y,z,r,h}]          — cylinder pipes
+  acUnits: [],     // [{x,y,z,w,h,d,rot}]    — AC boxes on flat roofs
+  waterTanks: [],  // [{x,y,z,r,h}]          — rooftop water tanks
+  antennas: []     // [{x,y,z,r,h}]          — rooftop antennas
+};
+
+/* ── Helper: ensure array exists for a given material key ── */
+function ensureArray(map, key){
+  if(!map[key]) map[key] = [];
+  return map[key];
 }
 
-/* Road proximity test */
-function isRoadZone(x, z){
-  for(var ri = 0; ri < ROADS.length; ri++){
-    var pts = ROADS[ri];
-    for(var i = 0; i < pts.length - 1; i++){
-      var p1 = pts[i], p2 = pts[i+1];
-      var dx = p2.x - p1.x, dz = p2.z - p1.z;
-      var l2 = dx*dx + dz*dz;
-      var t = ((x - p1.x) * dx + (z - p1.z) * dz) / l2;
-      t = Math.max(0, Math.min(1, t));
-      var px = p1.x + dx * t, pz = p1.z + dz * t;
-      if(Math.hypot(x - px, z - pz) < ROAD_WIDTH / 2 + 10) return true;
+/* ── Collect a single rectangular building block ── */
+function collectBox(x, z, w, h, d, rot, matIdx){
+  var y = terrainHeight(x, z);
+  var arr = ensureArray(BUILDING_DATA.boxes, matIdx);
+  arr.push({ x: x, y: y, z: z, w: w, h: h, d: d, rot: rot });
+  /* Rotation-aware collision (Fix #5) */
+  addCollision(x, z, w, d, h, rot);
+  return y;
+}
+
+/* ── Collect a rooftop element (same geometry as box) ── */
+function collectRoofBox(x, y, z, w, h, d, rot, matIdx){
+  var arr = ensureArray(BUILDING_DATA.roofs, matIdx);
+  arr.push({ x: x, y: y, z: z, w: w, h: h, d: d, rot: rot });
+}
+
+/* ── Collect a pyramidal pitched roof ── */
+function collectConeRoof(x, y, z, r, h, rotY){
+  BUILDING_DATA.cones.push({ x: x, y: y, z: z, r: r, h: h, rotY: rotY || 0 });
+}
+
+/* ── Collect a rooftop chimney (cylinder) ── */
+function collectChimney(x, y, z, r, h){
+  BUILDING_DATA.chimneys.push({ x: x, y: y, z: z, r: r, h: h });
+}
+
+/* ── Collect an AC unit (small box) ── */
+function collectAC(x, y, z, w, h, d, rot){
+  BUILDING_DATA.acUnits.push({ x: x, y: y, z: z, w: w, h: h, d: d, rot: rot });
+}
+
+/* ── Collect a water tank (cylinder) ── */
+function collectWaterTank(x, y, z, r, h){
+  BUILDING_DATA.waterTanks.push({ x: x, y: y, z: z, r: r, h: h });
+}
+
+/* ── Collect an antenna (thin cylinder) ── */
+function collectAntenna(x, y, z, r, h){
+  BUILDING_DATA.antennas.push({ x: x, y: y, z: z, r: r, h: h });
+}
+
+/* ── Local-to-world offset rotation (matches three.js Y-axis rotation) ──
+   In three.js, matrix4.makeRotationY(θ) transforms (x, z) as:
+       x' = cos(θ)·x + sin(θ)·z
+       z' = -sin(θ)·x + cos(θ)·z
+   We use this for placing child boxes (L-shapes, T-shapes). */
+function rotateOffset(lx, lz, rot){
+  var c = Math.cos(rot), s = Math.sin(rot);
+  return {
+    x: c * lx + s * lz,
+    z: -s * lx + c * lz
+  };
+}
+
+/* ───────────────────────────────────────────────────────────────
+   BUILDING SHAPES
+   ─────────────────────────────────────────────────────────────── */
+
+/* ── Simple box, optionally with rooftop detail ── */
+function addBuildingBox(cx, cz, w, h, d, rot, matIdx, detail){
+  var y = collectBox(cx, cz, w, h, d, rot, matIdx);
+  var topY = y + h;
+
+  /* ── Rooftop detail (optional) ── */
+  if(detail !== false && h > 8){
+    /* Small flat parapet cap */
+    if(Math.random() < 0.6){
+      var capMat = Math.random() < 0.5 ? MAT_ROOF_TOP : MAT_ROOF_FLAT;
+      var capIdx = (capMat === MAT_ROOF_TOP) ? 100 : 101;
+      collectRoofBox(cx, topY + 0.4, cz, w * 0.96, 0.8, d * 0.96, rot, capIdx);
+    }
+
+    /* Pitched pyramid roof (only for low buildings) */
+    if(h < 18 && Math.random() < 0.30){
+      var cr = Math.max(w, d) * 0.72;
+      var ch = 3 + Math.random() * 4;
+      collectConeRoof(cx, topY + ch / 2, cz, cr, ch, rot + Math.PI / 4);
+    }
+
+    /* Chimney (tall brick building) */
+    if(h > 20 && Math.random() < 0.45){
+      var off = rotateOffset(w * 0.3, d * 0.3, rot);
+      collectChimney(
+        cx + off.x, topY + 1.5, cz + off.z,
+        0.4 + Math.random() * 0.2, 3 + Math.random() * 2
+      );
+    }
+
+    /* AC unit on flat roof */
+    if(h > 22 && Math.random() < 0.5){
+      var acOff = rotateOffset(
+        (Math.random() - 0.5) * w * 0.5,
+        (Math.random() - 0.5) * d * 0.5,
+        rot
+      );
+      collectAC(
+        cx + acOff.x, topY + 0.6, cz + acOff.z,
+        1.5 + Math.random(), 1.2, 1.5 + Math.random(), rot
+      );
+    }
+
+    /* Water tank */
+    if(h > 25 && Math.random() < 0.25){
+      var wtOff = rotateOffset(
+        (Math.random() - 0.5) * w * 0.4,
+        (Math.random() - 0.5) * d * 0.4,
+        rot
+      );
+      collectWaterTank(
+        cx + wtOff.x, topY + 1.5, cz + wtOff.z,
+        1.2 + Math.random() * 0.4, 2.5 + Math.random()
+      );
+    }
+
+    /* Antenna */
+    if(h > 32 && Math.random() < 0.20){
+      collectAntenna(cx, topY + 3, cz, 0.08, 6);
     }
   }
-  for(var i = 0; i < WINDING.length - 1; i++){
-    var p1 = WINDING[i], p2 = WINDING[i+1];
-    var dx = p2.x - p1.x, dz = p2.z - p1.z;
-    var l2 = dx*dx + dz*dz;
-    var t = ((x - p1.x) * dx + (z - p1.z) * dz) / l2;
-    t = Math.max(0, Math.min(1, t));
-    var px = p1.x + dx * t, pz = p1.z + dz * t;
-    if(Math.hypot(x - px, z - pz) < 14) return true;
-  }
-  return false;
 }
 
-function isNearLandmark(x, z, r){
-  for(var k in LM){
-    var L = LM[k];
-    if(Math.hypot(x - L.x, z - L.z) < r) return true;
-  }
-  return false;
+/* ── L-shape: main block + wing attached at +X ── */
+function addBuildingL(cx, cz, baseW, baseH, baseD, rot, matIdx){
+  addBuildingBox(cx, cz, baseW, baseH, baseD, rot, matIdx, false);
+
+  var wingW = baseW * 0.65;
+  var wingD = baseD * 0.55;
+  var wingH = baseH * 0.85;
+
+  /* Wing offsets relative to main center, in local space */
+  var lx = baseW * 0.5 + wingW * 0.5 - baseW * 0.15;
+  var lz = -baseD * 0.5 + wingD * 0.5;
+
+  var off = rotateOffset(lx, lz, rot);
+  addBuildingBox(cx + off.x, cz + off.z, wingW, wingH, wingD, rot, matIdx, false);
 }
 
-/* Build varied city fabric */
-function buildCityBlocks(){
+/* ── T-shape: main block + perpendicular wing crossing at center ── */
+function addBuildingT(cx, cz, baseW, baseH, baseD, rot, matIdx){
+  addBuildingBox(cx, cz, baseW, baseH, baseD, rot, matIdx, false);
+
+  var crossW = baseW * 0.9;
+  var crossD = baseD * 0.55;
+  var crossH = baseH * 0.9;
+
+  /* Cross wing, perpendicular direction */
+  var crossRot = rot + Math.PI / 2;
+  addBuildingBox(cx, cz, crossW, crossH, crossD, crossRot, matIdx, false);
+}
+
+/* ── U-shape: main block + two wings on both sides ── */
+function addBuildingU(cx, cz, baseW, baseH, baseD, rot, matIdx){
+  addBuildingBox(cx, cz, baseW, baseH, baseD, rot, matIdx, false);
+
+  var wingW = baseW * 0.4;
+  var wingD = baseD * 0.55;
+  var wingH = baseH * 0.9;
+
+  /* Left wing */
+  var offL = rotateOffset(-baseW * 0.5 - wingW * 0.5 + baseW * 0.1, 0, rot);
+  addBuildingBox(cx + offL.x, cz + offL.z, wingW, wingH, wingD, rot, matIdx, false);
+
+  /* Right wing */
+  var offR = rotateOffset(baseW * 0.5 + wingW * 0.5 - baseW * 0.1, 0, rot);
+  addBuildingBox(cx + offR.x, cz + offR.z, wingW, wingH, wingD, rot, matIdx, false);
+}
+
+/* ── Courtyard: four thin buildings around a hollow rectangle ── */
+function addBuildingCourtyard(cx, cz, w, h, d, rot, matIdx){
+  var t = Math.min(w, d) * 0.22;   /* wall thickness */
+
+  /* North wall */
+  var offN = rotateOffset(0, -d * 0.5 + t * 0.5, rot);
+  addBuildingBox(cx + offN.x, cz + offN.z, w, h, t, rot, matIdx, false);
+
+  /* South wall */
+  var offS = rotateOffset(0, d * 0.5 - t * 0.5, rot);
+  addBuildingBox(cx + offS.x, cz + offS.z, w, h, t, rot, matIdx, false);
+
+  /* West wall */
+  var offW = rotateOffset(-w * 0.5 + t * 0.5, 0, rot);
+  addBuildingBox(cx + offW.x, cz + offW.z, t, h, d - t * 2, rot, matIdx, false);
+
+  /* East wall */
+  var offE = rotateOffset(w * 0.5 - t * 0.5, 0, rot);
+  addBuildingBox(cx + offE.x, cz + offE.z, t, h, d - t * 2, rot, matIdx, false);
+}
+
+/* ───────────────────────────────────────────────────────────────
+   FLUSH: turn collected data into InstancedMesh objects
+   ─────────────────────────────────────────────────────────────── */
+function flushInstancedGroups(){
+  var dummy = new THREE.Object3D();
+
+  /* ── 1. Building boxes grouped by material ── */
+  for(var matIdx in BUILDING_DATA.boxes){
+    var arr = BUILDING_DATA.boxes[matIdx];
+    if(!arr || arr.length === 0) continue;
+
+    /* Determine which material object to use (0–7 = BLD_MATS, 100+ = roof) */
+    var mi = parseInt(matIdx, 10);
+    var mat = (mi < 100) ? BLD_MATS[mi] : (mi === 100 ? MAT_ROOF_TOP : MAT_ROOF_FLAT);
+
+    var im = new THREE.InstancedMesh(BOX_GEO, mat, arr.length);
+    im.frustumCulled = false;   /* We spread across the whole map — disable culling */
+
+    for(var i = 0; i < arr.length; i++){
+      var b = arr[i];
+      dummy.position.set(b.x, b.y + b.h / 2, b.z);
+      dummy.rotation.set(0, b.rot, 0);
+      dummy.scale.set(b.w, b.h, b.d);
+      dummy.updateMatrix();
+      im.setMatrixAt(i, dummy.matrix);
+    }
+    im.instanceMatrix.needsUpdate = true;
+    scene.add(im);
+  }
+
+  /* ── 2. Roof boxes (already keyed as 100 / 101) ── */
+  for(var rMatIdx in BUILDING_DATA.roofs){
+    var rArr = BUILDING_DATA.roofs[rMatIdx];
+    if(!rArr || rArr.length === 0) continue;
+
+    var rmi = parseInt(rMatIdx, 10);
+    var rMat = (rmi === 100) ? MAT_ROOF_TOP : MAT_ROOF_FLAT;
+
+    var rIm = new THREE.InstancedMesh(BOX_GEO, rMat, rArr.length);
+    rIm.frustumCulled = false;
+
+    for(var j = 0; j < rArr.length; j++){
+      var rb = rArr[j];
+      dummy.position.set(rb.x, rb.y, rb.z);
+      dummy.rotation.set(0, rb.rot, 0);
+      dummy.scale.set(rb.w, rb.h, rb.d);
+      dummy.updateMatrix();
+      rIm.setMatrixAt(j, dummy.matrix);
+    }
+    rIm.instanceMatrix.needsUpdate = true;
+    scene.add(rIm);
+  }
+
+  /* ── 3. Cone (pyramidal) roofs ── */
+  if(BUILDING_DATA.cones.length > 0){
+    var cArr = BUILDING_DATA.cones;
+    var cMat = new THREE.MeshLambertMaterial({ color: 0xa85030 });
+    var cIm = new THREE.InstancedMesh(CONE_GEO, cMat, cArr.length);
+    cIm.frustumCulled = false;
+
+    for(var k = 0; k < cArr.length; k++){
+      var cr = cArr[k];
+      dummy.position.set(cr.x, cr.y, cr.z);
+      dummy.rotation.set(0, cr.rotY, 0);
+      dummy.scale.set(cr.r * 2, cr.h, cr.r * 2);
+      dummy.updateMatrix();
+      cIm.setMatrixAt(k, dummy.matrix);
+    }
+    cIm.instanceMatrix.needsUpdate = true;
+    scene.add(cIm);
+  }
+
+  /* ── 4. Chimneys (cylinders) ── */
+  if(BUILDING_DATA.chimneys.length > 0){
+    var chArr = BUILDING_DATA.chimneys;
+    var chIm = new THREE.InstancedMesh(CYL_GEO, MAT_CHIMNEY, chArr.length);
+    chIm.frustumCulled = false;
+
+    for(var ck = 0; ck < chArr.length; ck++){
+      var c = chArr[ck];
+      dummy.position.set(c.x, c.y, c.z);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(c.r * 2, c.h, c.r * 2);
+      dummy.updateMatrix();
+      chIm.setMatrixAt(ck, dummy.matrix);
+    }
+    chIm.instanceMatrix.needsUpdate = true;
+    scene.add(chIm);
+  }
+
+  /* ── 5. AC units (small boxes) ── */
+  if(BUILDING_DATA.acUnits.length > 0){
+    var acArr = BUILDING_DATA.acUnits;
+    var acIm = new THREE.InstancedMesh(BOX_GEO, MAT_AC_UNIT, acArr.length);
+    acIm.frustumCulled = false;
+
+    for(var ak = 0; ak < acArr.length; ak++){
+      var a = acArr[ak];
+      dummy.position.set(a.x, a.y, a.z);
+      dummy.rotation.set(0, a.rot, 0);
+      dummy.scale.set(a.w, a.h, a.d);
+      dummy.updateMatrix();
+      acIm.setMatrixAt(ak, dummy.matrix);
+    }
+    acIm.instanceMatrix.needsUpdate = true;
+    scene.add(acIm);
+  }
+
+  /* ── 6. Water tanks (cylinders) ── */
+  if(BUILDING_DATA.waterTanks.length > 0){
+    var wtArr = BUILDING_DATA.waterTanks;
+    var wtIm = new THREE.InstancedMesh(CYL_GEO, MAT_WATER_TANK, wtArr.length);
+    wtIm.frustumCulled = false;
+
+    for(var wk = 0; wk < wtArr.length; wk++){
+      var w = wtArr[wk];
+      dummy.position.set(w.x, w.y, w.z);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(w.r * 2, w.h, w.r * 2);
+      dummy.updateMatrix();
+      wtIm.setMatrixAt(wk, dummy.matrix);
+    }
+    wtIm.instanceMatrix.needsUpdate = true;
+    scene.add(wtIm);
+  }
+
+  /* ── 7. Antennas (thin cylinders) ── */
+  if(BUILDING_DATA.antennas.length > 0){
+    var anArr = BUILDING_DATA.antennas;
+    var anIm = new THREE.InstancedMesh(CYL_GEO, MAT_ANTENNA, anArr.length);
+    anIm.frustumCulled = false;
+
+    for(var ank = 0; ank < anArr.length; ank++){
+      var an = anArr[ank];
+      dummy.position.set(an.x, an.y, an.z);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(an.r * 2, an.h, an.r * 2);
+      dummy.updateMatrix();
+      anIm.setMatrixAt(ank, dummy.matrix);
+    }
+    anIm.instanceMatrix.needsUpdate = true;
+    scene.add(anIm);
+  }
+
+  /* ── Report for debugging ── */
+  var totalBoxes = 0;
+  for(var mb in BUILDING_DATA.boxes) totalBoxes += BUILDING_DATA.boxes[mb].length;
+  console.log(
+    '[InstancedBuildings]',
+    'boxes:', totalBoxes,
+    '| roofs:', Object.keys(BUILDING_DATA.roofs).reduce(function(a, k){
+      return a + BUILDING_DATA.roofs[k].length;
+    }, 0),
+    '| cones:', BUILDING_DATA.cones.length,
+    '| chimneys:', BUILDING_DATA.chimneys.length,
+    '| AC:', BUILDING_DATA.acUnits.length,
+    '| tanks:', BUILDING_DATA.waterTanks.length,
+    '| antennas:', BUILDING_DATA.antennas.length
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 12 — CITY FABRIC POPULATION
+   ───────────────────────────────────────────────────────────────
+   Places ~140 buildings in the city plain, avoiding landmarks and
+   roads.  Each building is randomly one of five shapes:
+     · Simple box  (65%)
+     · L-shape     (12%)
+     · T-shape     (8%)
+     · U-shape     (8%)
+     · Courtyard   (7%)
+   ═══════════════════════════════════════════════════════════════════ */
+(function populateCity(){
   var placed = 0;
   var tries = 0;
-  while(placed < 95 && tries < 800){
+  var MAX_BUILDINGS = 140;
+  var MAX_TRIES = 4000;
+
+  while(placed < MAX_BUILDINGS && tries < MAX_TRIES){
     tries++;
+
+    /* Random position within city bounds */
     var x = (Math.random() - 0.5) * 1000;
     var z = (Math.random() - 0.5) * 1000;
 
-    if(isNearLandmark(x, z, 60)) continue;
-    if(isRoadZone(x, z)) continue;
-    // Skip cascade area (green zone)
-    if(z > 280 && Math.abs(x) < 220) continue;
-    // Skip further out
+    /* Bounds filters */
     if(Math.hypot(x, z) > 620) continue;
+    if(isNearLandmark(x, z, 12)) continue;
+    if(isNearRoad(x, z, 9)) continue;
+    if(z > 240 && Math.abs(x) < 260) continue;   /* Cascade green zone */
+    if(z < -400) continue;                       /* Beyond Marriott */
 
-    var w = 10 + Math.random() * 20;
-    var d = 10 + Math.random() * 20;
-    var h;
+    /* Size */
+    var w = 12 + Math.random() * 22;
+    var d = 12 + Math.random() * 22;
+
+    /* Height category */
     var r = Math.random();
-    if(r < 0.45) h = 9 + Math.random() * 10;
-    else if(r < 0.8) h = 16 + Math.random() * 18;
-    else if(r < 0.95) h = 28 + Math.random() * 20;
-    else h = 45 + Math.random() * 25; // tall tower
+    var h;
+    if(r < 0.35) h = 10 + Math.random() * 8;
+    else if(r < 0.68) h = 16 + Math.random() * 14;
+    else if(r < 0.90) h = 28 + Math.random() * 16;
+    else h = 44 + Math.random() * 22;
 
+    /* Rotation — snap to 90° grid for a tidier city look */
     var rot = Math.round(Math.random() * 4) * Math.PI / 2;
-    var shape = Math.random();
 
-    // Pick material - sometimes modern for tall buildings
+    /* Material selection */
     var matIdx;
-    if(h > 40 && Math.random() < 0.6) matIdx = 6; // glass
-    else matIdx = Math.floor(Math.random() * 6);
+    if(h > 40 && Math.random() < 0.55) matIdx = 5;  /* Glass tower */
+    else matIdx = Math.floor(Math.random() * 8);
 
-    if(shape < 0.15){
-      // L-shape
-      placeBox(x, z, w, h, d, rot, matIdx);
-      var ox = Math.cos(rot) * (w * 0.6);
-      var oz = -Math.sin(rot) * (w * 0.6);
-      placeBox(x + ox, z + oz, w * 0.55, h * 0.75, d * 0.55, rot, matIdx);
-    } else if(shape < 0.25 && h < 30){
-      // T-shape
-      placeBox(x, z, w, h, d, rot, matIdx);
-      var ox = Math.cos(rot) * (d * 0.55);
-      var oz = -Math.sin(rot) * (d * 0.55);
-      placeBox(x + oz, z + ox, w * 0.7, h * 0.85, d * 0.5, rot + Math.PI/2, matIdx);
+    /* Shape selection */
+    var shapeRoll = Math.random();
+    if(shapeRoll < 0.65){
+      /* Simple box */
+      addBuildingBox(x, z, w, h, d, rot, matIdx, true);
+    } else if(shapeRoll < 0.77){
+      /* L-shape */
+      addBuildingL(x, z, w, h, d, rot, matIdx);
+    } else if(shapeRoll < 0.85){
+      /* T-shape */
+      addBuildingT(x, z, w, h, d, rot, matIdx);
+    } else if(shapeRoll < 0.93){
+      /* U-shape */
+      addBuildingU(x, z, w, h, d, rot, matIdx);
     } else {
-      placeBox(x, z, w, h, d, rot, matIdx);
+      /* Courtyard */
+      addBuildingCourtyard(x, z, w, h, d, rot, matIdx);
     }
-
-    // Sometimes add a roof detail
-    if(h > 15 && Math.random() < 0.4){
-      var rw = w * 0.6, rd = d * 0.6, rh = 1.5 + Math.random() * 2;
-      var roofM = new THREE.Mesh(BOX_GEO, BLD_MATS[Math.floor(Math.random() * 6)]);
-      roofM.scale.set(rw, rh, rd);
-      roofM.position.set(x, terrainHeight(x, z) + h + rh/2, z);
-      roofM.rotation.y = rot;
-      roofM.castShadow = true;
-      scene.add(roofM);
-    }
-
     placed++;
   }
-}
 
-buildCityBlocks();
+  console.log('[CityFabric] Placed ' + placed + ' buildings in ' + tries + ' tries');
+})();
 
-/* ═════════════ LANDMARKS ═════════════ */
-var TUFF_MAT = new THREE.MeshStandardMaterial({ color: 0xe8d8b8, roughness: 0.9 });
-var TUFF_DARK = new THREE.MeshStandardMaterial({ color: 0xd8b890, roughness: 0.9 });
-var ROOF_MAT = new THREE.MeshStandardMaterial({ color: 0xa89070, roughness: 0.92 });
-var WINDOW_GLASS = new THREE.MeshStandardMaterial({
-  color: 0x88ccee, emissive: 0x224466, emissiveIntensity: 0.4,
-  metalness: 0.5, roughness: 0.2
-});
-var WATER_MAT = new THREE.MeshStandardMaterial({ color: 0x4a8ac8, roughness: 0.15, metalness: 0.6 });
-var STONE_DARK = new THREE.MeshStandardMaterial({ color: 0xa89878, roughness: 0.9 });
-var GOLD_MAT = new THREE.MeshStandardMaterial({ color: 0xc8a850, metalness: 0.85, roughness: 0.25 });
-var ROCK_MAT = new THREE.MeshStandardMaterial({ color: 0xb8a890, roughness: 0.95 });
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 13 — LANDMARKS (detailed, unique geometry)
+   ───────────────────────────────────────────────────────────────
+   Landmarks use raw Mesh objects (not instanced) because each is
+   unique and there are only 8 of them.
+   ═══════════════════════════════════════════════════════════════════ */
 
-function addBoxTo(group, x, y, z, w, h, d, mat, rotY){
+/* ── Shared landmark materials ── */
+var MAT_TUFF       = new THREE.MeshLambertMaterial({ color: 0xe8d6b0 });
+var MAT_TUFF_DARK  = new THREE.MeshLambertMaterial({ color: 0xc8a878 });
+var MAT_ROOF_RED   = new THREE.MeshLambertMaterial({ color: 0xa04828 });
+var MAT_STONE      = new THREE.MeshLambertMaterial({ color: 0x9a8870 });
+var MAT_GOLD       = new THREE.MeshLambertMaterial({ color: 0xd8b050 });
+var MAT_WATER      = new THREE.MeshLambertMaterial({ color: 0x3a7ac8 });
+var MAT_GLASS_CYAN = new THREE.MeshLambertMaterial({ color: 0x7ac0e0, transparent: true, opacity: 0.75 });
+var MAT_TREE_GRN   = new THREE.MeshLambertMaterial({ color: 0x2a5a20 });
+var MAT_TRUNK      = new THREE.MeshLambertMaterial({ color: 0x4a2a14 });
+var MAT_LAWN       = new THREE.MeshLambertMaterial({ color: 0x5a8a3a });
+var MAT_FOUNTAIN   = new THREE.MeshLambertMaterial({ color: 0xb8a888 });
+
+/* ── Helpers for constructing a landmark group ── */
+function addBox(parent, x, y, z, w, h, d, mat, rot){
   var m = new THREE.Mesh(BOX_GEO, mat);
   m.scale.set(w, h, d);
   m.position.set(x, y, z);
-  if(rotY) m.rotation.y = rotY;
-  m.castShadow = true;
-  m.receiveShadow = true;
-  group.add(m);
+  if(rot) m.rotation.y = rot;
+  parent.add(m);
   return m;
 }
 
-function addCylTo(group, x, y, z, r1, r2, h, mat, seg){
+function addCyl(parent, x, y, z, r1, r2, h, mat, seg){
   var g = new THREE.CylinderGeometry(r1, r2, h, seg || 12);
   var m = new THREE.Mesh(g, mat);
   m.position.set(x, y, z);
-  m.castShadow = true;
-  m.receiveShadow = true;
-  group.add(m);
+  parent.add(m);
   return m;
 }
 
-/* REPUBLIC SQUARE */
-function buildRepublicSquare(){
+function addCone(parent, x, y, z, r, h, mat, seg, rotY){
+  var g = new THREE.ConeGeometry(r, h, seg || 4);
+  var m = new THREE.Mesh(g, mat);
+  m.position.set(x, y, z);
+  if(rotY) m.rotation.y = rotY;
+  parent.add(m);
+  return m;
+}
+
+/* ─── REPUBLIC SQUARE ─── */
+function buildSquare(){
   var g = new THREE.Group();
   var cx = LM.square.x, cz = LM.square.z;
-  var baseY = terrainHeight(cx, cz);
+  var y0 = terrainHeight(cx, cz);
 
+  /* Big plaza */
   var plaza = new THREE.Mesh(
-    new THREE.CircleGeometry(38, 40),
-    new THREE.MeshStandardMaterial({ color: 0xc8b090, roughness: 0.95 })
+    new THREE.CircleGeometry(46, 40),
+    new THREE.MeshLambertMaterial({ color: 0xc8b090 })
   );
   plaza.rotation.x = -Math.PI / 2;
-  plaza.position.y = baseY + 0.15;
-  plaza.receiveShadow = true;
+  plaza.position.set(0, y0 + 0.22, 0);
   g.add(plaza);
 
-  // Two curved wings (arc-shaped government buildings)
+  /* Central fountain */
+  addCyl(g, 0, y0 + 0.6, 0, 7, 7.5, 1.2, MAT_FOUNTAIN, 20);
+  addCyl(g, 0, y0 + 1.3, 0, 6, 6, 0.5, MAT_WATER, 20);
+  addCyl(g, 0, y0 + 3.5, 0, 0.3, 0.3, 4, MAT_WATER, 8);
+
+  /* Curved government wings on the north side */
   for(var side = -1; side <= 1; side += 2){
-    for(var seg = -2; seg <= 2; seg++){
-      var ang = side * 0.7 + seg * 0.18;
-      var r = 44;
-      var bx = Math.cos(ang) * r;
-      var bz = Math.sin(ang) * r - 5;
-      var bh = 15 - Math.abs(seg) * 1.2;
-      addBoxTo(g, bx, baseY + bh/2, bz, 9, bh, 9, TUFF_MAT, -ang + Math.PI/2);
-      // Columns
+    for(var seg = 0; seg < 5; seg++){
+      var ang = side * (0.5 + seg * 0.16);
+      var rr = 40 + seg * 1.5;
+      var bx = Math.sin(ang) * rr;
+      var bz = Math.cos(ang) * rr * 0.6 - 30;
+      var bh = 15 - seg * 0.8;
+      addBox(g, bx, y0 + bh / 2, bz, 8, bh, 8, MAT_TUFF, ang);
+      var cAng = ang + Math.PI / 2;
       for(var ci = -1; ci <= 1; ci++){
-        addCylTo(g, bx + Math.cos(ang) * 5 + ci * 2, baseY + 5, bz + Math.sin(ang) * 5, 0.65, 0.65, 10, TUFF_MAT, 8);
+        var ox = Math.cos(cAng) * ci * 2.2;
+        var oz = -Math.sin(cAng) * ci * 2.2;
+        addCyl(
+          g,
+          bx + ox + Math.sin(ang) * 4.2,
+          y0 + 5,
+          bz + oz + Math.cos(ang) * 4.2,
+          0.6, 0.6, 10, MAT_TUFF, 8
+        );
       }
     }
   }
 
-  // Central fountain
-  addCylTo(g, 0, baseY + 0.6, 0, 6, 6.5, 1.2, STONE_DARK, 24);
-  addCylTo(g, 0, baseY + 1.35, 0, 5, 5, 0.5, WATER_MAT, 24);
-  addCylTo(g, 0, baseY + 3, 0, 0.3, 0.3, 3.5, WATER_MAT, 8);
-
-  // Clock tower north
-  addBoxTo(g, 0, baseY + 15, -56, 8, 30, 8, TUFF_MAT);
-  var clock = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, 0.3, 20),
-    new THREE.MeshStandardMaterial({ color: 0xf0e8d0 }));
+  /* Clock tower */
+  addBox(g, 0, y0 + 16, -62, 9, 32, 9, MAT_TUFF);
+  addBox(g, 0, y0 + 34, -62, 11, 3, 11, MAT_TUFF_DARK);
+  var clock = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.6, 2.6, 0.3, 20),
+    new THREE.MeshLambertMaterial({ color: 0xf8f0d8 })
+  );
   clock.rotation.x = Math.PI / 2;
-  clock.position.set(0, baseY + 26, -52);
+  clock.position.set(0, y0 + 27, -57.5);
   g.add(clock);
 
-  // Big government buildings flanking square
-  addBoxTo(g, -34, baseY + 9, 0, 20, 18, 26, TUFF_MAT);
-  addBoxTo(g, 34, baseY + 9, 0, 20, 18, 26, TUFF_MAT);
-  for(var i = -4; i <= 4; i++){
-    addCylTo(g, -34 + i * 2.2, baseY + 5, 13.5, 0.7, 0.7, 10, TUFF_MAT, 8);
-    addCylTo(g, 34 + i * 2.2, baseY + 5, 13.5, 0.7, 0.7, 10, TUFF_MAT, 8);
+  /* Two flanking government buildings */
+  function wing(px){
+    addBox(g, px, y0 + 10, 0, 22, 20, 30, MAT_TUFF);
+    addBox(g, px, y0 + 21, 0, 24, 2.5, 32, MAT_TUFF_DARK);
+    for(var i = -5; i <= 5; i++){
+      addCyl(g, px + i * 2.2, y0 + 6, 16, 0.75, 0.75, 12, MAT_TUFF, 10);
+    }
+  }
+  wing(-38);
+  wing(38);
+
+  /* Ring of trees around plaza */
+  for(var ti = 0; ti < 18; ti++){
+    var a = (ti / 18) * Math.PI * 2;
+    var tx = Math.sin(a) * 44;
+    var tz = Math.cos(a) * 44;
+    addCyl(g, tx, y0 + 1.2, tz, 0.28, 0.35, 2.4, MAT_TRUNK, 6);
+    addCone(g, tx, y0 + 4.5, tz, 1.6, 3.6, MAT_TREE_GRN, 6);
   }
 
+  g.position.set(cx, 0, cz);
   scene.add(g);
-  addCollision(-34, cz, 20, 26, 18, 0);
-  addCollision(34, cz, 20, 26, 18, 0);
-  addCollision(0, cz - 56, 8, 8, 30, 0);
-  // The arc buildings
-  for(var side = -1; side <= 1; side += 2){
-    addCollision(side * 30, cz - 5, 30, 45, 15, 0);
-  }
+  addCollision(cx, cz, 76, 30, 32, 0);
+  addCollision(cx, cz - 62, 12, 12, 36, 0);
 }
 
-/* OPERA */
+/* ─── OPERA ─── */
 function buildOpera(){
   var g = new THREE.Group();
   var cx = LM.opera.x, cz = LM.opera.z;
-  var baseY = terrainHeight(cx, cz);
+  var y0 = terrainHeight(cx, cz);
 
-  var park = new THREE.Mesh(new THREE.CircleGeometry(46, 32),
-    new THREE.MeshStandardMaterial({ color: 0x5a8a3a, roughness: 1 }));
+  /* Park lawn */
+  var park = new THREE.Mesh(new THREE.CircleGeometry(58, 32), MAT_LAWN);
   park.rotation.x = -Math.PI / 2;
-  park.position.y = baseY + 0.25;
-  park.receiveShadow = true;
+  park.position.set(0, y0 + 0.28, 0);
   g.add(park);
 
-  var main = new THREE.Mesh(new THREE.CylinderGeometry(22, 24, 16, 24), TUFF_MAT);
-  main.position.set(0, baseY + 8, 0);
-  main.scale.set(1, 1, 0.75);
-  main.castShadow = true;
-  main.receiveShadow = true;
+  /* Oval main body */
+  var main = new THREE.Mesh(new THREE.CylinderGeometry(24, 26, 18, 28), MAT_TUFF);
+  main.position.set(0, y0 + 9, 0);
+  main.scale.set(1.0, 1.0, 0.72);
   g.add(main);
 
-  var roof = new THREE.Mesh(new THREE.CylinderGeometry(23, 23, 2, 24), ROOF_MAT);
-  roof.position.set(0, baseY + 17, 0);
-  roof.scale.set(1, 1, 0.75);
-  roof.castShadow = true;
-  g.add(roof);
+  /* Dome cap */
+  var cap = new THREE.Mesh(new THREE.CylinderGeometry(24.5, 24.5, 2.5, 28), MAT_TUFF_DARK);
+  cap.position.set(0, y0 + 19.2, 0);
+  cap.scale.set(1.0, 1.0, 0.72);
+  g.add(cap);
 
-  for(var i = 0; i < 20; i++){
-    var a = (i / 20) * Math.PI * 2;
-    addCylTo(g, Math.cos(a) * 24, baseY + 6, Math.sin(a) * 18, 0.9, 0.9, 12, TUFF_MAT, 8);
+  /* Drum */
+  var drum = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 6, 20), MAT_TUFF_DARK);
+  drum.position.set(0, y0 + 23.5, 0);
+  drum.scale.set(1.0, 1.0, 0.72);
+  g.add(drum);
+
+  /* Ring of columns */
+  for(var i = 0; i < 24; i++){
+    var a = (i / 24) * Math.PI * 2;
+    addCyl(g, Math.cos(a) * 26, y0 + 6, Math.sin(a) * 18, 0.85, 0.85, 12, MAT_TUFF, 8);
+  }
+
+  /* Entrance portico */
+  for(var j = -3; j <= 3; j++){
+    addCyl(g, j * 2.6, y0 + 5, 20, 0.9, 0.9, 10, MAT_TUFF, 10);
+  }
+  addBox(g, 0, y0 + 11, 20, 20, 2, 4, MAT_TUFF_DARK);
+
+  /* Ring of trees around park */
+  for(var k = 0; k < 22; k++){
+    var ang = (k / 22) * Math.PI * 2 + 0.3;
+    addCyl(g, Math.cos(ang) * 48, y0 + 1.2, Math.sin(ang) * 48, 0.3, 0.38, 2.6, MAT_TRUNK, 6);
+    addCone(g, Math.cos(ang) * 48, y0 + 5.2, Math.sin(ang) * 48, 1.9, 4.2, MAT_TREE_GRN, 6);
   }
 
   g.position.set(cx, 0, cz);
   scene.add(g);
-  addCollision(cx, cz, 48, 36, 18, 0);
+  addCollision(cx, cz, 50, 40, 26, 0);
 }
 
-/* MATENADARAN */
+/* ─── MATENADARAN ─── */
 function buildMatenadaran(){
   var g = new THREE.Group();
   var cx = LM.matenadaran.x, cz = LM.matenadaran.z;
-  var baseY = terrainHeight(cx, cz);
+  var y0 = terrainHeight(cx, cz);
 
-  addBoxTo(g, 0, baseY + 4, 0, 44, 8, 34, STONE_DARK);
-  for(var s = 0; s < 6; s++){
-    addBoxTo(g, 0, baseY + 8.5 + s * 1.0, 17 + (5 - s) * 1.4, 20, 0.9, 1.6, STONE_DARK);
+  /* Wide base platform */
+  addBox(g, 0, y0 + 4, 0, 46, 8, 34, MAT_STONE);
+
+  /* Broad staircase front */
+  for(var s = 0; s < 8; s++){
+    var stepZ = 17 + (7 - s) * 1.5;
+    addBox(g, 0, y0 + 8.5 + s * 0.9, stepZ, 20, 0.9, 1.5, MAT_STONE);
   }
-  addBoxTo(g, 0, baseY + 20, 0, 38, 20, 26, TUFF_MAT);
-  for(var i = -6; i <= 6; i++){
-    addCylTo(g, i * 2.8, baseY + 17, 14, 0.9, 0.9, 14, TUFF_MAT, 10);
+
+  /* Central block */
+  addBox(g, 0, y0 + 18, -2, 34, 20, 22, MAT_TUFF);
+
+  /* Massive colonnade */
+  for(var i = -5; i <= 5; i++){
+    addCyl(g, i * 3.0, y0 + 16, 13, 1.0, 1.0, 14, MAT_TUFF, 12);
   }
-  var ped = new THREE.Mesh(new THREE.ConeGeometry(14, 4, 4), TUFF_MAT);
-  ped.rotation.y = Math.PI / 4;
-  ped.position.set(0, baseY + 32, 14);
-  ped.castShadow = true;
-  g.add(ped);
+
+  /* Roof pediment */
+  addBox(g, 0, y0 + 29, 13, 36, 1.5, 6, MAT_TUFF_DARK);
+  addCone(g, 0, y0 + 34, 13, 14, 4, MAT_TUFF, 4, Math.PI / 4);
+
+  /* Twin figures */
+  addBox(g, -12, y0 + 27, 12, 2, 5, 2, MAT_TUFF_DARK);
+  addBox(g, 12, y0 + 27, 12, 2, 5, 2, MAT_TUFF_DARK);
 
   g.position.set(cx, 0, cz);
   scene.add(g);
-  addCollision(cx, cz, 44, 34, 40, 0);
+  addCollision(cx, cz, 46, 34, 32, 0);
 }
 
-/* NATIONAL GALLERY */
+/* ─── NATIONAL GALLERY ─── */
 function buildGallery(){
   var g = new THREE.Group();
   var cx = LM.gallery.x, cz = LM.gallery.z;
-  var baseY = terrainHeight(cx, cz);
+  var y0 = terrainHeight(cx, cz);
 
-  addBoxTo(g, 0, baseY + 8, 0, 30, 16, 22, TUFF_MAT);
-  for(var i = -4; i <= 4; i++){
-    addCylTo(g, i * 3, baseY + 5, 11.5, 0.8, 0.8, 11, TUFF_MAT, 10);
+  addBox(g, 0, y0 + 9, 0, 32, 18, 24, MAT_TUFF);
+  for(var i = -5; i <= 5; i++){
+    addCyl(g, i * 2.8, y0 + 5.5, 12.5, 0.8, 0.8, 11, MAT_TUFF, 10);
   }
-  var ped = new THREE.Mesh(new THREE.ConeGeometry(12, 3, 4), TUFF_MAT);
-  ped.rotation.y = Math.PI / 4;
-  ped.position.set(0, baseY + 17.5, 11.5);
-  g.add(ped);
+  addBox(g, 0, y0 + 19, 12.5, 30, 1.5, 4, MAT_TUFF_DARK);
+  addBox(g, -14, y0 + 12, 0, 6, 8, 22, MAT_TUFF);
+  addBox(g, 14, y0 + 12, 0, 6, 8, 22, MAT_TUFF);
 
   g.position.set(cx, 0, cz);
   scene.add(g);
-  addCollision(cx, cz, 30, 22, 19, 0);
+  addCollision(cx, cz, 32, 24, 20, 0);
 }
 
-/* MARRIOTT */
+/* ─── MARRIOTT ─── */
 function buildMarriott(){
   var g = new THREE.Group();
   var cx = LM.marriott.x, cz = LM.marriott.z;
-  var baseY = terrainHeight(cx, cz);
+  var y0 = terrainHeight(cx, cz);
 
-  addBoxTo(g, 0, baseY + 12, 0, 26, 24, 20, TUFF_MAT);
-  addBoxTo(g, 0, baseY + 25.5, 0, 20, 3, 14, TUFF_DARK);
+  addBox(g, 0, y0 + 14, 0, 30, 28, 24, MAT_TUFF);
+  addBox(g, 0, y0 + 29, 0, 26, 3, 20, MAT_TUFF_DARK);
 
-  for(var r = 0; r < 6; r++){
-    for(var c = -5; c <= 5; c++){
-      var w = new THREE.Mesh(BOX_GEO, WINDOW_GLASS);
-      w.scale.set(1.6, 2.2, 0.3);
-      w.position.set(c * 2.2, baseY + 4 + r * 3.5, 10.2);
+  /* Window grid — front */
+  for(var r = 0; r < 7; r++){
+    for(var c = -6; c <= 6; c++){
+      var w = new THREE.Mesh(BOX_GEO, MAT_GLASS_CYAN);
+      w.scale.set(1.4, 2.2, 0.2);
+      w.position.set(c * 2.0, y0 + 4 + r * 3.6, 12.2);
       g.add(w);
-      var w2 = new THREE.Mesh(BOX_GEO, WINDOW_GLASS);
-      w2.scale.set(0.3, 2.2, 1.6);
-      w2.position.set(-13.2, baseY + 4 + r * 3.5, c * 1.7);
-      g.add(w2);
     }
+  }
+  /* Side windows */
+  for(var r2 = 0; r2 < 7; r2++){
+    for(var c2 = -5; c2 <= 5; c2++){
+      var wL = new THREE.Mesh(BOX_GEO, MAT_GLASS_CYAN);
+      wL.scale.set(0.2, 2.2, 1.4);
+      wL.position.set(-15.2, y0 + 4 + r2 * 3.6, c2 * 2.0);
+      g.add(wL);
+      var wR = new THREE.Mesh(BOX_GEO, MAT_GLASS_CYAN);
+      wR.scale.set(0.2, 2.2, 1.4);
+      wR.position.set(15.2, y0 + 4 + r2 * 3.6, c2 * 2.0);
+      g.add(wR);
+    }
+  }
+  /* Ground floor columns */
+  for(var i = -5; i <= 5; i++){
+    addCyl(g, i * 2.6, y0 + 3, 12.5, 0.7, 0.7, 6, MAT_TUFF, 8);
   }
 
   g.position.set(cx, 0, cz);
   scene.add(g);
-  addCollision(cx, cz, 26, 20, 27, 0);
+  addCollision(cx, cz, 30, 24, 32, 0);
 }
 
-/* UNIVERSITY */
+/* ─── UNIVERSITY ─── */
 function buildUniversity(){
   var g = new THREE.Group();
   var cx = LM.university.x, cz = LM.university.z;
-  var baseY = terrainHeight(cx, cz);
+  var y0 = terrainHeight(cx, cz);
 
-  addBoxTo(g, 0, baseY + 3, 0, 40, 6, 30, STONE_DARK);
-  addBoxTo(g, 0, baseY + 12, 0, 36, 18, 24, TUFF_MAT);
-  addBoxTo(g, 0, baseY + 24, 0, 10, 12, 10, TUFF_MAT);
+  addBox(g, 0, y0 + 3.5, 0, 44, 7, 32, MAT_STONE);
+  addBox(g, 0, y0 + 14, 0, 40, 18, 26, MAT_TUFF);
+  addBox(g, 0, y0 + 26, 0, 12, 14, 12, MAT_TUFF);
+  addBox(g, 0, y0 + 34, 0, 14, 2, 14, MAT_TUFF_DARK);
+  addCone(g, 0, y0 + 38.5, 0, 5, 7, MAT_GOLD, 4, Math.PI / 4);
 
-  var spire = new THREE.Mesh(new THREE.ConeGeometry(5, 6, 4), GOLD_MAT);
-  spire.rotation.y = Math.PI / 4;
-  spire.position.set(0, baseY + 33, 0);
-  g.add(spire);
-
-  for(var i = -6; i <= 6; i++){
-    addCylTo(g, i * 2.6, baseY + 13, 12.5, 0.75, 0.75, 14, TUFF_MAT, 10);
+  for(var i = -7; i <= 7; i++){
+    addCyl(g, i * 2.5, y0 + 13, 13.5, 0.8, 0.8, 15, MAT_TUFF, 10);
   }
+  addBox(g, 0, y0 + 21, 13.5, 40, 2, 3, MAT_TUFF_DARK);
 
   g.position.set(cx, 0, cz);
   scene.add(g);
-  addCollision(cx, cz, 40, 30, 36, 0);
+  addCollision(cx, cz, 44, 32, 38, 0);
 }
 
-/* CASCADES */
-function buildCascades(){
+/* ─── NORTHERN AVENUE ─── */
+function buildNorthAvenue(){
   var g = new THREE.Group();
-  var cx = LM.cascades.x, cz = LM.cascades.z;
-  var baseY = terrainHeight(cx, cz);
-  var WATER_2 = new THREE.MeshStandardMaterial({ color: 0x3a7ac8, roughness: 0.15, metalness: 0.7 });
+  var cx = LM.northAve.x, cz = LM.northAve.z;
+  var y0 = terrainHeight(cx, cz);
 
-  for(var s = 0; s < 7; s++){
-    var w = 60 - s * 4;
-    var y = baseY + s * 5;
-    addBoxTo(g, 0, y + 2.5, -s * 4, w, 5, 20, TUFF_MAT);
-
-    var pool = new THREE.Mesh(BOX_GEO, WATER_2);
-    pool.scale.set(w - 24, 0.6, 6);
-    pool.position.set(0, y + 5.2, 2);
-    g.add(pool);
-
-    for(var side = -1; side <= 1; side += 2){
-      addBoxTo(g, side * (w/2 + 2), y + 2.5, -s * 4, 3, 5, 10, ROCK_MAT);
+  /* Two parallel rows of buildings */
+  for(var side = -1; side <= 1; side += 2){
+    for(var i = 0; i < 6; i++){
+      var bx = side * 22;
+      var bz = (i - 2.5) * 22;
+      var bh = 12 + Math.random() * 6;
+      addBox(
+        g, bx, y0 + bh / 2, bz,
+        14, bh, 16,
+        BLD_MATS[Math.floor(Math.random() * 4)]
+      );
     }
   }
 
-  var topY = baseY + 7 * 5;
-  addBoxTo(g, 0, topY + 5, -7 * 4 - 10, 12, 10, 12, TUFF_MAT);
-  addCylTo(g, 0, topY + 25, -7 * 4 - 10, 1.5, 2, 30, TUFF_MAT, 12);
-  var top = new THREE.Mesh(new THREE.SphereGeometry(2.5, 16, 12), GOLD_MAT);
-  top.position.set(0, topY + 42, -7 * 4 - 10);
-  top.castShadow = true;
-  g.add(top);
+  /* Pedestrian paving */
+  var pav = new THREE.Mesh(
+    new THREE.PlaneGeometry(24, 130),
+    new THREE.MeshLambertMaterial({ color: 0xd8c8a8 })
+  );
+  pav.rotation.x = -Math.PI / 2;
+  pav.position.set(0, y0 + 0.35, 0);
+  g.add(pav);
+
+  /* Median fountains */
+  for(var f = -2; f <= 2; f++){
+    addCyl(g, 0, y0 + 0.6, f * 22, 1.4, 1.6, 1.0, MAT_FOUNTAIN, 12);
+    addCyl(g, 0, y0 + 1.2, f * 22, 0.9, 0.9, 0.3, MAT_WATER, 12);
+  }
+
+  g.position.set(cx, 0, cz);
+  scene.add(g);
+  addCollision(cx - 22, cz, 14, 130, 15, 0);
+  addCollision(cx + 22, cz, 14, 130, 15, 0);
+}
+
+/* ─── CASCADES ─── */
+function buildCascades(){
+  var g = new THREE.Group();
+  var cx = LM.cascades.x, cz = LM.cascades.z;
+  var y0 = terrainHeight(cx, cz);
+
+  /* 7 stepped tuff terraces */
+  for(var s = 0; s < 7; s++){
+    var w = 66 - s * 5;
+    var d = 22 - s * 1.5;
+    var levelY = y0 + s * 6.5;
+
+    addBox(g, 0, levelY + 3, -s * 5.5, w, 6, d, MAT_TUFF);
+
+    var pool = new THREE.Mesh(BOX_GEO, MAT_WATER);
+    pool.scale.set(w - 26, 0.7, 6);
+    pool.position.set(0, levelY + 6.5, 0);
+    g.add(pool);
+
+    for(var side = -1; side <= 1; side += 2){
+      addBox(g, side * (w / 2 + 2.5), levelY + 3, -s * 5.5, 4, 6, d * 0.7, MAT_TUFF_DARK);
+    }
+  }
+
+  /* Top monument column */
+  var topY = y0 + 7 * 6.5;
+  addBox(g, 0, topY + 5, -40, 14, 10, 14, MAT_TUFF);
+  addCyl(g, 0, topY + 28, -40, 1.8, 2.5, 38, MAT_TUFF, 12);
+  var star = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12), MAT_GOLD);
+  star.position.set(0, topY + 49, -40);
+  g.add(star);
+
+  addBox(g, 0, topY + 3, -25, 18, 6, 8, MAT_TUFF);
 
   g.position.set(cx, 0, cz);
   scene.add(g);
 
-  for(var s = 0; s < 7; s++){
-    var w2 = 60 - s * 4;
-    addCollision(cx, cz + (-s * 4), w2, 20, 5, 0);
+  /* Collisions per terrace */
+  for(var s2 = 0; s2 < 7; s2++){
+    var w2 = 66 - s2 * 5;
+    addCollision(cx, cz + (-s2 * 5.5), w2, 22, 6, 0);
   }
 }
 
-buildRepublicSquare();
+buildSquare();
 buildOpera();
 buildMatenadaran();
 buildGallery();
 buildMarriott();
 buildUniversity();
+buildNorthAvenue();
 buildCascades();
 
-/* ═════════════ TREES (InstancedMesh - 2 draw calls) ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 14 — FLUSH ALL INSTANCED MESHES
+   ───────────────────────────────────────────────────────────────
+   Called ONCE after all buildings and landmarks are collected.
+   Turns ~300 building pieces into ~10 InstancedMesh objects.
+   ═══════════════════════════════════════════════════════════════════ */
+flushInstancedGroups();
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 15 — TREES (already instanced)
+   ═══════════════════════════════════════════════════════════════════ */
 (function(){
-  var NUM = 260;
-  var trunkGeo = new THREE.CylinderGeometry(0.25, 0.35, 2, 5);
-  trunkGeo.translate(0, 1, 0);
-  var leafGeo = new THREE.ConeGeometry(1.6, 3, 6);
-  leafGeo.translate(0, 3.5, 0);
+  var NUM = 500;
+  var trunkGeo = new THREE.CylinderGeometry(0.22, 0.32, 2.2, 5);
+  trunkGeo.translate(0, 1.1, 0);
+  var leafGeo = new THREE.ConeGeometry(1.5, 3.4, 6);
+  leafGeo.translate(0, 3.6, 0);
 
-  var trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3a20, roughness: 0.95 });
-  var leafMat = new THREE.MeshStandardMaterial({ color: 0x2a5a20, roughness: 0.95 });
-
-  var trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, NUM);
-  var leaves = new THREE.InstancedMesh(leafGeo, leafMat, NUM);
+  var trunks = new THREE.InstancedMesh(trunkGeo, MAT_TRUNK, NUM);
+  var leaves = new THREE.InstancedMesh(leafGeo, MAT_TREE_GRN, NUM);
+  trunks.frustumCulled = false;
+  leaves.frustumCulled = false;
 
   var dummy = new THREE.Object3D();
   var placed = 0, tries = 0;
-  while(placed < NUM && tries < 3000){
+  while(placed < NUM && tries < 8000){
     tries++;
     var x = (Math.random() - 0.5) * 1200;
     var z = (Math.random() - 0.5) * 1200;
-    if(Math.hypot(x, z) < 120) continue;
-    if(isRoadZone(x, z)) continue;
-    if(isNearLandmark(x, z, 42)) continue;
-    if(Math.abs(x - LM.cascades.x) < 40 && Math.abs(z - LM.cascades.z) < 100) continue;
+
+    if(Math.hypot(x, z) < 100) continue;
+    if(isNearLandmark(x, z, 4)) continue;
+    /* Prefer near roads */
+    var nearRoad = isNearRoad(x, z, 12);
+    if(!nearRoad && Math.random() < 0.7) continue;
 
     var y = terrainHeight(x, z);
-    var s = 0.7 + Math.random() * 0.8;
+    var s = 0.7 + Math.random() * 0.9;
     var rot = Math.random() * Math.PI * 2;
 
     dummy.position.set(x, y, z);
@@ -931,23 +1943,26 @@ buildCascades();
   leaves.count = placed;
   trunks.instanceMatrix.needsUpdate = true;
   leaves.instanceMatrix.needsUpdate = true;
-  trunks.castShadow = true;
-  leaves.castShadow = true;
   scene.add(trunks);
   scene.add(leaves);
+  console.log('[Trees] Placed ' + placed + ' trees');
 })();
 
-/* ═════════════ CAR ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 16 — CAR MODEL
+   ═══════════════════════════════════════════════════════════════════ */
 function buildCar(colorHex){
   var g = new THREE.Group();
-  var bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.85, roughness: 0.25 });
-  var darkMat = new THREE.MeshStandardMaterial({ color: 0x0a0d14, metalness: 0.5, roughness: 0.5 });
-  var chromeMat = new THREE.MeshStandardMaterial({ color: 0xdadde2, metalness: 0.98, roughness: 0.12 });
-  var glassMat = new THREE.MeshStandardMaterial({ color: 0x0a1828, metalness: 0.9, roughness: 0.08, transparent: true, opacity: 0.85 });
-  var tireMat = new THREE.MeshStandardMaterial({ color: 0x0d0d10, roughness: 0.95 });
-  var rimMat = new THREE.MeshStandardMaterial({ color: 0xc8d0d8, metalness: 0.95, roughness: 0.2 });
-  var headMat = new THREE.MeshBasicMaterial({ color: 0xfff4d0 });
-  var tailMat = new THREE.MeshBasicMaterial({ color: 0xff2222 });
+  g.rotation.order = 'YXZ';
+
+  var bodyMat   = new THREE.MeshLambertMaterial({ color: colorHex });
+  var darkMat   = new THREE.MeshLambertMaterial({ color: 0x0a0d14 });
+  var chromeMat = new THREE.MeshLambertMaterial({ color: 0xd8dce0 });
+  var glassMat  = new THREE.MeshLambertMaterial({ color: 0x14263a, transparent: true, opacity: 0.75 });
+  var tireMat   = new THREE.MeshLambertMaterial({ color: 0x0e0e12 });
+  var rimMat    = new THREE.MeshLambertMaterial({ color: 0xc0c8d0 });
+  var headMat   = new THREE.MeshBasicMaterial({ color: 0xfff4d0 });
+  var tailMat   = new THREE.MeshBasicMaterial({ color: 0xff2222 });
 
   var chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.2, 4.7), darkMat);
   chassis.position.y = 0.36;
@@ -955,13 +1970,10 @@ function buildCar(colorHex){
 
   var body = new THREE.Mesh(new THREE.BoxGeometry(1.96, 0.6, 4.6), bodyMat);
   body.position.y = 0.75;
-  body.castShadow = true;
-  body.receiveShadow = true;
   g.add(body);
 
   var shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.22, 4.45), bodyMat);
   shoulder.position.y = 1.14;
-  shoulder.castShadow = true;
   g.add(shoulder);
 
   var nose = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.52, 1.25), bodyMat);
@@ -985,26 +1997,24 @@ function buildCar(colorHex){
     pA.position.set(px, 1.55, 0.78);
     pA.rotation.x = -0.3;
     g.add(pA);
+
     var pB = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.14), darkMat);
     pB.position.set(px, 1.55, -0.35);
     g.add(pB);
+
     var pC = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.2), darkMat);
     pC.position.set(px, 1.55, -1.42);
     pC.rotation.x = 0.28;
     g.add(pC);
   });
 
-  var fBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.34, 0.44), darkMat);
-  fBumper.position.set(0, 0.62, 2.98);
-  g.add(fBumper);
+  var fB = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.34, 0.44), darkMat);
+  fB.position.set(0, 0.62, 2.98);
+  g.add(fB);
 
-  var lip = new THREE.Mesh(new THREE.BoxGeometry(1.88, 0.07, 0.16), chromeMat);
-  lip.position.set(0, 0.84, 3.18);
-  g.add(lip);
-
-  var rBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.32, 0.42), darkMat);
-  rBumper.position.set(0, 0.62, -2.4);
-  g.add(rBumper);
+  var rB = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.32, 0.42), darkMat);
+  rB.position.set(0, 0.62, -2.4);
+  g.add(rB);
 
   var grille = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.36, 0.06), chromeMat);
   grille.position.set(0, 0.74, 3.2);
@@ -1022,6 +2032,7 @@ function buildCar(colorHex){
     var arm = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.05, 0.09), darkMat);
     arm.position.set(x * 0.95, 1.48, 0.78);
     g.add(arm);
+
     var mir = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.1, 0.15), bodyMat);
     mir.position.set(x * 1.15, 1.45, 0.78);
     g.add(mir);
@@ -1039,15 +2050,15 @@ function buildCar(colorHex){
     g.add(t);
   });
 
+  /* ── Wheels ── */
   function makeWheel(){
     var steer = new THREE.Group();
     var roll = new THREE.Group();
     steer.add(roll);
 
-    var tireGeo = new THREE.TorusGeometry(0.44, 0.17, 10, 20);
+    var tireGeo = new THREE.TorusGeometry(0.44, 0.17, 8, 16);
     tireGeo.rotateY(Math.PI / 2);
     var tire = new THREE.Mesh(tireGeo, tireMat);
-    tire.castShadow = true;
     roll.add(tire);
 
     var discGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.26, 16);
@@ -1063,57 +2074,67 @@ function buildCar(colorHex){
       spoke.position.z = Math.cos(a) * 0.2;
       roll.add(spoke);
     }
-
-    var ringGeo = new THREE.TorusGeometry(0.32, 0.035, 5, 16);
-    ringGeo.rotateY(Math.PI / 2);
-    var ring = new THREE.Mesh(ringGeo, chromeMat);
-    roll.add(ring);
-
     return { steer: steer, roll: roll };
   }
 
   var wheels = [];
-  var wp = [
-    { x: -1.02, z: 1.5, tag: 'fl' },
-    { x: 1.02, z: 1.5, tag: 'fr' },
+  var wpos = [
+    { x: -1.02, z:  1.5, tag: 'fl' },
+    { x:  1.02, z:  1.5, tag: 'fr' },
     { x: -1.02, z: -1.5, tag: 'rl' },
-    { x: 1.02, z: -1.5, tag: 'rr' }
+    { x:  1.02, z: -1.5, tag: 'rr' }
   ];
-  for(var wi = 0; wi < wp.length; wi++){
+  for(var wi = 0; wi < wpos.length; wi++){
     var w = makeWheel();
-    // ✅ FIX: wheel center at 0.61 (torus outer radius), so tire bottom touches ground
-    w.steer.position.set(wp[wi].x, 0.61, wp[wi].z);
+    w.steer.position.set(wpos[wi].x, 0.61, wpos[wi].z);
     g.add(w.steer);
-    wheels.push({ steer: w.steer, roll: w.roll, tag: wp[wi].tag });
+    wheels.push({ steer: w.steer, roll: w.roll, tag: wpos[wi].tag });
   }
 
-  var brakeLight = new THREE.PointLight(0xff2020, 0, 8);
-  brakeLight.position.set(0, 0.88, -2.6);
-  g.add(brakeLight);
+  /* Fake ground shadow */
+  var shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(1.6, 16),
+    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28 })
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.02;
+  g.add(shadow);
 
-  return { group: g, wheels: wheels, brakeLight: brakeLight, tailMat: tailMat };
+  return { group: g, wheels: wheels, tailMat: tailMat, bodyMat: bodyMat };
 }
 
-var player = buildCar(0xe83030);
+var player = buildCar(0xe03030);
 scene.add(player.group);
 
-/* ═════════════ STATE ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 17 — GAME STATE
+   ═══════════════════════════════════════════════════════════════════ */
 var S = {
   phase: 'loading',
-  x: 0, z: -320, heading: 0, speed: 0, steer: 0,
+  x: 0, z: -320,
+  heading: 0,
+  speed: 0,
+  steer: 0,
   camX: 0, camY: 0, camZ: 0,
   camLX: 0, camLY: 0, camLZ: 0,
-  camYaw: 0, camPitch: 0.38, camDist: 8.5,
+  camYaw: 0,
+  camPitch: 0.42,
+  camDist: 10.5,
   loc: 'Երևան',
   suspensionY: 0, suspensionV: 0,
   bodyRoll: 0, bodyRollV: 0,
-  lastCamDrag: 0
+  bodyPitch: 0, bodyPitchV: 0,
+  lastCamDrag: 0,
+  wheelSpin: 0
 };
 
 var IN = { gas: false, rev: false, left: false, right: false };
 
-/* ═════════════ PHYSICS ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 18 — PHYSICS
+   ═══════════════════════════════════════════════════════════════════ */
 function updatePhysics(dt){
+  /* Steering input */
   var target = 0;
   if(IN.left) target = -1;
   if(IN.right) target = 1;
@@ -1124,7 +2145,8 @@ function updatePhysics(dt){
     if(Math.abs(S.steer) < 0.003) S.steer = 0;
   }
 
-  if(IN.gas) S.speed += (S.speed < 40 ? 40 : 22) * dt;
+  /* Throttle */
+  if(IN.gas) S.speed += (S.speed < 40 ? 38 : 22) * dt;
   if(IN.rev){
     if(S.speed > 0.5) S.speed -= 65 * dt;
     else S.speed -= 28 * dt;
@@ -1135,85 +2157,101 @@ function updatePhysics(dt){
     else S.speed = 0;
   }
 
-  // Slope resistance
+  /* Slope resistance */
   var fx = Math.sin(S.heading), fz = Math.cos(S.heading);
-  var aheadH = terrainHeight(S.x + fx * 6, S.z + fz * 6);
-  var behindH = terrainHeight(S.x - fx * 6, S.z - fz * 6);
-  var slope = (aheadH - behindH) / 12;
-  S.speed -= slope * 18 * dt;
+  var aheadH = terrainHeight(S.x + fx * 5, S.z + fz * 5);
+  var behindH = terrainHeight(S.x - fx * 5, S.z - fz * 5);
+  var slope = (aheadH - behindH) / 10;
+  S.speed -= slope * 22 * dt;
   S.speed = Math.max(-MAX_REV_KMH, Math.min(MAX_KMH, S.speed));
 
-  // ✅ FIX: reverse steering sign preserved
+  /* Steering — reverses when moving backward (Fix #4) */
   var v = S.speed / 3.6;
-  var spdFac = Math.max(-1, Math.min(1, v / 10));
-  S.heading -= S.steer * 1.7 * spdFac * dt;
+  var spdFac = Math.max(-1, Math.min(1, v / 8));
+  S.heading -= S.steer * 1.9 * spdFac * dt;
 
+  /* Position update */
   var nfx = Math.sin(S.heading), nfz = Math.cos(S.heading);
   S.x += nfx * v * dt;
   S.z += nfz * v * dt;
 
-  var lim = 680;
-  S.x = Math.max(-lim, Math.min(lim, S.x));
-  S.z = Math.max(-lim, Math.min(lim, S.z));
+  /* World limits */
+  S.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, S.x));
+  S.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, S.z));
 
-  // Collision via hash
+  /* ═══════ Collision using spatial hash ═══════ */
   var hk = Math.floor(S.x / HASH_SIZE) + ',' + Math.floor(S.z / HASH_SIZE);
   var nearby = COL_HASH[hk];
   if(nearby){
     for(var ci = 0; ci < nearby.length; ci++){
       var b = nearby[ci];
-      var hw = b.w / 2 + 1.2;
-      var hd = b.d / 2 + 1.2;
+      var hw = b.w / 2 + 1.4;
+      var hd = b.d / 2 + 1.4;
       var ddx = S.x - b.x;
       var ddz = S.z - b.z;
       if(Math.abs(ddx) < hw && Math.abs(ddz) < hd){
         var ox = hw - Math.abs(ddx);
         var oz = hd - Math.abs(ddz);
-        if(ox < oz) S.x = b.x + Math.sign(ddx) * hw;
-        else S.z = b.z + Math.sign(ddz) * hd;
-        S.speed *= 0.4;
+        if(ox < oz) S.x = b.x + Math.sign(ddx || 1) * hw;
+        else S.z = b.z + Math.sign(ddz || 1) * hd;
+        S.speed *= 0.35;
       }
     }
   }
 
+  /* Ground height */
   var groundY = terrainHeight(S.x, S.z);
-  var targetSusp = -slope * 0.05;
-  S.suspensionV += (targetSusp - S.suspensionY) * 50 * dt - S.suspensionV * 8 * dt;
+
+  /* Suspension */
+  var targetSusp = -slope * 0.04;
+  S.suspensionV += (targetSusp - S.suspensionY) * 55 * dt - S.suspensionV * 9 * dt;
   S.suspensionY += S.suspensionV * dt;
 
+  /* Terrain-following pitch and roll (Fix #7) */
+  var rx = Math.cos(S.heading), rz = -Math.sin(S.heading);
+  var hF = terrainHeight(S.x + fx * 1.6, S.z + fz * 1.6);
+  var hB = terrainHeight(S.x - fx * 1.6, S.z - fz * 1.6);
+  var hL = terrainHeight(S.x - rx * 1.1, S.z - rz * 1.1);
+  var hR = terrainHeight(S.x + rx * 1.1, S.z + rz * 1.1);
+
+  var terrainPitch = Math.atan2(hF - hB, 3.2);
+  var terrainRoll  = Math.atan2(hR - hL, 2.2);
+
+  S.bodyPitchV += (terrainPitch - S.bodyPitch) * 14 * dt - S.bodyPitchV * 8 * dt;
+  S.bodyPitch  += S.bodyPitchV * dt;
+
+  var steerRoll = -S.steer * 0.06;
+  S.bodyRollV += (terrainRoll + steerRoll - S.bodyRoll) * 14 * dt - S.bodyRollV * 8 * dt;
+  S.bodyRoll  += S.bodyRollV * dt;
+
+  /* Apply transforms */
   player.group.position.set(S.x, groundY + S.suspensionY, S.z);
   player.group.rotation.y = S.heading;
-
-  // ✅ FIX: body roll uses car-local axis
-  var rx = Math.cos(S.heading), rz = -Math.sin(S.heading);
-  var terrainRoll = Math.atan2(
-    terrainHeight(S.x - rx, S.z - rz) - terrainHeight(S.x + rx, S.z + rz),
-    2
-  ) * 0.7;
-  var targetRoll = -S.steer * 0.05 + terrainRoll;
-  S.bodyRollV += (targetRoll - S.bodyRoll) * 15 * dt - S.bodyRollV * 7 * dt;
-  S.bodyRoll += S.bodyRollV * dt;
+  player.group.rotation.x = -S.bodyPitch;
   player.group.rotation.z = S.bodyRoll;
 
-  // ✅ FIX: wheel spin direction (+= is forward)
-  var spin = v * dt * 2.0;
+  /* Wheels (Fix #1 + #2) */
+  var spin = v * dt * 2.2;
+  S.wheelSpin += spin;
   for(var wk = 0; wk < player.wheels.length; wk++){
     var w = player.wheels[wk];
-    w.roll.rotation.x += spin;
+    w.roll.rotation.x = S.wheelSpin;
     if(w.tag === 'fl' || w.tag === 'fr'){
-      // ✅ FIX: steering rotation is NEGATIVE
       w.steer.rotation.y = -S.steer * 0.5;
     }
   }
 
-  var braking = IN.rev || (!IN.gas && Math.abs(S.speed) > 3);
-  player.brakeLight.intensity = braking ? 1.5 : 0;
+  /* Brake light */
+  var braking = IN.rev || (!IN.gas && Math.abs(S.speed) > 4);
   player.tailMat.color.setHex(braking ? 0xff1010 : 0xff2222);
 
   updateLocationName();
 }
 
-var lastLoc = '';
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 19 — LOCATION NAME
+   ═══════════════════════════════════════════════════════════════════ */
+var lastLocName = '';
 function updateLocationName(){
   var closest = 'Երևան', minD = Infinity;
   for(var k in LM){
@@ -1221,31 +2259,35 @@ function updateLocationName(){
     var d = Math.hypot(S.x - L.x, S.z - L.z);
     if(d < minD){ minD = d; closest = L.name; }
   }
-  var newLoc = minD < 80 ? closest : 'Երևան';
-  if(newLoc !== lastLoc){
-    lastLoc = newLoc;
+  var newLoc = minD < 90 ? closest : 'Երևան';
+  if(newLoc !== lastLocName){
+    lastLocName = newLoc;
     S.loc = newLoc;
-    document.getElementById('locName').textContent = newLoc;
+    var el = document.getElementById('locName');
+    if(el) el.textContent = newLoc;
   }
 }
 
-/* ═════════════ CAMERA (orbit on right, auto-follow) ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 20 — CAMERA
+   ═══════════════════════════════════════════════════════════════════ */
 function updateCamera(dt){
-  // Auto-return to behind car only if driving and not recently dragged
+  /* Auto-follow when driving and not recently dragged (Fix #49) */
   var timeSinceDrag = performance.now() - S.lastCamDrag;
-  if(Math.abs(S.speed) > 5 && timeSinceDrag > 2000){
-    var diff = ((S.heading - S.camYaw + Math.PI) % (Math.PI * 2)) - Math.PI;
-    if(diff < -Math.PI) diff += Math.PI * 2;
-    S.camYaw += diff * Math.min(1, 1.6 * dt);
+  if(Math.abs(S.speed) > 6 && timeSinceDrag > 1800){
+    var diff = S.heading - S.camYaw;
+    while(diff >  Math.PI) diff -= Math.PI * 2;
+    while(diff < -Math.PI) diff += Math.PI * 2;
+    S.camYaw += diff * Math.min(1, 1.8 * dt);
   }
 
-  var dist = S.camDist * Math.cos(S.camPitch * 0.7);
-  var high = 1.5 + S.camDist * Math.sin(S.camPitch);
+  var dist = S.camDist * Math.cos(S.camPitch * 0.65);
+  var high = 1.8 + S.camDist * Math.sin(S.camPitch);
 
   var tx = S.x - Math.sin(S.camYaw) * dist;
   var tz = S.z - Math.cos(S.camYaw) * dist;
   var ty = terrainHeight(tx, tz) + high;
-  var minY = terrainHeight(tx, tz) + 1.6;
+  var minY = terrainHeight(tx, tz) + 1.7;
   if(ty < minY) ty = minY;
 
   var k = 1 - Math.exp(-9 * dt);
@@ -1255,8 +2297,8 @@ function updateCamera(dt){
 
   var lx = S.x + Math.sin(S.heading) * 6;
   var lz = S.z + Math.cos(S.heading) * 6;
-  var ly = terrainHeight(S.x, S.z) + 1.2;
-  var lk = 1 - Math.exp(-10 * dt);
+  var ly = terrainHeight(S.x, S.z) + 1.3;
+  var lk = 1 - Math.exp(-11 * dt);
   S.camLX += (lx - S.camLX) * lk;
   S.camLY += (ly - S.camLY) * lk;
   S.camLZ += (lz - S.camLZ) * lk;
@@ -1264,29 +2306,152 @@ function updateCamera(dt){
   camera.position.set(S.camX, S.camY, S.camZ);
   camera.lookAt(S.camLX, S.camLY, S.camLZ);
 
-  var tFov = 60 + Math.abs(S.speed / MAX_KMH) * 8;
-  if(Math.abs(camera.fov - tFov) > 0.15){
+  var tFov = 62 + Math.abs(S.speed / MAX_KMH) * 6;
+  if(Math.abs(camera.fov - tFov) > 0.2){
     camera.fov += (tFov - camera.fov) * Math.min(1, 3 * dt);
     camera.updateProjectionMatrix();
   }
 
-  sunTarget.position.copy(player.group.position);
-  sun.position.copy(player.group.position).add(new THREE.Vector3(-60, 120, 45));
+  /* Sun follows camera for consistent lighting */
+  sun.position.set(S.x - 100, 200, S.z + 120);
+  sun.target.position.set(S.x, 0, S.z);
+  sun.target.updateMatrixWorld();
 }
 
-/* ═════════════ HUD ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 21 — HUD + MINIMAP
+   ═══════════════════════════════════════════════════════════════════ */
+var spdEl = document.getElementById('spdVal');
+var compassEl = document.getElementById('compassArrow');
+var perfEl = document.getElementById('perfInfo');
 var lastSpd = -1;
-function updateHUD(){
+
+var minimapCanvas = document.getElementById('minimap');
+var mmCtx = minimapCanvas.getContext('2d');
+var MM_SIZE = 264;
+var MM_RANGE = 320;
+
+/* Frame counter for perf display */
+var fps = 0, frameCount = 0, fpsTimer = 0;
+
+function updateHUD(dt){
   var spd = Math.round(Math.abs(S.speed));
   if(spd !== lastSpd){
-    document.getElementById('spdVal').textContent = spd;
+    spdEl.textContent = spd;
     lastSpd = spd;
   }
   var deg = S.heading * 180 / Math.PI;
-  document.getElementById('compassArrow').style.transform = 'rotate(' + (-deg) + 'deg)';
+  compassEl.style.transform = 'rotate(' + (-deg) + 'deg)';
+
+  /* Perf overlay */
+  frameCount++;
+  fpsTimer += dt;
+  if(fpsTimer >= 0.5){
+    fps = Math.round(frameCount / fpsTimer);
+    frameCount = 0;
+    fpsTimer = 0;
+    if(perfEl){
+      perfEl.textContent =
+        fps + ' FPS · ' +
+        renderer.info.render.calls + ' calls · ' +
+        renderer.info.render.triangles + ' tris';
+    }
+  }
+
+  drawMinimap();
 }
 
-/* ═════════════ INPUT ═════════════ */
+function drawMinimap(){
+  var ctx = mmCtx;
+  var S2 = MM_SIZE / 2;
+  var scale = (MM_SIZE / 2) / MM_RANGE;
+  ctx.clearRect(0, 0, MM_SIZE, MM_SIZE);
+
+  ctx.fillStyle = '#1a2a3a';
+  ctx.fillRect(0, 0, MM_SIZE, MM_SIZE);
+  ctx.fillStyle = '#2a4a2a';
+  ctx.beginPath();
+  ctx.arc(S2, S2, S2 - 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(S2, S2);
+  ctx.rotate(-S.heading);
+
+  /* Roads */
+  ctx.strokeStyle = '#ffcc44';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  for(var i = 0; i < ROAD_EDGES.length; i++){
+    var e = ROAD_EDGES[i];
+    var A = ROAD_NODES[e[0]], B = ROAD_NODES[e[1]];
+    ctx.beginPath();
+    ctx.moveTo((A.x - S.x) * scale, (A.z - S.z) * scale);
+    ctx.lineTo((B.x - S.x) * scale, (B.z - S.z) * scale);
+    ctx.stroke();
+  }
+
+  /* Winding path */
+  ctx.strokeStyle = '#a08a3a';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for(var wi = 0; wi < WINDING_PATH.length; wi++){
+    var W = WINDING_PATH[wi];
+    var wx = (W.x - S.x) * scale;
+    var wy = (W.z - S.z) * scale;
+    if(wi === 0) ctx.moveTo(wx, wy);
+    else ctx.lineTo(wx, wy);
+  }
+  ctx.stroke();
+
+  /* Landmarks */
+  for(var k in LM){
+    var L = LM[k];
+    var lx = (L.x - S.x) * scale;
+    var ly = (L.z - S.z) * scale;
+    if(Math.hypot(lx, ly) > S2 - 8) continue;
+    ctx.fillStyle = '#ff5577';
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('N', 0, -S2 + 16);
+
+  ctx.restore();
+
+  /* Car arrow */
+  ctx.save();
+  ctx.translate(S2, S2);
+  ctx.fillStyle = '#ff3b3b';
+  ctx.beginPath();
+  ctx.moveTo(0, -9);
+  ctx.lineTo(-6, 6);
+  ctx.lineTo(0, 3);
+  ctx.lineTo(6, 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.strokeStyle = 'rgba(255,255,255,.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(S2, S2, S2 - 3, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 22 — INPUT BINDING
+   ═══════════════════════════════════════════════════════════════════ */
 function bindHold(el, key){
   if(!el) return;
   var on = function(e){
@@ -1328,7 +2493,7 @@ window.addEventListener('keyup', function(e){
   if(k === 'arrowright' || k === 'd') IN.right = false;
 });
 
-/* Camera drag zone — right half, vertical limited, horizontal free */
+/* ── Camera drag zone ── */
 (function(){
   var z = document.getElementById('camZone');
   if(!z) return;
@@ -1338,8 +2503,10 @@ window.addEventListener('keyup', function(e){
     e.preventDefault();
     drag = true;
     var t = e.touches ? e.touches[0] : e;
-    sx = t.clientX; sy = t.clientY;
-    sYaw = S.camYaw; sPitch = S.camPitch;
+    sx = t.clientX;
+    sy = t.clientY;
+    sYaw = S.camYaw;
+    sPitch = S.camPitch;
     S.lastCamDrag = performance.now();
   };
   var mv = function(e){
@@ -1347,10 +2514,8 @@ window.addEventListener('keyup', function(e){
     e.preventDefault();
     var t = e.touches ? e.touches[0] : e;
     S.lastCamDrag = performance.now();
-    // Horizontal: unlimited yaw
-    S.camYaw = sYaw - (t.clientX - sx) / 220;
-    // Vertical: limited pitch
-    S.camPitch = Math.max(0.05, Math.min(1.15, sPitch + (sy - t.clientY) / 300));
+    S.camYaw = sYaw - (t.clientX - sx) / 200;
+    S.camPitch = Math.max(0.05, Math.min(1.2, sPitch + (sy - t.clientY) / 280));
   };
   var up = function(){ drag = false; };
 
@@ -1363,6 +2528,7 @@ window.addEventListener('keyup', function(e){
   window.addEventListener('mouseup', up);
 })();
 
+/* ── Global gesture prevention ── */
 document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
 document.addEventListener('gesturechange', function(e){ e.preventDefault(); });
 document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
@@ -1371,38 +2537,55 @@ document.addEventListener('touchmove', function(e){
   if(e.touches.length > 1) e.preventDefault();
 }, {passive: false});
 
-/* ═════════════ START GAME ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 23 — GAME START
+   ═══════════════════════════════════════════════════════════════════ */
 function startGame(){
+  /* Spawn on main road facing Cascade */
   S.x = 0;
   S.z = -320;
   S.heading = 0;
   S.speed = 0;
+  S.steer = 0;
   S.camYaw = 0;
-  S.camPitch = 0.38;
+  S.camPitch = 0.42;
   S.suspensionY = 0;
+  S.suspensionV = 0;
   S.bodyRoll = 0;
+  S.bodyRollV = 0;
+  S.bodyPitch = 0;
+  S.bodyPitchV = 0;
+  S.wheelSpin = 0;
   S.lastCamDrag = 0;
 
   var dist = S.camDist;
   S.camX = S.x - Math.sin(S.camYaw) * dist;
-  S.camY = terrainHeight(S.camX, S.z - dist) + 3;
+  S.camY = terrainHeight(S.camX, S.z - dist) + 3.2;
   S.camZ = S.z - Math.cos(S.camYaw) * dist;
   S.camLX = S.x;
-  S.camLY = terrainHeight(S.x, S.z) + 1.2;
+  S.camLY = terrainHeight(S.x, S.z) + 1.3;
   S.camLZ = S.z + 6;
 
   player.group.position.set(S.x, terrainHeight(S.x, S.z), S.z);
   player.group.rotation.y = S.heading;
+  player.group.rotation.x = 0;
   player.group.rotation.z = 0;
 
   S.phase = 'play';
+  lastLocName = '';
   updateLocationName();
+
+  /* Reveal perf overlay */
+  var perf = document.getElementById('perfInfo');
+  if(perf) perf.style.display = 'block';
 }
 
-/* ═════════════ RESIZE ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 24 — RESIZE
+   ═══════════════════════════════════════════════════════════════════ */
 function resize(){
-  var w = app.clientWidth || window.innerWidth;
-  var h = app.clientHeight || window.innerHeight;
+  var w = window.innerWidth;
+  var h = window.innerHeight;
   renderer.setSize(w, h, false);
   cvs.style.width = '100%';
   cvs.style.height = '100%';
@@ -1410,27 +2593,60 @@ function resize(){
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', function(){ setTimeout(resize, 200); });
+window.addEventListener('orientationchange', function(){
+  setTimeout(resize, 200);
+  setTimeout(resize, 600);
+});
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', resize);
+}
 
-/* ═════════════ LOOP ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 25 — MAIN LOOP
+   ═══════════════════════════════════════════════════════════════════ */
 var lastT = performance.now();
 function loop(now){
   requestAnimationFrame(loop);
-  var dt = Math.min(0.033, (now - lastT) / 1000);
+  var dt = Math.min(0.04, (now - lastT) / 1000);
   lastT = now;
 
-  if(S.phase === 'play') updatePhysics(dt);
+  if(S.phase === 'play'){
+    updatePhysics(dt);
+  }
   updateCamera(dt);
-  updateHUD();
+  updateHUD(dt);
   renderer.render(scene, camera);
 }
 
-/* ═════════════ INIT ═════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 26 — INIT
+   ═══════════════════════════════════════════════════════════════════ */
 resize();
 player.group.position.set(S.x, terrainHeight(S.x, S.z), S.z);
 requestAnimationFrame(loop);
 
+/* Signal readiness to the loader */
+window.__gameReady = true;
 window.__gameStartFn = startGame;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION 27 — STARTUP REPORT (console)
+   ═══════════════════════════════════════════════════════════════════ */
+(function reportBuildStats(){
+  var totalCollision = 0;
+  for(var k in COL_HASH) totalCollision += COL_HASH[k].length;
+  console.log('──────────────────────────────────');
+  console.log('  YEREVAN 3D — BUILD COMPLETE');
+  console.log('──────────────────────────────────');
+  console.log('  Draw calls (initial): ~' + scene.children.length);
+  console.log('  Collision cells:', Object.keys(COL_HASH).length);
+  console.log('  Collision boxes:', totalCollision);
+  console.log('  Terrain verts:', terrainGeo.attributes.position.count);
+  console.log('  Pixel ratio: 1 (fixed)');
+  console.log('  Antialias: OFF');
+  console.log('  Shadows: OFF');
+  console.log('──────────────────────────────────');
+})();
 
 })();
 </script>
