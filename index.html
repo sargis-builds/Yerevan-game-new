@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#87ceeb">
+<meta name="theme-color" content="#0c1830">
 <title>Երևան · 3D</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
-html,body{width:100%;height:100%;overflow:hidden;background:#87ceeb;color:#fff;touch-action:none;overscroll-behavior:none;position:fixed}
+html,body{width:100%;height:100%;overflow:hidden;background:#0c1830;color:#fff;touch-action:none;overscroll-behavior:none;position:fixed}
 #app{position:fixed;inset:0;overflow:hidden}
 @media (orientation:portrait){#app{width:100vh;height:100vw;top:50%;left:50%;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center}}
 canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
@@ -40,15 +40,15 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
 #msg.show{animation:popMsg 2.4s ease-out}
 @keyframes popMsg{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}25%{opacity:1;transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}
 
-#homeScreen{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at 50% 0%,rgba(120,180,255,.4),transparent 65%),linear-gradient(170deg,#0c1830,#060c18 55%,#040810);transition:opacity .8s}
-#homeScreen.hide{opacity:0;pointer-events:none}
-#title{font-size:clamp(36px,7vw,66px);font-weight:900;letter-spacing:12px;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6,#7dd3fc);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite}
-@keyframes shine{to{background-position:300% 0}}
-#sub{font-size:11px;letter-spacing:8px;color:#8ea8c8;margin-top:-4px;font-weight:700}
-#loadingBar{margin-top:20px;width:220px;height:4px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
-#loadingFill{height:100%;width:0%;background:linear-gradient(90deg,#7dd3fc,#fbbf24);transition:width .3s}
-#hint{font-size:11px;color:#8ea8c8;letter-spacing:2px;text-align:center;line-height:1.9;margin-top:20px;max-width:88vw}
-.k{display:inline-block;padding:2px 8px;border-radius:6px;background:rgba(120,180,255,.16);border:1px solid rgba(150,190,255,.35);color:#b8d4ff;font-weight:700;margin:0 2px}
+/* ⚠️ LOADING OVERLAY — ավելի հստակ, արագ */
+#loader{position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:radial-gradient(ellipse at 50% 40%,#142850,#060c18 70%);transition:opacity .5s}
+#loader.hide{opacity:0;pointer-events:none}
+#loaderTitle{font-size:clamp(32px,6vw,54px);font-weight:900;letter-spacing:14px;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#7dd3fc);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 3s linear infinite;text-shadow:0 0 60px rgba(120,180,255,.6)}
+@keyframes shine{to{background-position:200% 0}}
+#loaderSub{font-size:11px;letter-spacing:6px;color:#8ea8c8;font-weight:700}
+#barWrap{width:260px;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden;box-shadow:0 0 20px rgba(120,180,255,.3)}
+#barFill{height:100%;width:0%;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6);border-radius:3px;transition:width .12s linear;box-shadow:0 0 12px rgba(120,180,255,.8)}
+#barText{font-size:11px;letter-spacing:3px;color:#a8c0dc;font-weight:600;min-height:14px}
 </style>
 </head>
 <body>
@@ -82,14 +82,11 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
 
   <div id="msg"></div>
 
-  <div id="homeScreen">
-    <div id="title">ԵՐԵՎԱՆ</div>
-    <div id="sub">3D · ՔԱՂԱՔ · ՌԵԼԻԵՖ</div>
-    <div id="loadingBar"><div id="loadingFill"></div></div>
-    <div id="hint">
-      <span class="k">◀ ▶</span> ղեկ · <span class="k">ԳԱԶ</span> · <span class="k">ՀԵՏ</span> · Աջ եզրից ↕ կամերա<br>
-      Բարձրացի՛ր Կասկադի գագաթը ոլորուն ճանապարհով
-    </div>
+  <div id="loader">
+    <div id="loaderTitle">ԵՐԵՎԱՆ</div>
+    <div id="loaderSub">3D · ՔԱՂԱՔ · ՌԵԼԻԵՖ</div>
+    <div id="barWrap"><div id="barFill"></div></div>
+    <div id="barText">ԲԵՌՆՈՒՄ...</div>
   </div>
 </div>
 
@@ -97,6 +94,13 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
 <script>
 (function(){
 'use strict';
+
+/* ⚠️ ERROR HANDLER — ցույց է տալիս սխալը էկրանին */
+window.addEventListener('error', e => {
+  const bt = document.getElementById('barText');
+  if(bt) bt.textContent = 'ՍԽԱԼ՝ ' + (e.message || 'unknown');
+  console.error(e);
+});
 
 /* ═══════ ԿԱՅՈՒՆՆԵՐ ═══════ */
 const ROAD_W = 9, SIDEWALK_W = 3.5, SPACING = 60, GRID_N = 11;
@@ -123,22 +127,17 @@ const S = {
 };
 const IN = { gas:false, brake:false, left:false, right:false };
 
-/* ═══════ ՌԵԼԻԵՖ — Կասկադ + Մատենադարան բարձրադիր ═══════ */
+/* ═══════ ՌԵԼԻԵՖ ═══════ */
 function terrainHeight(x, z){
   let y = 0;
-  // Կասկադի բլուր — հյուսիս (z+), ամենաբարձր
   const dc = Math.hypot(x - 0, z - 380);
   y += 55 * Math.exp(-dc*dc / 55000);
-  // Մատենադարանի բլուր — հս-արմ
   const dm = Math.hypot(x + 250, z - 320);
   y += 32 * Math.exp(-dm*dm / 28000);
-  // Ընդհանուր թեք դեպի հյուսիս
   y += Math.max(0, z) * 0.06;
-  // Ալիքներ
   y += 1.2 * Math.sin(x*0.012) * Math.cos(z*0.011);
   return Math.max(0, y);
 }
-
 function nodeX(i){ return -HALF_CITY + i*SPACING; }
 function nodeZ(j){ return -HALF_CITY + j*SPACING; }
 
@@ -193,7 +192,7 @@ const fill = new THREE.DirectionalLight(0xc8d8ff, 0.3);
 fill.position.set(100, 80, -100);
 scene.add(fill);
 
-/* ԳԵՏԻՆ — ռելիեֆով */
+/* ԳԵՏԻՆ */
 const TERRAIN_SIZE = CITY_SIZE + 400;
 const TERRAIN_RES = 160;
 const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_RES, TERRAIN_RES);
@@ -201,13 +200,11 @@ terrainGeo.rotateX(-Math.PI/2);
 (function(){
   const pos = terrainGeo.attributes.position;
   for(let i=0;i<pos.count;i++){
-    const x = pos.getX(i), z = pos.getZ(i);
-    pos.setY(i, terrainHeight(x, z));
+    pos.setY(i, terrainHeight(pos.getX(i), pos.getZ(i)));
   }
   pos.needsUpdate = true;
   terrainGeo.computeVertexNormals();
 })();
-// Խոտի տեքստուրա
 function makeGrassTex(){
   const cv = document.createElement('canvas');
   cv.width = 256; cv.height = 256;
@@ -229,7 +226,7 @@ const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
 terrainMesh.receiveShadow = true;
 scene.add(terrainMesh);
 
-/* ═══════ ՃԱՆԱՊԱՐՀՆԵՐ + ՄԱՅԹԵՐ ═══════ */
+/* ═══════ ՃԱՆԱՊԱՐՀՆԵՐ ═══════ */
 function addStrip(pos, uv, idx, x1, z1, x2, z2, width, yOff, uvScale){
   const base = pos.length/3;
   const dx = x2-x1, dz = z2-z1;
@@ -261,10 +258,8 @@ function addQuad(pos, uv, idx, x1, z1, x2, z2, x3, z3, x4, z4, yOff, uvScale){
   uv.push(0,0, 1*s,0, 1*s,1*s, 0,1*s);
   idx.push(base,base+1,base+2, base,base+2,base+3);
 }
-
 function makeAsphaltTex(){
-  const cv = document.createElement('canvas');
-  cv.width=256; cv.height=256;
+  const cv = document.createElement('canvas'); cv.width=256; cv.height=256;
   const x = cv.getContext('2d');
   x.fillStyle = '#3a3d42'; x.fillRect(0,0,256,256);
   for(let i=0;i<3500;i++){
@@ -277,8 +272,7 @@ function makeAsphaltTex(){
   return t;
 }
 function makeWalkTex(){
-  const cv = document.createElement('canvas');
-  cv.width=128; cv.height=128;
+  const cv = document.createElement('canvas'); cv.width=128; cv.height=128;
   const x = cv.getContext('2d');
   x.fillStyle = '#c8c0b0'; x.fillRect(0,0,128,128);
   x.strokeStyle = 'rgba(120,110,100,0.5)'; x.lineWidth = 1.5;
@@ -292,8 +286,7 @@ function makeWalkTex(){
   return t;
 }
 function makeRoadWithLinesTex(){
-  const cv = document.createElement('canvas');
-  cv.width=128; cv.height=256;
+  const cv = document.createElement('canvas'); cv.width=128; cv.height=256;
   const x = cv.getContext('2d');
   x.fillStyle = '#3a3d42'; x.fillRect(0,0,128,256);
   for(let i=0;i<2500;i++){
@@ -316,7 +309,6 @@ const walkPositions=[], walkUVs=[], walkIndices=[];
 const interPositions=[], interUVs=[], interIndices=[];
 
 function edgeExists(i, j, dir){
-  // Բաց թողնում ենք որոշ եզրեր վայրերի տարածքում
   if (dir === 'h' && i === 4 && j === 5) return false;
   if (dir === 'v' && i === 5 && j === 4) return false;
   if (dir === 'h' && i === 6 && j === 5) return false;
@@ -324,25 +316,19 @@ function edgeExists(i, j, dir){
   if (dir === 'v' && i === 5 && j === 5) return false;
   return true;
 }
-
-// Հորիզոնական ճանապարհներ
 for(let j = 0; j < GRID_N; j++){
   for(let i = 0; i < GRID_N - 1; i++){
     if(!edgeExists(i,j,'h')) continue;
     addStrip(roadPositions, roadUVs, roadIndices, nodeX(i), nodeZ(j), nodeX(i+1), nodeZ(j), ROAD_W, 0.06, 0.06);
   }
 }
-// Ուղղահայաց
 for(let i = 0; i < GRID_N; i++){
   for(let j = 0; j < GRID_N - 1; j++){
     if(!edgeExists(i,j,'v')) continue;
     addStrip(roadPositions, roadUVs, roadIndices, nodeX(i), nodeZ(j), nodeX(i), nodeZ(j+1), ROAD_W, 0.061, 0.06);
   }
 }
-
 const SWI = ROAD_W/2 + SIDEWALK_W;
-
-// Մայթեր
 for(let j = 0; j < GRID_N; j++){
   for(let i = 0; i < GRID_N - 1; i++){
     if(!edgeExists(i,j,'h')) continue;
@@ -361,7 +347,6 @@ for(let i = 0; i < GRID_N; i++){
     addStrip(walkPositions, walkUVs, walkIndices, x-ROAD_W/2-SIDEWALK_W/2, z1, x-ROAD_W/2-SIDEWALK_W/2, z2, SIDEWALK_W, 0.22, 0.3);
   }
 }
-// Խաչմերուկների անկյունային մայթեր
 for(let i = 0; i < GRID_N; i++){
   for(let j = 0; j < GRID_N; j++){
     const cx = nodeX(i), cz = nodeZ(j);
@@ -378,7 +363,6 @@ for(let i = 0; i < GRID_N; i++){
     addQuad(interPositions, interUVs, interIndices, cx-w2,cz-w2, cx+w2,cz-w2, cx+w2,cz+w2, cx-w2,cz+w2, 0.07, 0.15);
   }
 }
-
 function makeMesh(pos, uv, idx, material){
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -397,8 +381,7 @@ scene.add(makeMesh(interPositions, interUVs, interIndices, new THREE.MeshStandar
 
 /* ═══════ ՇԵՆՔԵՐ ═══════ */
 function makeBuildingTex(hue){
-  const cv = document.createElement('canvas');
-  cv.width = 128; cv.height = 256;
+  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 256;
   const x = cv.getContext('2d');
   const baseColors = ['#e0d0b8','#d8c8a8','#e8d8c8','#d0c0a8','#e8dcc8','#d8ccc0'];
   x.fillStyle = baseColors[hue % baseColors.length];
@@ -407,8 +390,7 @@ function makeBuildingTex(hue){
     x.fillStyle = `rgba(120,100,80,${Math.random()*0.1})`;
     x.fillRect(Math.random()*128, Math.random()*256, 3, 2);
   }
-  const cols = 4, rows = 10;
-  const cw = 128/cols, ch = 256/rows;
+  const cols = 4, rows = 10, cw = 128/cols, ch = 256/rows;
   for(let r=1;r<rows-1;r++){
     for(let c=0;c<cols;c++){
       x.fillStyle = '#3a4a5a';
@@ -440,7 +422,6 @@ for(let i = 0; i < GRID_N - 1; i++){
       if(Math.abs(L.i-i) <= 1 && Math.abs(L.j-j) <= 1){ skip = true; break; }
     }
     if(skip) continue;
-    // Cascade-ի շուրջը ազատ թողնենք (բլրի վրա)
     if(j >= 8) continue;
     const cellCX = nodeX(i)+SPACING/2;
     const cellCZ = nodeZ(j)+SPACING/2;
@@ -455,15 +436,14 @@ for(let i = 0; i < GRID_N - 1; i++){
     m.scale.set(w,h,d);
     m.position.set(bx, terrainHeight(bx,bz)+h/2, bz);
     m.rotation.y = Math.round(Math.random()*4) * Math.PI/2;
-    m.castShadow = true;
-    m.receiveShadow = true;
+    m.castShadow = true; m.receiveShadow = true;
     scene.add(m);
     buildings.push(m);
     BLD_COLLISION.push({ x:bx, z:bz, w, d, h });
   }
 }
 
-/* ═══════ ԿԱՍԿԱԴ — ԺԱՅՌԱՓՈՐ ═══════ */
+/* ═══════ ԿԱՍԿԱԴ ═══════ */
 function buildCascade(cx, cz){
   const g = new THREE.Group();
   const rockMat = new THREE.MeshStandardMaterial({ color:0xb8a890, roughness:0.95 });
@@ -471,99 +451,50 @@ function buildCascade(cx, cz){
   const tuffMat = new THREE.MeshStandardMaterial({ color:0xd8c8a8, roughness:0.9 });
   const waterMat = new THREE.MeshStandardMaterial({ color:0x4a8ac8, roughness:0.15, metalness:0.6 });
   const baseY = terrainHeight(cx, cz);
-
-  // Ժայռի հիմք — մեծ ամուր զանգված
   for(let s = 0; s < 6; s++){
     const levelY = baseY + s * 4;
     const width = 40 - s * 4;
     const depth = 24 - s * 3;
-
-    // Հիմնական ժայռի բլոկ
-    const rock = new THREE.Mesh(
-      new THREE.BoxGeometry(width, 3.5, depth),
-      s % 2 === 0 ? rockMat : darkRockMat
-    );
-    rock.position.set(0, levelY + 1.75, s * 2.5);
-    rock.castShadow = true;
-    rock.receiveShadow = true;
-    g.add(rock);
-
-    // Ջրի ավազան
-    const pool = new THREE.Mesh(
-      new THREE.BoxGeometry(width - 8, 0.6, depth - 8),
-      waterMat
-    );
-    pool.position.set(0, levelY + 3.7, s * 2.5);
-    g.add(pool);
-
-    // Աջ ու ձախ ժայռեր
-    [-1, 1].forEach(side => {
-      const tower = new THREE.Mesh(
-        new THREE.BoxGeometry(6, 6, 8),
-        rockMat
-      );
-      tower.position.set(side * (width/2 + 3), levelY + 3, s * 2.5);
-      tower.castShadow = true;
-      g.add(tower);
+    const rock = new THREE.Mesh(new THREE.BoxGeometry(width, 3.5, depth), s%2===0?rockMat:darkRockMat);
+    rock.position.set(0, levelY+1.75, s*2.5);
+    rock.castShadow = true; rock.receiveShadow = true; g.add(rock);
+    const pool = new THREE.Mesh(new THREE.BoxGeometry(width-8, 0.6, depth-8), waterMat);
+    pool.position.set(0, levelY+3.7, s*2.5); g.add(pool);
+    [-1,1].forEach(side=>{
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(6,6,8), rockMat);
+      tower.position.set(side*(width/2+3), levelY+3, s*2.5);
+      tower.castShadow = true; g.add(tower);
     });
   }
-
-  // Գագաթին հուշարձան-սյուն
-  const pillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.5, 2, 12, 12),
-    tuffMat
-  );
-  pillar.position.set(0, baseY + 6*4 + 6, 15);
-  pillar.castShadow = true;
-  g.add(pillar);
-
-  // Աջ ու ձախ մեծ կամարներ (Կասկադի կողային մուտքեր)
-  [-1, 1].forEach(side => {
+  const pillar = new THREE.Mesh(new THREE.CylinderGeometry(1.5,2,12,12), tuffMat);
+  pillar.position.set(0, baseY+6*4+6, 15); pillar.castShadow = true; g.add(pillar);
+  [-1,1].forEach(side=>{
     for(let s = 0; s < 6; s++){
-      const arch = new THREE.Mesh(
-        new THREE.BoxGeometry(3, 4, 6),
-        tuffMat
-      );
-      arch.position.set(side * 22, baseY + s*4 + 2, s * 2.5);
-      arch.castShadow = true;
-      g.add(arch);
+      const arch = new THREE.Mesh(new THREE.BoxGeometry(3,4,6), tuffMat);
+      arch.position.set(side*22, baseY+s*4+2, s*2.5);
+      arch.castShadow = true; g.add(arch);
     }
   });
-
   g.position.set(cx, 0, cz);
   scene.add(g);
-
-  // Collision-ներ՝ յուրաքանչյուր հարթակ
   for(let s = 0; s < 6; s++){
-    const w = 44 - s * 4;
-    BLD_COLLISION.push({
-      x: cx,
-      z: cz + s * 2.5,
-      w: w,
-      d: 24 - s * 3,
-      h: 4
-    });
+    BLD_COLLISION.push({ x:cx, z:cz+s*2.5, w:44-s*4, d:24-s*3, h:4 });
   }
 }
 
-/* ═══════ ՈԼՈՐՈՒՆ ՎԵՐԵԼՔ ԴԵՊԻ ԿԱՍԿԱԴ ═══════ */
-// Հատուկ ճանապարհ՝ միանում է ցանցին, բարձրանում է Կասկադ
+/* ═══════ ՈԼՈՐՈՒՆ ՃԱՆԱՊԱՐՀ ═══════ */
 const windRoadCurve = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(nodeX(5), 0, nodeZ(6) + 30),
-  new THREE.Vector3(nodeX(5) - 40, 0, nodeZ(7) + 10),
-  new THREE.Vector3(nodeX(5) + 50, 0, nodeZ(8) - 10),
-  new THREE.Vector3(nodeX(5) - 30, 0, nodeZ(8) + 40),
-  new THREE.Vector3(nodeX(5) + 10, 0, nodeZ(9) + 20),
-  new THREE.Vector3(nodeX(5), 0, nodeZ(9) + 60)
+  new THREE.Vector3(nodeX(5), 0, nodeZ(6)+30),
+  new THREE.Vector3(nodeX(5)-40, 0, nodeZ(7)+10),
+  new THREE.Vector3(nodeX(5)+50, 0, nodeZ(8)-10),
+  new THREE.Vector3(nodeX(5)-30, 0, nodeZ(8)+40),
+  new THREE.Vector3(nodeX(5)+10, 0, nodeZ(9)+20),
+  new THREE.Vector3(nodeX(5), 0, nodeZ(9)+60)
 ], false, 'catmullrom', 0.5);
 
 (function buildWindingRoad(){
   const pts = windRoadCurve.getPoints(60);
-  // Բարձրությունները ձևափոխենք ըստ տեղանքի
-  for(const p of pts){
-    p.y = terrainHeight(p.x, p.z) + 0.15;
-  }
-
+  for(const p of pts) p.y = terrainHeight(p.x, p.z) + 0.15;
   const roadW = 10;
   const pos = [], uv = [], idx = [];
   for(let i=0;i<pts.length-1;i++){
@@ -573,10 +504,10 @@ const windRoadCurve = new THREE.CatmullRomCurve3([
     if(len < 0.01) continue;
     const nx = -dz/len, nz = dx/len;
     const base = pos.length/3;
-    pos.push(p1.x + nx*roadW/2, p1.y, p1.z + nz*roadW/2);
-    pos.push(p1.x - nx*roadW/2, p1.y, p1.z - nz*roadW/2);
-    pos.push(p2.x + nx*roadW/2, p2.y, p2.z + nz*roadW/2);
-    pos.push(p2.x - nx*roadW/2, p2.y, p2.z - nz*roadW/2);
+    pos.push(p1.x+nx*roadW/2, p1.y, p1.z+nz*roadW/2);
+    pos.push(p1.x-nx*roadW/2, p1.y, p1.z-nz*roadW/2);
+    pos.push(p2.x+nx*roadW/2, p2.y, p2.z+nz*roadW/2);
+    pos.push(p2.x-nx*roadW/2, p2.y, p2.z-nz*roadW/2);
     uv.push(0,0, 1,0, 0,1, 1,1);
     idx.push(base,base+1,base+2, base+1,base+3,base+2);
   }
@@ -596,181 +527,113 @@ function buildOpera(cx, cz){
   const tuff = new THREE.MeshStandardMaterial({ color:0xe8d8b8, roughness:0.88 });
   const roof = new THREE.MeshStandardMaterial({ color:0xa89878, roughness:0.9 });
   const baseY = terrainHeight(cx, cz);
-  const main = new THREE.Mesh(new THREE.BoxGeometry(20, 11, 16), tuff);
-  main.position.set(0, baseY+5.5, 0);
-  main.castShadow = true; main.receiveShadow = true;
-  g.add(main);
-  const r = new THREE.Mesh(new THREE.CylinderGeometry(11, 11, 1.2, 16), roof);
-  r.position.set(0, baseY+11.6, 0);
-  r.castShadow = true;
-  g.add(r);
-  for(let i=-3; i<=3; i++){
+  const main = new THREE.Mesh(new THREE.BoxGeometry(20,11,16), tuff);
+  main.position.set(0, baseY+5.5, 0); main.castShadow = true; main.receiveShadow = true; g.add(main);
+  const r = new THREE.Mesh(new THREE.CylinderGeometry(11,11,1.2,16), roof);
+  r.position.set(0, baseY+11.6, 0); r.castShadow = true; g.add(r);
+  for(let i=-3;i<=3;i++){
     const c = new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,8,10), tuff);
-    c.position.set(i*2.8, baseY+4, 8.5);
-    c.castShadow = true;
-    g.add(c);
+    c.position.set(i*2.8, baseY+4, 8.5); c.castShadow = true; g.add(c);
   }
-  const green = new THREE.Mesh(new THREE.PlaneGeometry(35, 25),
-    new THREE.MeshStandardMaterial({ color:0x5a8a3a, roughness:1 }));
-  green.rotation.x = -Math.PI/2;
-  green.position.set(0, baseY+0.3, -20);
-  green.receiveShadow = true;
-  g.add(green);
-  g.position.set(cx, 0, cz);
-  scene.add(g);
+  const green = new THREE.Mesh(new THREE.PlaneGeometry(35,25), new THREE.MeshStandardMaterial({ color:0x5a8a3a, roughness:1 }));
+  green.rotation.x = -Math.PI/2; green.position.set(0, baseY+0.3, -20); green.receiveShadow = true; g.add(green);
+  g.position.set(cx, 0, cz); scene.add(g);
   BLD_COLLISION.push({ x:cx, z:cz, w:22, d:18, h:12 });
 }
-
 function buildSquare(cx, cz){
   const g = new THREE.Group();
   const baseY = terrainHeight(cx, cz);
-  const plaza = new THREE.Mesh(new THREE.CircleGeometry(28, 32),
-    new THREE.MeshStandardMaterial({ color:0xc8b898, roughness:0.95 }));
-  plaza.rotation.x = -Math.PI/2;
-  plaza.position.y = baseY+0.05;
-  plaza.receiveShadow = true;
-  g.add(plaza);
-  const fount = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 4, 0.8, 20),
-    new THREE.MeshStandardMaterial({ color:0xb8a888, roughness:0.9 }));
-  fount.position.y = baseY+0.4;
-  fount.castShadow = true; g.add(fount);
-  const water = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 0.6, 20),
-    new THREE.MeshStandardMaterial({ color:0x4a8ac8, roughness:0.15, metalness:0.6 }));
+  const plaza = new THREE.Mesh(new THREE.CircleGeometry(28,32), new THREE.MeshStandardMaterial({ color:0xc8b898, roughness:0.95 }));
+  plaza.rotation.x = -Math.PI/2; plaza.position.y = baseY+0.05; plaza.receiveShadow = true; g.add(plaza);
+  const fount = new THREE.Mesh(new THREE.CylinderGeometry(3.5,4,0.8,20), new THREE.MeshStandardMaterial({ color:0xb8a888, roughness:0.9 }));
+  fount.position.y = baseY+0.4; fount.castShadow = true; g.add(fount);
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(3,3,0.6,20), new THREE.MeshStandardMaterial({ color:0x4a8ac8, roughness:0.15, metalness:0.6 }));
   water.position.y = baseY+0.7; g.add(water);
-  // 2 կառավարական շենք
   const tuff = new THREE.MeshStandardMaterial({ color:0xe8d8b8, roughness:0.88 });
   const roof = new THREE.MeshStandardMaterial({ color:0xa89878, roughness:0.9 });
   [[-20,0],[20,0]].forEach(([dx,dz])=>{
-    const b = new THREE.Mesh(new THREE.BoxGeometry(11, 13, 15), tuff);
-    b.position.set(dx, baseY+6.5, dz);
-    b.castShadow = true; b.receiveShadow = true;
-    g.add(b);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(11,13,15), tuff);
+    b.position.set(dx, baseY+6.5, dz); b.castShadow = true; b.receiveShadow = true; g.add(b);
     const rr = new THREE.Mesh(new THREE.BoxGeometry(12,1,16), roof);
     rr.position.set(dx, baseY+13.5, dz); g.add(rr);
     for(let i=-2;i<=2;i++){
       const col = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,9,10), tuff);
-      col.position.set(dx, baseY+4.5, dz+8); col.castShadow = true;
-      g.add(col);
+      col.position.set(dx, baseY+4.5, dz+8); col.castShadow = true; g.add(col);
     }
   });
-  // Ժամացույցի աշտարակ
-  const tower = new THREE.Mesh(new THREE.BoxGeometry(4.5, 18, 4.5), tuff);
-  tower.position.set(0, baseY+9, -16);
-  tower.castShadow = true;
-  g.add(tower);
-  const clock = new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,0.3,20),
-    new THREE.MeshStandardMaterial({ color:0xf0e8d0, roughness:0.7 }));
-  clock.rotation.x = Math.PI/2;
-  clock.position.set(0, baseY+15.5, -13.7);
-  g.add(clock);
-  g.position.set(cx, 0, cz);
-  scene.add(g);
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(4.5,18,4.5), tuff);
+  tower.position.set(0, baseY+9, -16); tower.castShadow = true; g.add(tower);
+  const clock = new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,0.3,20), new THREE.MeshStandardMaterial({ color:0xf0e8d0, roughness:0.7 }));
+  clock.rotation.x = Math.PI/2; clock.position.set(0, baseY+15.5, -13.7); g.add(clock);
+  g.position.set(cx, 0, cz); scene.add(g);
   BLD_COLLISION.push({ x:cx-20, z:cz, w:11, d:15, h:14 });
   BLD_COLLISION.push({ x:cx+20, z:cz, w:11, d:15, h:14 });
   BLD_COLLISION.push({ x:cx, z:cz-16, w:5, d:5, h:18 });
 }
-
 function buildGallery(cx, cz){
   const g = new THREE.Group();
   const baseY = terrainHeight(cx, cz);
   const tuff = new THREE.MeshStandardMaterial({ color:0xd8c8a8, roughness:0.9 });
-  const main = new THREE.Mesh(new THREE.BoxGeometry(24, 14, 16), tuff);
-  main.position.y = baseY+7;
-  main.castShadow = true; main.receiveShadow = true;
-  g.add(main);
-  // Ֆրոնտոն
-  const ped = new THREE.Mesh(new THREE.ConeGeometry(13, 5, 4), tuff);
-  ped.rotation.y = Math.PI/4;
-  ped.position.y = baseY+16.5;
-  ped.castShadow = true;
-  g.add(ped);
+  const main = new THREE.Mesh(new THREE.BoxGeometry(24,14,16), tuff);
+  main.position.y = baseY+7; main.castShadow = true; main.receiveShadow = true; g.add(main);
+  const ped = new THREE.Mesh(new THREE.ConeGeometry(13,5,4), tuff);
+  ped.rotation.y = Math.PI/4; ped.position.y = baseY+16.5; ped.castShadow = true; g.add(ped);
   for(let i=-4;i<=4;i++){
     const c = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,10,10), tuff);
-    c.position.set(i*2.6, baseY+5, 8.5); c.castShadow = true;
-    g.add(c);
+    c.position.set(i*2.6, baseY+5, 8.5); c.castShadow = true; g.add(c);
   }
-  g.position.set(cx, 0, cz);
-  scene.add(g);
+  g.position.set(cx, 0, cz); scene.add(g);
   BLD_COLLISION.push({ x:cx, z:cz, w:26, d:18, h:18 });
 }
-
 function buildMatenadaran(cx, cz){
   const g = new THREE.Group();
   const baseY = terrainHeight(cx, cz);
   const tuff = new THREE.MeshStandardMaterial({ color:0xe0d0b0, roughness:0.9 });
   const dark = new THREE.MeshStandardMaterial({ color:0xa89878, roughness:0.9 });
-  // Հիմքի հարթակ (բլրի գագաթին)
-  const base = new THREE.Mesh(new THREE.BoxGeometry(32, 5, 26), dark);
-  base.position.y = baseY+2.5;
-  base.castShadow = true; base.receiveShadow = true;
-  g.add(base);
-  // Սանդուղք (6 քայլ)
+  const base = new THREE.Mesh(new THREE.BoxGeometry(32,5,26), dark);
+  base.position.y = baseY+2.5; base.castShadow = true; base.receiveShadow = true; g.add(base);
   for(let i=0;i<6;i++){
-    const step = new THREE.Mesh(new THREE.BoxGeometry(16, 0.6, 1.5), dark);
-    step.position.set(0, baseY+5.3+i*0.6, 14+(5-i)*1.5-3);
-    step.castShadow = true;
-    g.add(step);
+    const step = new THREE.Mesh(new THREE.BoxGeometry(16,0.6,1.5), dark);
+    step.position.set(0, baseY+5.3+i*0.6, 14+(5-i)*1.5-3); step.castShadow = true; g.add(step);
   }
-  const main = new THREE.Mesh(new THREE.BoxGeometry(26, 13, 18), tuff);
-  main.position.y = baseY+11.5;
-  main.castShadow = true; main.receiveShadow = true;
-  g.add(main);
+  const main = new THREE.Mesh(new THREE.BoxGeometry(26,13,18), tuff);
+  main.position.y = baseY+11.5; main.castShadow = true; main.receiveShadow = true; g.add(main);
   for(let i=-4;i<=4;i++){
     const c = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,10,12), tuff);
-    c.position.set(i*2.8, baseY+10.5, 10); c.castShadow = true;
-    g.add(c);
+    c.position.set(i*2.8, baseY+10.5, 10); c.castShadow = true; g.add(c);
   }
-  g.position.set(cx, 0, cz);
-  scene.add(g);
+  g.position.set(cx, 0, cz); scene.add(g);
   BLD_COLLISION.push({ x:cx, z:cz, w:32, d:26, h:20 });
 }
-
 function buildHotel(cx, cz){
   const g = new THREE.Group();
   const baseY = terrainHeight(cx, cz);
   const tuff = new THREE.MeshStandardMaterial({ color:0xd8c8b0, roughness:0.88 });
-  const main = new THREE.Mesh(new THREE.BoxGeometry(22, 16, 18), tuff);
-  main.position.y = baseY+8;
-  main.castShadow = true; main.receiveShadow = true;
-  g.add(main);
-  // Պատուհանների շարքեր
+  const main = new THREE.Mesh(new THREE.BoxGeometry(22,16,18), tuff);
+  main.position.y = baseY+8; main.castShadow = true; main.receiveShadow = true; g.add(main);
   const winMat = new THREE.MeshStandardMaterial({ color:0x88ccee, emissive:0x224466, emissiveIntensity:0.4, metalness:0.5, roughness:0.2 });
-  for(let r=0;r<4;r++){
-    for(let c=-3;c<=3;c++){
-      const w = new THREE.Mesh(new THREE.BoxGeometry(1.6,2,0.2), winMat);
-      w.position.set(c*2.6, baseY+3+r*3, 9.1);
-      g.add(w);
-    }
+  for(let r=0;r<4;r++) for(let c=-3;c<=3;c++){
+    const w = new THREE.Mesh(new THREE.BoxGeometry(1.6,2,0.2), winMat);
+    w.position.set(c*2.6, baseY+3+r*3, 9.1); g.add(w);
   }
-  g.position.set(cx, 0, cz);
-  scene.add(g);
+  g.position.set(cx, 0, cz); scene.add(g);
   BLD_COLLISION.push({ x:cx, z:cz, w:22, d:18, h:16 });
 }
-
 function buildUniversity(cx, cz){
   const g = new THREE.Group();
   const baseY = terrainHeight(cx, cz);
   const tuff = new THREE.MeshStandardMaterial({ color:0xe8d8b8, roughness:0.88 });
-  const main = new THREE.Mesh(new THREE.BoxGeometry(28, 12, 20), tuff);
-  main.position.y = baseY+6;
-  main.castShadow = true; main.receiveShadow = true;
-  g.add(main);
-  // Սյունաշար
+  const main = new THREE.Mesh(new THREE.BoxGeometry(28,12,20), tuff);
+  main.position.y = baseY+6; main.castShadow = true; main.receiveShadow = true; g.add(main);
   for(let i=-5;i<=5;i++){
     const c = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,10,10), tuff);
-    c.position.set(i*2.5, baseY+5, 10.5); c.castShadow = true;
-    g.add(c);
+    c.position.set(i*2.5, baseY+5, 10.5); c.castShadow = true; g.add(c);
   }
-  // Կենտրոնական զանգված
-  const center = new THREE.Mesh(new THREE.BoxGeometry(6, 6, 6), tuff);
-  center.position.set(0, baseY+15, 0);
-  center.castShadow = true;
-  g.add(center);
-  g.position.set(cx, 0, cz);
-  scene.add(g);
+  const center = new THREE.Mesh(new THREE.BoxGeometry(6,6,6), tuff);
+  center.position.set(0, baseY+15, 0); center.castShadow = true; g.add(center);
+  g.position.set(cx, 0, cz); scene.add(g);
   BLD_COLLISION.push({ x:cx, z:cz, w:28, d:20, h:18 });
 }
-
 for(const k in LANDMARKS){
   const L = LANDMARKS[k];
   const cx = nodeX(L.i)+SPACING/2;
@@ -784,14 +647,10 @@ for(const k in LANDMARKS){
   else if(k === 'university') buildUniversity(cx, cz);
 }
 
-/* ═══════ ՄԵՔԵՆԱ — ՄԱՆՐԱՄԱՍՆ ═══════ */
+/* ═══════ ՄԵՔԵՆԱ ═══════ */
 function buildCar(colorHex){
   const g = new THREE.Group();
-
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color:colorHex, metalness:0.85, roughness:0.22,
-    envMapIntensity:0.8
-  });
+  const bodyMat = new THREE.MeshStandardMaterial({ color:colorHex, metalness:0.85, roughness:0.22, envMapIntensity:0.8 });
   const darkMat = new THREE.MeshStandardMaterial({ color:0x0a0d14, metalness:0.5, roughness:0.5 });
   const chromeMat = new THREE.MeshStandardMaterial({ color:0xdadde2, metalness:0.98, roughness:0.12 });
   const glassMat = new THREE.MeshStandardMaterial({ color:0x0a1828, metalness:0.9, roughness:0.06, transparent:true, opacity:0.85 });
@@ -800,211 +659,118 @@ function buildCar(colorHex){
   const headMat = new THREE.MeshBasicMaterial({ color:0xfff4d0 });
   const tailMat = new THREE.MeshBasicMaterial({ color:0xff2222 });
 
-  // ═══ ՍՏՈՐԻՆ ՇԱՍԻ ═══
-  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.18, 4.6), darkMat);
-  chassis.position.y = 0.35;
-  chassis.castShadow = true;
-  g.add(chassis);
-
-  // ═══ ՀԻՄՆԱԿԱՆ ՄԱՐՄԻՆ ═══
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.96, 0.56, 4.5), bodyMat);
-  body.position.y = 0.72;
-  body.castShadow = true;
-  body.receiveShadow = true;
-  g.add(body);
-
-  // ═══ ՆԵՂԱՑՎԱԾ ՈՒՍԵՐ (shoulder) ═══
-  const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.22, 4.35), bodyMat);
-  shoulder.position.y = 1.08;
-  shoulder.castShadow = true;
-  g.add(shoulder);
-
-  // ═══ ՔԻԹ ═══
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.5, 1.2), bodyMat);
-  nose.position.set(0, 0.8, 2.5);
-  nose.castShadow = true;
-  g.add(nose);
-
-  // ═══ ԿԱՊՈՏ ═══
-  const hood = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.14, 1.7), bodyMat);
-  hood.position.set(0, 1.19, 1.55);
-  hood.rotation.x = 0.03;
-  hood.castShadow = true;
-  g.add(hood);
-
-  // ═══ ԿԱԲԻՆԱ ═══
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.62, 2.3), glassMat);
-  cabin.position.set(0, 1.5, -0.35);
-  cabin.castShadow = true;
-  g.add(cabin);
-
-  // ═══ ՏԱՆԻՔ ═══
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.1, 2.1), bodyMat);
-  roof.position.set(0, 1.85, -0.35);
-  roof.castShadow = true;
-  g.add(roof);
-
-  // ═══ PILLARS ═══
+  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0,0.18,4.6), darkMat);
+  chassis.position.y = 0.35; chassis.castShadow = true; g.add(chassis);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.96,0.56,4.5), bodyMat);
+  body.position.y = 0.72; body.castShadow = true; body.receiveShadow = true; g.add(body);
+  const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.86,0.22,4.35), bodyMat);
+  shoulder.position.y = 1.08; shoulder.castShadow = true; g.add(shoulder);
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(1.78,0.5,1.2), bodyMat);
+  nose.position.set(0,0.8,2.5); nose.castShadow = true; g.add(nose);
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(1.86,0.14,1.7), bodyMat);
+  hood.position.set(0,1.19,1.55); hood.rotation.x = 0.03; hood.castShadow = true; g.add(hood);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.74,0.62,2.3), glassMat);
+  cabin.position.set(0,1.5,-0.35); cabin.castShadow = true; g.add(cabin);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.68,0.1,2.1), bodyMat);
+  roof.position.set(0,1.85,-0.35); roof.castShadow = true; g.add(roof);
   const pillarMat = new THREE.MeshStandardMaterial({ color:0x080c14, roughness:0.5 });
-  [-0.87, 0.87].forEach(px => {
-    const pA = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.65, 0.2), pillarMat);
-    pA.position.set(px, 1.5, 0.75); pA.rotation.x = -0.3; g.add(pA);
-    const pB = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.65, 0.14), pillarMat);
-    pB.position.set(px, 1.5, -0.35); g.add(pB);
-    const pC = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.65, 0.18), pillarMat);
-    pC.position.set(px, 1.5, -1.4); pC.rotation.x = 0.28; g.add(pC);
+  [-0.87,0.87].forEach(px=>{
+    const pA = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.65,0.2), pillarMat);
+    pA.position.set(px,1.5,0.75); pA.rotation.x = -0.3; g.add(pA);
+    const pB = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.65,0.14), pillarMat);
+    pB.position.set(px,1.5,-0.35); g.add(pB);
+    const pC = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.65,0.18), pillarMat);
+    pC.position.set(px,1.5,-1.4); pC.rotation.x = 0.28; g.add(pC);
   });
-
-  // ═══ ԱՌԱՋԻ ԲԱՄՊԵՐ ═══
-  const fBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.32, 0.42), darkMat);
-  fBumper.position.set(0, 0.62, 2.92);
-  fBumper.castShadow = true;
-  g.add(fBumper);
-  // Քրոմե lip
-  const lip = new THREE.Mesh(new THREE.BoxGeometry(1.88, 0.06, 0.15), chromeMat);
-  lip.position.set(0, 0.82, 3.12);
-  g.add(lip);
-
-  // ═══ ՀԵՏԻ ԲԱՄՊԵՐ ═══
-  const rBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.3, 0.4), darkMat);
-  rBumper.position.set(0, 0.62, -2.32);
-  rBumper.castShadow = true;
-  g.add(rBumper);
-
-  // ═══ ԳՐԻԼ (առջևի ցանց) ═══
-  const grille = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.34, 0.06), chromeMat);
-  grille.position.set(0, 0.72, 3.14);
-  g.add(grille);
+  const fBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02,0.32,0.42), darkMat);
+  fBumper.position.set(0,0.62,2.92); fBumper.castShadow = true; g.add(fBumper);
+  const lip = new THREE.Mesh(new THREE.BoxGeometry(1.88,0.06,0.15), chromeMat);
+  lip.position.set(0,0.82,3.12); g.add(lip);
+  const rBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02,0.3,0.4), darkMat);
+  rBumper.position.set(0,0.62,-2.32); rBumper.castShadow = true; g.add(rBumper);
+  const grille = new THREE.Mesh(new THREE.BoxGeometry(1.55,0.34,0.06), chromeMat);
+  grille.position.set(0,0.72,3.14); g.add(grille);
   for(let i=-3;i<=3;i++){
-    const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.28, 0.04), darkMat);
-    b.position.set(i*0.22, 0.72, 3.16);
-    g.add(b);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.28,0.04), darkMat);
+    b.position.set(i*0.22,0.72,3.16); g.add(b);
   }
-
-  // ═══ ՏՐՈՒՆԿ ═══
-  const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.14, 1.2), bodyMat);
-  trunk.position.set(0, 1.14, -1.9);
-  g.add(trunk);
-
-  // ═══ SPOILER ═══
-  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.08, 0.5), darkMat);
-  spoiler.position.set(0, 1.32, -2.15);
-  spoiler.castShadow = true;
-  g.add(spoiler);
-  [-0.68, 0.68].forEach(x=>{
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.22, 0.14), darkMat);
-    leg.position.set(x, 1.2, -2.15); g.add(leg);
+  const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.86,0.14,1.2), bodyMat);
+  trunk.position.set(0,1.14,-1.9); g.add(trunk);
+  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.72,0.08,0.5), darkMat);
+  spoiler.position.set(0,1.32,-2.15); spoiler.castShadow = true; g.add(spoiler);
+  [-0.68,0.68].forEach(x=>{
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.22,0.14), darkMat);
+    leg.position.set(x,1.2,-2.15); g.add(leg);
+  });
+  [-1.02,1.02].forEach(x=>{
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.05,0.08), darkMat);
+    arm.position.set(x*0.95,1.42,0.78); g.add(arm);
+    const mir = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.1,0.14), bodyMat);
+    mir.position.set(x*1.15,1.4,0.78); g.add(mir);
+  });
+  [-0.62,0.62].forEach(x=>{
+    const h = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.22,0.08), headMat);
+    h.position.set(x,0.85,3.05); g.add(h);
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.35,8,8), new THREE.MeshBasicMaterial({ color:0xfff4d0, transparent:true, opacity:0.35 }));
+    glow.position.set(x,0.85,3.1); g.add(glow);
+  });
+  [-0.62,0.62].forEach(x=>{
+    const t = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.18,0.08), tailMat);
+    t.position.set(x,0.85,-2.42); g.add(t);
   });
 
-  // ═══ ՀԱՅԵԼԻՆԵՐ ═══
-  [-1.02, 1.02].forEach(x=>{
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.08), darkMat);
-    arm.position.set(x*0.95, 1.42, 0.78); g.add(arm);
-    const mir = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.14), bodyMat);
-    mir.position.set(x*1.15, 1.4, 0.78); g.add(mir);
-  });
-
-  // ═══ ԱՌԱՋԻ ԼՈՒՍԱՐՁԱԿՆԵՐ ═══
-  [-0.62, 0.62].forEach(x => {
-    const h = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.22, 0.08), headMat);
-    h.position.set(x, 0.85, 3.05);
-    g.add(h);
-    // Glow sprite
-    const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(0.35, 8, 8),
-      new THREE.MeshBasicMaterial({ color:0xfff4d0, transparent:true, opacity:0.35 })
-    );
-    glow.position.set(x, 0.85, 3.1);
-    g.add(glow);
-  });
-
-  // ═══ ՀԵՏԻ ԼՈՒՍԵՐ ═══
-  [-0.62, 0.62].forEach(x => {
-    const t = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.08), tailMat);
-    t.position.set(x, 0.85, -2.42);
-    g.add(t);
-  });
-
-  // ═══ ԱՆԻՎՆԵՐ (մանրամասն) ═══
   function makeWheel(){
     const steer = new THREE.Group();
     const roll = new THREE.Group();
     steer.add(roll);
-
-    // Անվադող (torus, axle-ը X-ի ուղղությամբ)
-    const tireGeo = new THREE.TorusGeometry(0.42, 0.15, 10, 24);
+    const tireGeo = new THREE.TorusGeometry(0.42,0.15,10,24);
     tireGeo.rotateY(Math.PI/2);
     const tire = new THREE.Mesh(tireGeo, tireMat);
-    tire.castShadow = true;
-    roll.add(tire);
-
-    // Սկավառակ (rim disc)
-    const discGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.24, 20);
+    tire.castShadow = true; roll.add(tire);
+    const discGeo = new THREE.CylinderGeometry(0.3,0.3,0.24,20);
     discGeo.rotateZ(Math.PI/2);
     const disc = new THREE.Mesh(discGeo, rimMat);
     roll.add(disc);
-
-    // ⚠️ ՇՊԻՑԵՐ (5 հատ) — սահուն պտտվող
     for(let i = 0; i < 5; i++){
       const a = (i / 5) * Math.PI * 2;
-      const spokeGeo = new THREE.BoxGeometry(0.06, 0.055, 0.5);
-      const spoke = new THREE.Mesh(spokeGeo, rimMat);
-      // Պտտում ենք X-ի շուրջ
+      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.055,0.5), rimMat);
       spoke.rotation.x = a;
-      // Տեղադրում ենք արտաքին հատվածում
-      spoke.position.set(0, Math.sin(a) * 0.02, 0);
-      // Շարժում ենք երկայնքով (local Z)
-      const dirY = Math.sin(a), dirZ = Math.cos(a);
-      spoke.position.y = dirY * 0.14;
-      spoke.position.z = dirZ * 0.14;
-      // Երկարացնում ենք
+      spoke.position.y = Math.sin(a) * 0.14;
+      spoke.position.z = Math.cos(a) * 0.14;
       spoke.scale.z = 0.95;
       roll.add(spoke);
     }
-
-    // Կենտրոնական cap (hubcap)
-    const capGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.26, 12);
+    const capGeo = new THREE.CylinderGeometry(0.1,0.1,0.26,12);
     capGeo.rotateZ(Math.PI/2);
     const cap = new THREE.Mesh(capGeo, chromeMat);
     roll.add(cap);
-
-    // Արտաքին օղակ (chrome rim edge)
-    const ringGeo = new THREE.TorusGeometry(0.3, 0.03, 6, 20);
+    const ringGeo = new THREE.TorusGeometry(0.3,0.03,6,20);
     ringGeo.rotateY(Math.PI/2);
     const ring = new THREE.Mesh(ringGeo, chromeMat);
     roll.add(ring);
-
     return { steer, roll };
   }
-
   const wheels = [];
   const wheelPositions = [
-    { x: -1.02, z: 1.5, tag: 'fl' },
-    { x:  1.02, z: 1.5, tag: 'fr' },
-    { x: -1.02, z: -1.5, tag: 'rl' },
-    { x:  1.02, z: -1.5, tag: 'rr' }
+    { x:-1.02, z:1.5, tag:'fl' }, { x:1.02, z:1.5, tag:'fr' },
+    { x:-1.02, z:-1.5, tag:'rl' }, { x:1.02, z:-1.5, tag:'rr' }
   ];
   for(const wp of wheelPositions){
     const w = makeWheel();
     w.steer.position.set(wp.x, 0.44, wp.z);
     g.add(w.steer);
-    wheels.push({ steer: w.steer, roll: w.roll, tag: wp.tag });
+    wheels.push({ steer:w.steer, roll:w.roll, tag:wp.tag });
   }
-
-  // ═══ ԱՐԴԵՂԱԿԱՅԻՆ ԼՈՒՅՍ (թաքնված) ═══
   const brakeLight = new THREE.PointLight(0xff2020, 0, 6);
   brakeLight.position.set(0, 0.85, -2.5);
   g.add(brakeLight);
-
   return { group:g, wheels, brakeLight, tailMat };
 }
-
 const player = buildCar(0xe83030);
 scene.add(player.group);
 
 /* ═══════ ՖԻԶԻԿԱ ═══════ */
 function updatePhysics(dt){
-  // ՂԵԿ
   let target = 0;
   if(IN.left) target = -1;
   if(IN.right) target = 1;
@@ -1013,47 +779,30 @@ function updatePhysics(dt){
     S.steer += (0 - S.steer) * Math.min(1, 5 * dt);
     if(Math.abs(S.steer) < 0.003) S.steer = 0;
   }
-
-  // ԳԱԶ
-  if(IN.gas){
-    S.speed += (S.speed < 40 ? 34 : 20) * dt;
-  }
-  // ՀԵՏ
+  if(IN.gas) S.speed += (S.speed < 40 ? 34 : 20) * dt;
   if(IN.brake){
     if(S.speed > 0.5) S.speed -= 58 * dt;
     else S.speed -= 26 * dt;
   }
-  // ԻՆԵՐՑԻԱ
   if(!IN.gas && !IN.brake){
     if(S.speed > 0.05) S.speed -= 9 * dt;
     else if(S.speed < -0.05) S.speed += 9 * dt;
     else S.speed = 0;
   }
-
-  // ԹԵՔՈՒԹՅՈՒՆ
   const fx = Math.sin(S.heading), fz = Math.cos(S.heading);
   const aheadH = terrainHeight(S.x + fx*6, S.z + fz*6);
   const behindH = terrainHeight(S.x - fx*6, S.z - fz*6);
-  const slope = (aheadH - behindH) / 12;
-  S.speed -= slope * 18 * dt;
-
+  S.speed -= ((aheadH - behindH) / 12) * 18 * dt;
   S.speed = Math.max(-MAX_REV_KMH, Math.min(MAX_KMH, S.speed));
-
-  // ՊՏՈՒՅՏ
   const v = S.speed / 3.6;
   const spdFac = Math.min(1, v / 10);
-  const turnRate = 1.65 * spdFac;
-  S.heading -= S.steer * turnRate * dt;
-
+  S.heading -= S.steer * 1.65 * spdFac * dt;
   const nfx = Math.sin(S.heading), nfz = Math.cos(S.heading);
   S.x += nfx * v * dt;
   S.z += nfz * v * dt;
-
   const lim = HALF_CITY + 80;
   S.x = Math.max(-lim, Math.min(lim, S.x));
   S.z = Math.max(-lim, Math.min(lim, S.z));
-
-  // ՇԵՆՔԵՐԻ ՀԵՏ ԲԱԽՈՒՄ
   for(const b of BLD_COLLISION){
     const hw = b.w/2 + 1.2, hd = b.d/2 + 1.2;
     const dx = S.x - b.x, dz = S.z - b.z;
@@ -1061,102 +810,74 @@ function updatePhysics(dt){
       const ox = hw - Math.abs(dx), oz = hd - Math.abs(dz);
       if(ox < oz) S.x = b.x + Math.sign(dx) * hw;
       else S.z = b.z + Math.sign(dz) * hd;
-      S.speed *= 0.5;
-      S.targetSusp = -0.15;
+      S.speed *= 0.5; S.targetSusp = -0.15;
     }
   }
-
-  // ⚠️ ՏԵՍՔ + ԱՄՈՐՏԻԶԱՑԻԱ
   const groundY = terrainHeight(S.x, S.z);
-  const y = groundY + S.suspensionY;
-  player.group.position.set(S.x, y, S.z);
+  player.group.position.set(S.x, groundY + S.suspensionY, S.z);
   player.group.rotation.y = S.heading;
-
-  // Կողային թեքվածություն (roll) ըստ ղեկի + արագության
   const terrainRoll = Math.atan2(terrainHeight(S.x-1,S.z)-terrainHeight(S.x+1,S.z), 2) * 0.75;
   S.targetRoll = -S.steer * 0.06 + terrainRoll;
-  // ⚠️ Սահուն ամորտիզացիա
   S.bodyRollV += (S.targetRoll - S.bodyRoll) * 14 * dt - S.bodyRollV * 6 * dt;
   S.bodyRoll += S.bodyRollV * dt;
   player.group.rotation.z = S.bodyRoll;
-
-  // ⚠️ Կախոց (suspension) — վեր-ներքև
   S.suspensionV += (S.targetSusp - S.suspensionY) * 55 * dt - S.suspensionV * 8 * dt;
   S.suspensionY += S.suspensionV * dt;
-  S.targetSusp *= Math.pow(0.1, dt);  // աստիճանաբար հանգչում է
-
-  // ⚠️ Ներս նստելը կախոցի պատճառով
+  S.targetSusp *= Math.pow(0.1, dt);
   player.group.scale.y = 1 + S.suspensionY * 0.15;
-
-  // ⚠️ ԱՆԻՎՆԵՐԻ ՊՏՈՒՅՏ — steer group-ը պտտվում է Y-ով, roll group-ը X-ով
   const spin = v * dt * 1.9;
   for(const w of player.wheels){
     w.roll.rotation.x -= spin;
-    if(w.tag === 'fl' || w.tag === 'fr'){
-      w.steer.rotation.y = S.steer * 0.5;
-    }
+    if(w.tag === 'fl' || w.tag === 'fr') w.steer.rotation.y = S.steer * 0.5;
   }
-
-  // Brake light
   const braking = IN.brake || (!IN.gas && S.speed > 3);
   player.brakeLight.intensity = braking ? 1.5 : 0;
   player.tailMat.color.setHex(braking ? 0xff1010 : 0xff2222);
-
   updateLocationName();
 }
-
 function updateLocationName(){
-  let closest = 'Երևան';
-  let minD = Infinity;
+  let closest = 'Երևան', minD = Infinity;
   for(const k in LANDMARKS){
     const L = LANDMARKS[k];
-    const lx = nodeX(L.i)+SPACING/2;
-    const lz = nodeZ(L.j)+SPACING/2;
+    const lx = nodeX(L.i)+SPACING/2, lz = nodeZ(L.j)+SPACING/2;
     const d = Math.hypot(S.x-lx, S.z-lz);
     if(d < minD){ minD = d; closest = L.name; }
   }
   S.loc = minD < 100 ? closest : 'Երևան';
-  document.getElementById('locName').textContent = S.loc;
+  const el = document.getElementById('locName');
+  if(el && el.textContent !== S.loc) el.textContent = S.loc;
 }
 
 /* ═══════ ԿԱՄԵՐԱ ═══════ */
 function updateCamera(dt){
   const h = S.heading;
   const fx = Math.sin(h), fz = Math.cos(h);
-  // ⚠️ ԱՎԵԼԻ ՄՈՏԻԿ, մեքենան ավելի մեծ երևա
   const dist = S.camDist - S.camPitch * 1.2;
   const high = 2.8 + S.camPitch * 3.5;
-  const tx = S.x - fx*dist;
-  const tz = S.z - fz*dist;
+  const tx = S.x - fx*dist, tz = S.z - fz*dist;
   const ty = terrainHeight(tx, tz) + high;
   const k = 1 - Math.exp(-8 * dt);
-  S.camX += (tx-S.camX)*k;
-  S.camY += (ty-S.camY)*k;
-  S.camZ += (tz-S.camZ)*k;
-  const lx = S.x + fx*10;
-  const lz = S.z + fz*10;
+  S.camX += (tx-S.camX)*k; S.camY += (ty-S.camY)*k; S.camZ += (tz-S.camZ)*k;
+  const lx = S.x + fx*10, lz = S.z + fz*10;
   const ly = terrainHeight(S.x, S.z) + 1.2;
   const lk = 1 - Math.exp(-10 * dt);
-  S.camLX += (lx-S.camLX)*lk;
-  S.camLY += (ly-S.camLY)*lk;
-  S.camLZ += (lz-S.camLZ)*lk;
+  S.camLX += (lx-S.camLX)*lk; S.camLY += (ly-S.camLY)*lk; S.camLZ += (lz-S.camLZ)*lk;
   camera.position.set(S.camX, S.camY, S.camZ);
   camera.lookAt(S.camLX, S.camLY, S.camLZ);
   const tFov = 62 + Math.abs(S.speed/MAX_KMH) * 8;
   camera.fov += (tFov - camera.fov) * Math.min(1, 3*dt);
   camera.updateProjectionMatrix();
   camera.rotation.z += S.steer * 0.018;
-
-  // Արևը հետևում է
   sunTarget.position.copy(player.group.position);
   sun.position.copy(player.group.position).add(new THREE.Vector3(-100, 200, 80));
 }
 
 /* ═══════ HUD ═══════ */
 function updateHUD(){
-  document.getElementById('spdVal').textContent = Math.round(Math.abs(S.speed));
-  const compassDeg = S.heading * 180 / Math.PI;
-  document.getElementById('compassArrow').style.transform = `rotate(${-compassDeg}deg)`;
+  const spd = Math.round(Math.abs(S.speed));
+  const spdEl = document.getElementById('spdVal');
+  if(spdEl.textContent !== String(spd)) spdEl.textContent = spd;
+  document.getElementById('compassArrow').style.transform = `rotate(${-S.heading * 180 / Math.PI}deg)`;
 }
 
 /* ═══════ ՁԱՅՆ ═══════ */
@@ -1166,49 +887,56 @@ const Aud = {
     if(this.ctx) return;
     const AC = window.AudioContext||window.webkitAudioContext;
     if(!AC) return;
-    this.ctx = new AC();
-    this._master = this.ctx.createGain(); this._master.gain.value = 0.6;
-    this._master.connect(this.ctx.destination);
-    this.engGain = this.ctx.createGain(); this.engGain.gain.value = 0;
-    this.engFilt = this.ctx.createBiquadFilter(); this.engFilt.type = 'lowpass';
-    this.engFilt.frequency.value = 400;
-    this.engFilt.connect(this.engGain);
-    this.engGain.connect(this._master);
-    this.o1 = this.ctx.createOscillator(); this.o1.type = 'sine'; this.o1.frequency.value = 45;
-    const g1 = this.ctx.createGain(); g1.gain.value = 1;
-    this.o1.connect(g1); g1.connect(this.engFilt); this.o1.start();
-    this.o2 = this.ctx.createOscillator(); this.o2.type = 'triangle'; this.o2.frequency.value = 68;
-    const g2 = this.ctx.createGain(); g2.gain.value = 0.5;
-    this.o2.connect(g2); g2.connect(this.engFilt); this.o2.start();
-    this.ready = true;
+    try{
+      this.ctx = new AC();
+      this._master = this.ctx.createGain(); this._master.gain.value = 0.6;
+      this._master.connect(this.ctx.destination);
+      this.engGain = this.ctx.createGain(); this.engGain.gain.value = 0;
+      this.engFilt = this.ctx.createBiquadFilter(); this.engFilt.type = 'lowpass';
+      this.engFilt.frequency.value = 400;
+      this.engFilt.connect(this.engGain);
+      this.engGain.connect(this._master);
+      this.o1 = this.ctx.createOscillator(); this.o1.type = 'sine'; this.o1.frequency.value = 45;
+      const g1 = this.ctx.createGain(); g1.gain.value = 1;
+      this.o1.connect(g1); g1.connect(this.engFilt); this.o1.start();
+      this.o2 = this.ctx.createOscillator(); this.o2.type = 'triangle'; this.o2.frequency.value = 68;
+      const g2 = this.ctx.createGain(); g2.gain.value = 0.5;
+      this.o2.connect(g2); g2.connect(this.engFilt); this.o2.start();
+      this.ready = true;
+    }catch(e){ console.warn('Audio init failed', e); }
   },
   resume(){ if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
   setEngine(kmh, gas, run){
     if(!this.ready) return;
-    const t = this.ctx.currentTime;
-    const a = Math.abs(kmh);
-    const f = 40 + a * 0.9;
-    this.o1.frequency.setTargetAtTime(f, t, 0.14);
-    this.o2.frequency.setTargetAtTime(f*1.5, t, 0.14);
-    this.engFilt.frequency.setTargetAtTime(300 + a*5 + (gas?200:0), t, 0.2);
-    this.engGain.gain.setTargetAtTime(run ? (0.05 + (a/MAX_KMH)*0.1) : 0, t, 0.25);
+    try{
+      const t = this.ctx.currentTime;
+      const a = Math.abs(kmh);
+      const f = 40 + a * 0.9;
+      this.o1.frequency.setTargetAtTime(f, t, 0.14);
+      this.o2.frequency.setTargetAtTime(f*1.5, t, 0.14);
+      this.engFilt.frequency.setTargetAtTime(300 + a*5 + (gas?200:0), t, 0.2);
+      this.engGain.gain.setTargetAtTime(run ? (0.05 + (a/MAX_KMH)*0.1) : 0, t, 0.25);
+    }catch(e){}
   },
   beep(){
     if(!this.ready) return;
-    const t = this.ctx.currentTime;
-    const o = this.ctx.createOscillator();
-    o.type = 'sine'; o.frequency.value = 660;
-    const g = this.ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.25, t+0.015);
-    g.gain.exponentialRampToValueAtTime(0.0001, t+0.15);
-    o.connect(g); g.connect(this._master);
-    o.start(t); o.stop(t+0.2);
+    try{
+      const t = this.ctx.currentTime;
+      const o = this.ctx.createOscillator();
+      o.type = 'sine'; o.frequency.value = 660;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.25, t+0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.15);
+      o.connect(g); g.connect(this._master);
+      o.start(t); o.stop(t+0.2);
+    }catch(e){}
   }
 };
 
 /* ═══════ INPUT ═══════ */
 function bindHold(el, key){
+  if(!el) return;
   const on = e => { e.preventDefault(); IN[key]=true; el.classList.add('on'); Aud.init(); Aud.resume(); };
   const off = e => { e.preventDefault(); IN[key]=false; el.classList.remove('on'); };
   el.addEventListener('touchstart', on, {passive:false});
@@ -1238,14 +966,14 @@ addEventListener('keyup', e=>{
 
 (function(){
   const z = document.getElementById('camZone');
+  if(!z) return;
   let drag = false, sy = 0, sp = 0;
   const dn = e => { e.preventDefault(); drag=true; const t=e.touches?e.touches[0]:e; sy=t.clientY; sp=S.camPitch; };
   const mv = e => {
     if(!drag) return;
     e.preventDefault();
     const t = e.touches?e.touches[0]:e;
-    const dy = t.clientY - sy;
-    S.camPitch = Math.max(0.05, Math.min(0.85, sp - dy/320));
+    S.camPitch = Math.max(0.05, Math.min(0.85, sp - (t.clientY - sy)/320));
   };
   const up = ()=> drag=false;
   z.addEventListener('touchstart', dn, {passive:false});
@@ -1263,12 +991,15 @@ document.addEventListener('dblclick', e=>e.preventDefault());
 document.addEventListener('selectstart', e=>e.preventDefault());
 document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
 
-/* ═══════ HOME SCREEN → AUTO-START ═══════ */
+/* ═══════ START GAME ═══════ */
 function startGame(){
-  // ՍԿԶԲՆԱԿԱՆ ՏԵՂ — ճանապարհի կենտրոն, ուղղված դեպի Կասկադ
-  S.x = nodeX(5) + SPACING/2;
-  S.z = nodeZ(3);
-  S.heading = 0;   // +Z ուղղություն (հյուսիս, դեպի Կասկադ)
+  /* ⚠️ ՈՒՂՂՎԱԾ ՍԿԶԲՆԱԿԱՆ ՏԵՂ
+     nodeX(5) = 0, nodeZ(3) = -120 → խաչմերուկ
+     + 30 դեպի հյուսիս → ճանապարհի մեջտեղում
+     ուղղված +Z (հյուսիս, դեպի Կասկադ) */
+  S.x = nodeX(5);           // = 0 (հորիզոնական ճանապարհ)
+  S.z = nodeZ(3) + 30;      // = -90 (ուղղահայաց ճանապարհի վրա)
+  S.heading = 0;
   S.speed = 0;
   S.steer = 0;
   S.suspensionY = 0; S.suspensionV = 0; S.targetSusp = 0;
@@ -1287,17 +1018,10 @@ function startGame(){
   player.group.rotation.z = 0;
 
   S.phase = 'play';
-  document.getElementById('homeScreen').classList.add('hide');
+  const loader = document.getElementById('loader');
+  if(loader) loader.classList.add('hide');
   updateLocationName();
   Aud.init(); Aud.resume();
-}
-
-function showMsg(text, cls){
-  const m = document.getElementById('msg');
-  m.textContent = text; m.className = cls||'';
-  m.classList.remove('show');
-  void m.offsetWidth;
-  m.classList.add('show');
 }
 
 document.getElementById('pauseBtn').onclick = ()=>{
@@ -1325,10 +1049,7 @@ function loop(now){
   const rawDt = Math.min(0.4, (now - lastT) / 1000);
   lastT = now;
   const dt = Math.min(0.028, rawDt);
-
-  if(S.phase === 'play'){
-    updatePhysics(dt);
-  }
+  if(S.phase === 'play') updatePhysics(dt);
   updateCamera(dt);
   updateHUD();
   Aud.setEngine(S.speed, IN.gas, S.phase === 'play');
@@ -1337,9 +1058,8 @@ function loop(now){
 
 /* ═══════ INIT ═══════ */
 resize();
-// Սկզբնական դիրք
-S.x = nodeX(5) + SPACING/2;
-S.z = nodeZ(3);
+S.x = nodeX(5);
+S.z = nodeZ(3) + 30;
 S.heading = 0;
 S.camX = S.x; S.camY = terrainHeight(S.x, S.z) + 3; S.camZ = S.z - S.camDist;
 S.camLX = S.x; S.camLY = terrainHeight(S.x, S.z) + 1.2; S.camLZ = S.z + 10;
@@ -1352,22 +1072,26 @@ requestAnimationFrame(loop);
   window.addEventListener(ev, ()=>{ Aud.init(); Aud.resume(); }, {once:true});
 });
 
-// ⚠️ AUTO-START — հղումով մտնելուն պես խաղի մեջ է
-// Home screen-ը ցույց ենք տալիս 1.2 վրկ, հետո ավտոմատ սկսում
-let progress = 0;
-const fill = document.getElementById('loadingFill');
-const iv = setInterval(()=>{
-  progress += 10;
-  fill.style.width = progress + '%';
-  if(progress >= 100){
-    clearInterval(iv);
-    setTimeout(()=>{
-      startGame();
-    }, 250);
-  }
-}, 80);
+/* ⚠️ ԱՐԱԳ LOADING — 1.2 վրկ և ավտոմատ սկիզբ */
+(function autoLoad(){
+  const fill = document.getElementById('barFill');
+  const text = document.getElementById('barText');
+  let p = 0;
+  const iv = setInterval(()=>{
+    p += 8 + Math.random()*6;
+    if(p >= 100){
+      p = 100;
+      clearInterval(iv);
+      if(fill) fill.style.width = '100%';
+      if(text) text.textContent = 'ՊԱՏՐԱՍՏ';
+      setTimeout(startGame, 200);
+    }
+    if(fill) fill.style.width = p + '%';
+    if(text) text.textContent = p < 40 ? 'ԲԵՌՆՈՒՄ...' : p < 80 ? 'ԿԱՌՈՒՑՈՒՄ...' : 'ՊԱՏՐԱՍՏՎՈՒՄ...';
+  }, 55);
+})();
 
 })();
 </script>
 </body>
-</html>
+  </html>
