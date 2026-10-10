@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0c1830">
+<meta name="theme-color" content="#0a1020">
 <title>Երևան · 3D</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
-html,body{width:100%;height:100%;overflow:hidden;background:#0c1830;color:#fff;touch-action:none;overscroll-behavior:none;position:fixed}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a1020;color:#fff;touch-action:none;overscroll-behavior:none;position:fixed}
 #app{position:fixed;inset:0;overflow:hidden}
 @media (orientation:portrait){#app{width:100vh;height:100vw;top:50%;left:50%;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center}}
 canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
 #vig{position:absolute;inset:0;pointer-events:none;z-index:5;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 62%,rgba(0,0,0,.32) 100%)}
+
 #hud{position:absolute;inset:0;pointer-events:none;z-index:10}
 .panel{background:linear-gradient(165deg,rgba(255,255,255,.95),rgba(230,238,250,.9));border:1px solid rgba(30,60,110,.2);border-radius:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 20px rgba(0,20,60,.2);color:#0a1a30}
 #topLeft{position:absolute;top:10px;left:10px;padding:9px 16px}
@@ -26,29 +27,29 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
 #compassN{font-size:11px;font-weight:900;color:#e11d48;letter-spacing:2px}
 #compassArrow{font-size:24px;color:#0a1a30;margin-top:-4px;transition:transform .1s}
 #pauseBtn{position:absolute;top:10px;left:50%;transform:translateX(-50%);pointer-events:auto;padding:7px 18px;border-radius:12px;font-size:11px;letter-spacing:2px;font-weight:800;color:#0a1a30;cursor:pointer;background:rgba(255,255,255,.9);border:1px solid rgba(30,60,110,.25);z-index:25}
+
 #controls{position:absolute;inset:0;z-index:20;pointer-events:none}
 .btn{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(210,225,245,.92));border:2.5px solid rgba(50,90,150,.45);box-shadow:0 8px 22px rgba(0,20,60,.3),inset 0 2px 0 rgba(255,255,255,.8);color:#1a3050;font-weight:900;transition:transform .08s,background .12s;touch-action:none}
 .btn:active,.btn.on{transform:scale(.94);background:linear-gradient(160deg,rgba(120,180,255,.96),rgba(70,130,220,.96));border-color:rgba(30,80,160,.9);color:#fff}
 #btnL{left:22px;bottom:24px;width:114px;height:114px;font-size:46px}
 #btnR{left:152px;bottom:24px;width:114px;height:114px;font-size:46px}
-#btnBrake{right:160px;bottom:28px;width:98px;height:98px;font-size:14px;letter-spacing:1.5px;border-color:rgba(200,60,60,.5);color:#a02020}
-#btnBrake:active,#btnBrake.on{background:linear-gradient(160deg,rgba(255,80,80,.96),rgba(180,30,30,.96));color:#fff}
+#btnRev{right:160px;bottom:28px;width:98px;height:98px;font-size:14px;letter-spacing:1.5px;border-color:rgba(200,60,60,.5);color:#a02020}
+#btnRev:active,#btnRev.on{background:linear-gradient(160deg,rgba(255,80,80,.96),rgba(180,30,30,.96));color:#fff}
 #btnGas{right:26px;bottom:20px;width:126px;height:126px;font-size:16px;letter-spacing:2px;border-color:rgba(40,160,80,.5);color:#0a6030}
 #btnGas:active,#btnGas.on{background:linear-gradient(160deg,rgba(70,220,120,.96),rgba(30,150,70,.96));color:#fff}
 #camZone{position:absolute;top:0;right:0;width:82px;height:100%;pointer-events:auto;z-index:21;touch-action:none}
-#msg{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-size:66px;font-weight:900;letter-spacing:6px;text-align:center;text-shadow:0 4px 30px rgba(0,0,0,.6);pointer-events:none;opacity:0;z-index:30;white-space:nowrap;color:#fff;padding:0 20px}
-#msg.show{animation:popMsg 2.4s ease-out}
-@keyframes popMsg{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}25%{opacity:1;transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}
 
-/* ⚠️ LOADING OVERLAY — ավելի հստակ, արագ */
-#loader{position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:radial-gradient(ellipse at 50% 40%,#142850,#060c18 70%);transition:opacity .5s}
-#loader.hide{opacity:0;pointer-events:none}
-#loaderTitle{font-size:clamp(32px,6vw,54px);font-weight:900;letter-spacing:14px;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#7dd3fc);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 3s linear infinite;text-shadow:0 0 60px rgba(120,180,255,.6)}
-@keyframes shine{to{background-position:200% 0}}
-#loaderSub{font-size:11px;letter-spacing:6px;color:#8ea8c8;font-weight:700}
-#barWrap{width:260px;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden;box-shadow:0 0 20px rgba(120,180,255,.3)}
-#barFill{height:100%;width:0%;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6);border-radius:3px;transition:width .12s linear;box-shadow:0 0 12px rgba(120,180,255,.8)}
-#barText{font-size:11px;letter-spacing:3px;color:#a8c0dc;font-weight:600;min-height:14px}
+#msg{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-size:66px;font-weight:900;letter-spacing:6px;text-align:center;text-shadow:0 4px 30px rgba(0,0,0,.6);pointer-events:none;opacity:0;z-index:30;white-space:nowrap;color:#fff;padding:0 20px}
+
+#loader{position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:radial-gradient(ellipse at 50% 40%,#16264a,#040810 75%);transition:opacity .6s ease-out}
+#loader.done{opacity:0;pointer-events:none}
+#loaderTitle{font-size:clamp(34px,7vw,58px);font-weight:900;letter-spacing:14px;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6,#7dd3fc);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 3s linear infinite;text-shadow:0 0 60px rgba(120,180,255,.5)}
+@keyframes shine{to{background-position:300% 0}}
+#loaderSub{font-size:11px;letter-spacing:7px;color:#8ea8c8;font-weight:700}
+#barWrap{width:280px;height:6px;border-radius:3px;background:rgba(255,255,255,.13);overflow:hidden;box-shadow:0 0 24px rgba(120,180,255,.35);margin-top:8px}
+#barFill{height:100%;width:0%;background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6);border-radius:3px;transition:width .15s linear;box-shadow:0 0 14px rgba(120,180,255,.9)}
+#barText{font-size:11px;letter-spacing:3px;color:#a8c0dc;font-weight:600;min-height:14px;margin-top:4px}
+#errorBox{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(200,30,30,.9);color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;font-family:monospace;max-width:90vw;display:none;z-index:200;word-break:break-all}
 </style>
 </head>
 <body>
@@ -75,7 +76,7 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
   <div id="controls">
     <div class="btn" id="btnL">◀</div>
     <div class="btn" id="btnR">▶</div>
-    <div class="btn" id="btnBrake">ՀԵՏ</div>
+    <div class="btn" id="btnRev">ՀԵՏ</div>
     <div class="btn" id="btnGas">ԳԱԶ</div>
   </div>
   <div id="camZone"></div>
@@ -86,65 +87,152 @@ canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
     <div id="loaderTitle">ԵՐԵՎԱՆ</div>
     <div id="loaderSub">3D · ՔԱՂԱՔ · ՌԵԼԻԵՖ</div>
     <div id="barWrap"><div id="barFill"></div></div>
-    <div id="barText">ԲԵՌՆՈՒՄ...</div>
+    <div id="barText">ՄԻԱՑՈՒՄ...</div>
   </div>
+
+  <div id="errorBox"></div>
 </div>
 
+<!-- ═══════════ LOADING (առանձին, աշխատում է նույնիսկ եթե խաղը սխալի) ═══════════ -->
+<script>
+window.__gameStartFn = null;
+window.__loaded = false;
+
+window.addEventListener('error', function(e){
+  var eb = document.getElementById('errorBox');
+  var bt = document.getElementById('barText');
+  if(eb){
+    eb.style.display = 'block';
+    eb.textContent = 'ՍԽԱԼ՝ ' + (e.message || 'unknown') + ' @ line ' + (e.lineno || '?');
+  }
+  if(bt) bt.textContent = 'ՍԽԱԼ';
+  console.error(e);
+});
+
+(function(){
+  var fill = document.getElementById('barFill');
+  var text = document.getElementById('barText');
+  var loader = document.getElementById('loader');
+  var p = 0;
+  var waitIv = null;
+
+  var iv = setInterval(function(){
+    p += 6 + Math.random() * 7;
+    if(p >= 100){
+      p = 100;
+      clearInterval(iv);
+      if(text) text.textContent = 'ՊԱՏՐԱՍՏ';
+      // Սպասում ենք խաղի պատրաստ լինելուն
+      waitIv = setInterval(function(){
+        if(window.__gameStartFn){
+          clearInterval(waitIv);
+          if(loader) loader.classList.add('done');
+          setTimeout(function(){
+            try { window.__gameStartFn(); }
+            catch(err){
+              var eb = document.getElementById('errorBox');
+              if(eb){ eb.style.display='block'; eb.textContent='START ՍԽԱԼ՝ ' + err.message; }
+              console.error(err);
+            }
+          }, 200);
+        }
+      }, 60);
+    }
+    if(fill) fill.style.width = p + '%';
+    if(text){
+      if(p < 35) text.textContent = 'ՄԻԱՑՈՒՄ...';
+      else if(p < 70) text.textContent = 'ԿԱՌՈՒՑՈՒՄ...';
+      else text.textContent = 'ՊԱՏՐԱՍՏՎՈՒՄ...';
+    }
+  }, 40);
+
+  // Ապահովության համար՝ 4 վրկ հետո ցանկացած դեպքում փորձում ենք սկսել
+  setTimeout(function(){
+    if(!window.__gameStartFn) return;
+    if(loader && !loader.classList.contains('done')){
+      clearInterval(iv);
+      if(fill) fill.style.width = '100%';
+      if(loader) loader.classList.add('done');
+      setTimeout(function(){
+        try { window.__gameStartFn(); } catch(e){ console.error(e); }
+      }, 200);
+    }
+  }, 4000);
+})();
+</script>
+
+<!-- ═══════════ THREE.JS ═══════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- ═══════════ ԽԱՂ ═══════════ -->
 <script>
 (function(){
 'use strict';
 
-/* ⚠️ ERROR HANDLER — ցույց է տալիս սխալը էկրանին */
-window.addEventListener('error', e => {
-  const bt = document.getElementById('barText');
-  if(bt) bt.textContent = 'ՍԽԱԼ՝ ' + (e.message || 'unknown');
-  console.error(e);
-});
+/* ═══════ ՀԱՍՏԱՏՈՒՆՆԵՐ ═══════ */
+var ROAD_W = 10;
+var SIDEWALK_W = 3.5;
+var SPACING = 60;
+var GRID_N = 13;
+var MAX_KMH = 100;
+var MAX_REV_KMH = 25;
+var CITY_SIZE = (GRID_N - 1) * SPACING;
+var HALF_CITY = CITY_SIZE / 2;
+var CURB_H = 0.22;
 
-/* ═══════ ԿԱՅՈՒՆՆԵՐ ═══════ */
-const ROAD_W = 9, SIDEWALK_W = 3.5, SPACING = 60, GRID_N = 11;
-const MAX_KMH = 90, MAX_REV_KMH = 25;
-const CITY_SIZE = (GRID_N-1)*SPACING, HALF_CITY = CITY_SIZE/2;
-
-const LANDMARKS = {
-  cascade:     { i:5, j:9,  name:'ԿԱՍԿԱԴ' },
-  matenadaran: { i:2, j:9,  name:'ՄԱՏԵՆԱԴԱՐԱՆ' },
-  opera:       { i:3, j:6,  name:'ՕՊԵՐԱ' },
-  gallery:     { i:4, j:5,  name:'ՊԱՏԿԵՐԱՍՐԱՀ' },
-  square:      { i:5, j:5,  name:'ՀՐԱՊԱՐԱԿ' },
-  northAve:    { i:7, j:5,  name:'ՀՅՈՒՍ. ՊՈՂՈՏԱ' },
-  marriott:    { i:5, j:3,  name:'ՄԱՐԻՈԹ' },
-  university:  { i:7, j:3,  name:'ՀԱՄԱԼՍԱՐԱՆ' }
+var LANDMARKS = {
+  cascade:     { i: 6, j: 11, name: 'ԿԱՍԿԱԴ' },
+  matenadaran: { i: 2, j: 10, name: 'ՄԱՏԵՆԱԴԱՐԱՆ' },
+  opera:       { i: 3, j: 7,  name: 'ՕՊԵՐԱ' },
+  gallery:     { i: 5, j: 6,  name: 'ՊԱՏԿԵՐԱՍՐԱՀ' },
+  square:      { i: 6, j: 6,  name: 'ՀՐԱՊԱՐԱԿ' },
+  northAve:    { i: 8, j: 6,  name: 'ՀՅՈՒՍ. ՊՈՂՈՏԱ' },
+  marriott:    { i: 6, j: 4,  name: 'ՄԱՐԻՈԹ' },
+  university:  { i: 9, j: 4,  name: 'ՀԱՄԱԼՍԱՐԱՆ' }
 };
 
-const S = {
-  phase:'loading', x:0, z:0, heading:0, speed:0, steer:0,
-  camX:0, camY:0, camZ:0, camLX:0, camLY:0, camLZ:0,
-  camPitch:0.25, camDist:6.5,
-  loc:'Երևան', suspensionY:0, suspensionV:0, targetSusp:0,
-  bodyRoll:0, bodyRollV:0, targetRoll:0
+var S = {
+  phase: 'loading',
+  x: 0, z: 0, heading: 0, speed: 0, steer: 0,
+  camX: 0, camY: 0, camZ: 0,
+  camLX: 0, camLY: 0, camLZ: 0,
+  camPitch: 0.30, camDist: 7.0,
+  loc: 'Երևան',
+  suspensionY: 0, suspensionV: 0,
+  bodyRoll: 0, bodyRollV: 0,
+  wheelSpin: 0
 };
-const IN = { gas:false, brake:false, left:false, right:false };
+
+var IN = { gas: false, rev: false, left: false, right: false };
 
 /* ═══════ ՌԵԼԻԵՖ ═══════ */
 function terrainHeight(x, z){
-  let y = 0;
-  const dc = Math.hypot(x - 0, z - 380);
-  y += 55 * Math.exp(-dc*dc / 55000);
-  const dm = Math.hypot(x + 250, z - 320);
-  y += 32 * Math.exp(-dm*dm / 28000);
-  y += Math.max(0, z) * 0.06;
-  y += 1.2 * Math.sin(x*0.012) * Math.cos(z*0.011);
+  var y = 0;
+  // Կասկադի մեծ բլուր — հյուսիս, z դրական կողմ
+  var dc = Math.hypot(x - 0, z - 420);
+  y += 70 * Math.exp(-dc * dc / 48000);
+  // Մատենադարանի բլուր
+  var dm = Math.hypot(x + 280, z - 380);
+  y += 38 * Math.exp(-dm * dm / 24000);
+  // Ընդհանուր թեք դեպի հյուսիս
+  y += Math.max(0, z) * 0.05;
+  // Մեղմ ալիքներ
+  y += 1.4 * Math.sin(x * 0.011) * Math.cos(z * 0.010);
   return Math.max(0, y);
 }
-function nodeX(i){ return -HALF_CITY + i*SPACING; }
-function nodeZ(j){ return -HALF_CITY + j*SPACING; }
 
-/* ═══════ THREE ═══════ */
-const app = document.getElementById('app');
-const cvs = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas:cvs, antialias:true, powerPreference:'high-performance' });
+function nodeX(i){ return -HALF_CITY + i * SPACING; }
+function nodeZ(j){ return -HALF_CITY + j * SPACING; }
+
+/* ═══════ THREE.JS ═══════ */
+var app = document.getElementById('app');
+var cvs = document.getElementById('c');
+
+var renderer = new THREE.WebGLRenderer({
+  canvas: cvs,
+  antialias: true,
+  powerPreference: 'high-performance'
+});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -152,904 +240,1403 @@ renderer.toneMappingExposure = 1.15;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-const scene = new THREE.Scene();
+var scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9ec7e8);
-scene.fog = new THREE.Fog(0xb8d4e8, 200, 550);
+scene.fog = new THREE.Fog(0xb8d4e8, 220, 620);
 
-const camera = new THREE.PerspectiveCamera(60, 16/9, 0.3, 900);
+var camera = new THREE.PerspectiveCamera(58, 16/9, 0.3, 900);
 
-/* ԵՐԿԻՆՔ */
+/* ═══════ ԵՐԿԻՆՔ ═══════ */
 (function(){
-  const g = new THREE.SphereGeometry(700, 32, 16);
-  const m = new THREE.ShaderMaterial({
-    uniforms:{ cT:{value:new THREE.Color(0x3a7fd0)}, cM:{value:new THREE.Color(0xa8cae8)}, cH:{value:new THREE.Color(0xf8e0b8)} },
-    vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-    fragmentShader:'uniform vec3 cT,cM,cH;varying vec3 vP;void main(){float h=normalize(vP).y;vec3 col=h>0.0?mix(cM,cT,pow(h,0.6)):cM;float hor=exp(-abs(h)*6.0);col=mix(col,cH,hor*0.65);gl_FragColor=vec4(col,1.0);}',
-    side:THREE.BackSide, depthWrite:false, fog:false
+  var g = new THREE.SphereGeometry(750, 32, 16);
+  var m = new THREE.ShaderMaterial({
+    uniforms: {
+      cT: { value: new THREE.Color(0x3a7fd0) },
+      cM: { value: new THREE.Color(0xa8cae8) },
+      cH: { value: new THREE.Color(0xf8e0b8) }
+    },
+    vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'uniform vec3 cT; uniform vec3 cM; uniform vec3 cH; varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 col = h > 0.0 ? mix(cM, cT, pow(h, 0.6)) : cM; float hor = exp(-abs(h) * 6.0); col = mix(col, cH, hor * 0.65); gl_FragColor = vec4(col, 1.0); }',
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false
   });
-  scene.add(new THREE.Mesh(g,m));
+  scene.add(new THREE.Mesh(g, m));
 })();
 
-/* ԼՈՒՅՍԵՐ */
+/* ═══════ ԼՈՒՅՍԵՐ ═══════ */
 scene.add(new THREE.HemisphereLight(0xc8e0f8, 0x8a7a5a, 0.75));
-const sun = new THREE.DirectionalLight(0xfff0d0, 1.35);
-sun.position.set(-100, 200, 80);
+
+var sun = new THREE.DirectionalLight(0xfff0d0, 1.35);
+sun.position.set(-120, 220, 90);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.camera.left = -120;
-sun.shadow.camera.right = 120;
-sun.shadow.camera.top = 120;
-sun.shadow.camera.bottom = -120;
+sun.shadow.camera.left = -130;
+sun.shadow.camera.right = 130;
+sun.shadow.camera.top = 130;
+sun.shadow.camera.bottom = -130;
 sun.shadow.camera.near = 10;
-sun.shadow.camera.far = 400;
-sun.shadow.bias = -0.0006;
+sun.shadow.camera.far = 500;
+sun.shadow.bias = -0.0005;
 sun.shadow.normalBias = 0.03;
 scene.add(sun);
-const sunTarget = new THREE.Object3D();
+
+var sunTarget = new THREE.Object3D();
 scene.add(sunTarget);
 sun.target = sunTarget;
-const fill = new THREE.DirectionalLight(0xc8d8ff, 0.3);
+
+var fill = new THREE.DirectionalLight(0xc8d8ff, 0.3);
 fill.position.set(100, 80, -100);
 scene.add(fill);
 
-/* ԳԵՏԻՆ */
-const TERRAIN_SIZE = CITY_SIZE + 400;
-const TERRAIN_RES = 160;
-const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_RES, TERRAIN_RES);
-terrainGeo.rotateX(-Math.PI/2);
+/* ═══════ ԳԵՏԻՆ ═══════ */
+function makeGrassTex(){
+  var cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 256;
+  var x = cv.getContext('2d');
+  x.fillStyle = '#7a9a55';
+  x.fillRect(0, 0, 256, 256);
+  for(var i = 0; i < 7000; i++){
+    var r = Math.random();
+    x.fillStyle = r > 0.66 ? '#8aaa60' : (r > 0.33 ? '#6a8a48' : '#5a7a3a');
+    x.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 2);
+  }
+  var t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(35, 35);
+  t.encoding = THREE.sRGBEncoding;
+  return t;
+}
+
+var TERRAIN_SIZE = CITY_SIZE + 500;
+var TERRAIN_RES = 140;
+var terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_RES, TERRAIN_RES);
+terrainGeo.rotateX(-Math.PI / 2);
+
 (function(){
-  const pos = terrainGeo.attributes.position;
-  for(let i=0;i<pos.count;i++){
+  var pos = terrainGeo.attributes.position;
+  for(var i = 0; i < pos.count; i++){
     pos.setY(i, terrainHeight(pos.getX(i), pos.getZ(i)));
   }
   pos.needsUpdate = true;
   terrainGeo.computeVertexNormals();
 })();
-function makeGrassTex(){
-  const cv = document.createElement('canvas');
-  cv.width = 256; cv.height = 256;
-  const x = cv.getContext('2d');
-  x.fillStyle = '#7a9a55'; x.fillRect(0,0,256,256);
-  for(let i=0;i<7000;i++){
-    const r = Math.random();
-    x.fillStyle = r>0.66 ? '#8aaa60' : r>0.33 ? '#6a8a48' : '#5a7a3a';
-    x.fillRect(Math.random()*256, Math.random()*256, 1.5, 2);
-  }
-  const t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(30, 30);
-  t.encoding = THREE.sRGBEncoding;
-  return t;
-}
-const terrainMat = new THREE.MeshStandardMaterial({ map:makeGrassTex(), roughness:1 });
-const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+
+var terrainMat = new THREE.MeshStandardMaterial({
+  map: makeGrassTex(),
+  roughness: 1,
+  metalness: 0
+});
+var terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
 terrainMesh.receiveShadow = true;
 scene.add(terrainMesh);
 
 /* ═══════ ՃԱՆԱՊԱՐՀՆԵՐ ═══════ */
-function addStrip(pos, uv, idx, x1, z1, x2, z2, width, yOff, uvScale){
-  const base = pos.length/3;
-  const dx = x2-x1, dz = z2-z1;
-  const len = Math.hypot(dx, dz);
-  const N = Math.max(2, Math.ceil(len/5));
-  const px = -dz/len, pz = dx/len;
-  for(let i=0;i<=N;i++){
-    const t = i/N;
-    const cx = x1 + dx*t, cz = z1 + dz*t;
-    const lx = cx + px*width/2, lz = cz + pz*width/2;
-    const rx = cx - px*width/2, rz = cz - pz*width/2;
-    pos.push(lx, terrainHeight(lx,lz)+yOff, lz);
-    pos.push(rx, terrainHeight(rx,rz)+yOff, rz);
-    const uvT = t*len*uvScale;
-    uv.push(0, uvT, 1, uvT);
-  }
-  for(let i=0;i<N;i++){
-    const a = base+i*2, b = base+i*2+1, c = base+(i+1)*2, d = base+(i+1)*2+1;
-    idx.push(a,c,b, b,c,d);
-  }
-}
-function addQuad(pos, uv, idx, x1, z1, x2, z2, x3, z3, x4, z4, yOff, uvScale){
-  const base = pos.length/3;
-  pos.push(x1, terrainHeight(x1,z1)+yOff, z1);
-  pos.push(x2, terrainHeight(x2,z2)+yOff, z2);
-  pos.push(x3, terrainHeight(x3,z3)+yOff, z3);
-  pos.push(x4, terrainHeight(x4,z4)+yOff, z4);
-  const s = uvScale||1;
-  uv.push(0,0, 1*s,0, 1*s,1*s, 0,1*s);
-  idx.push(base,base+1,base+2, base,base+2,base+3);
-}
 function makeAsphaltTex(){
-  const cv = document.createElement('canvas'); cv.width=256; cv.height=256;
-  const x = cv.getContext('2d');
-  x.fillStyle = '#3a3d42'; x.fillRect(0,0,256,256);
-  for(let i=0;i<3500;i++){
-    x.fillStyle = Math.random()>0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.07)';
-    x.fillRect(Math.random()*256, Math.random()*256, 1.5, 1.5);
+  var cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 256;
+  var x = cv.getContext('2d');
+  x.fillStyle = '#3a3d42';
+  x.fillRect(0, 0, 256, 256);
+  for(var i = 0; i < 4000; i++){
+    x.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.07)';
+    x.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 1.5);
   }
-  const t = new THREE.CanvasTexture(cv);
+  var t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.encoding = THREE.sRGBEncoding;
   return t;
 }
+
 function makeWalkTex(){
-  const cv = document.createElement('canvas'); cv.width=128; cv.height=128;
-  const x = cv.getContext('2d');
-  x.fillStyle = '#c8c0b0'; x.fillRect(0,0,128,128);
-  x.strokeStyle = 'rgba(120,110,100,0.5)'; x.lineWidth = 1.5;
-  for(let i=0;i<=4;i++){
-    x.beginPath(); x.moveTo(i*32,0); x.lineTo(i*32,128); x.stroke();
-    x.beginPath(); x.moveTo(0,i*32); x.lineTo(128,i*32); x.stroke();
+  var cv = document.createElement('canvas');
+  cv.width = 128; cv.height = 128;
+  var x = cv.getContext('2d');
+  x.fillStyle = '#c8c0b0';
+  x.fillRect(0, 0, 128, 128);
+  x.strokeStyle = 'rgba(120,110,100,0.5)';
+  x.lineWidth = 1.5;
+  for(var i = 0; i <= 4; i++){
+    x.beginPath(); x.moveTo(i * 32, 0); x.lineTo(i * 32, 128); x.stroke();
+    x.beginPath(); x.moveTo(0, i * 32); x.lineTo(128, i * 32); x.stroke();
   }
-  const t = new THREE.CanvasTexture(cv);
+  var t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.encoding = THREE.sRGBEncoding;
   return t;
 }
-function makeRoadWithLinesTex(){
-  const cv = document.createElement('canvas'); cv.width=128; cv.height=256;
-  const x = cv.getContext('2d');
-  x.fillStyle = '#3a3d42'; x.fillRect(0,0,128,256);
-  for(let i=0;i<2500;i++){
-    x.fillStyle = Math.random()>0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.07)';
-    x.fillRect(Math.random()*128, Math.random()*256, 1.5, 1.5);
+
+function makeRoadLinesTex(){
+  var cv = document.createElement('canvas');
+  cv.width = 128; cv.height = 256;
+  var x = cv.getContext('2d');
+  x.fillStyle = '#3a3d42';
+  x.fillRect(0, 0, 128, 256);
+  for(var i = 0; i < 2500; i++){
+    x.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.07)';
+    x.fillRect(Math.random() * 128, Math.random() * 256, 1.5, 1.5);
   }
   x.fillStyle = '#e8b830';
-  x.fillRect(60,0,4,256); x.fillRect(66,0,4,256);
-  const t = new THREE.CanvasTexture(cv);
+  x.fillRect(60, 0, 4, 256);
+  x.fillRect(66, 0, 4, 256);
+  var t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.encoding = THREE.sRGBEncoding;
   return t;
 }
-const asphaltTex = makeAsphaltTex();
-const walkTex = makeWalkTex();
-const roadTex = makeRoadWithLinesTex();
 
-const roadPositions=[], roadUVs=[], roadIndices=[];
-const walkPositions=[], walkUVs=[], walkIndices=[];
-const interPositions=[], interUVs=[], interIndices=[];
+var asphaltTex = makeAsphaltTex();
+var walkTex = makeWalkTex();
+var roadTex = makeRoadLinesTex();
+
+var roadPositions = [], roadUVs = [], roadIndices = [];
+var walkPositions = [], walkUVs = [], walkIndices = [];
+var interPositions = [], interUVs = [], interIndices = [];
+
+function addStrip(pos, uv, idx, x1, z1, x2, z2, width, yOff, uvScale){
+  var base = pos.length / 3;
+  var dx = x2 - x1, dz = z2 - z1;
+  var len = Math.hypot(dx, dz);
+  if(len < 0.01) return;
+  var N = Math.max(2, Math.ceil(len / 5));
+  var px = -dz / len, pz = dx / len;
+  for(var i = 0; i <= N; i++){
+    var t = i / N;
+    var cx = x1 + dx * t, cz = z1 + dz * t;
+    var lx = cx + px * width / 2, lz = cz + pz * width / 2;
+    var rx = cx - px * width / 2, rz = cz - pz * width / 2;
+    pos.push(lx, terrainHeight(lx, lz) + yOff, lz);
+    pos.push(rx, terrainHeight(rx, rz) + yOff, rz);
+    var uvT = t * len * uvScale;
+    uv.push(0, uvT, 1, uvT);
+  }
+  for(var j = 0; j < N; j++){
+    var a = base + j * 2;
+    var b = base + j * 2 + 1;
+    var c = base + (j + 1) * 2;
+    var d = base + (j + 1) * 2 + 1;
+    idx.push(a, c, b, b, c, d);
+  }
+}
+
+function addQuad(pos, uv, idx, x1, z1, x2, z2, x3, z3, x4, z4, yOff, uvScale){
+  var base = pos.length / 3;
+  pos.push(x1, terrainHeight(x1, z1) + yOff, z1);
+  pos.push(x2, terrainHeight(x2, z2) + yOff, z2);
+  pos.push(x3, terrainHeight(x3, z3) + yOff, z3);
+  pos.push(x4, terrainHeight(x4, z4) + yOff, z4);
+  var s = uvScale || 1;
+  uv.push(0, 0, 1 * s, 0, 1 * s, 1 * s, 0, 1 * s);
+  idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+}
 
 function edgeExists(i, j, dir){
-  if (dir === 'h' && i === 4 && j === 5) return false;
-  if (dir === 'v' && i === 5 && j === 4) return false;
-  if (dir === 'h' && i === 6 && j === 5) return false;
-  if (dir === 'h' && i === 4 && j === 9) return false;
-  if (dir === 'v' && i === 5 && j === 5) return false;
+  // Բաց թողնում ենք որոշ եզրեր վայրերի տարածքում
+  if(dir === 'h' && i === 5 && j === 6) return false; // պատկերասրահ
+  if(dir === 'h' && i === 7 && j === 6) return false; // Հյուսիսային
+  if(dir === 'v' && i === 6 && j === 5) return false; // հրապարակ
+  if(dir === 'v' && i === 6 && j === 6) return false;
+  if(dir === 'v' && i === 9 && j === 10) return false; // մատենադարան
   return true;
 }
-for(let j = 0; j < GRID_N; j++){
-  for(let i = 0; i < GRID_N - 1; i++){
-    if(!edgeExists(i,j,'h')) continue;
-    addStrip(roadPositions, roadUVs, roadIndices, nodeX(i), nodeZ(j), nodeX(i+1), nodeZ(j), ROAD_W, 0.06, 0.06);
+
+// Հորիզոնական ճանապարհներ
+for(var j = 0; j < GRID_N; j++){
+  for(var i = 0; i < GRID_N - 1; i++){
+    if(!edgeExists(i, j, 'h')) continue;
+    addStrip(roadPositions, roadUVs, roadIndices,
+      nodeX(i), nodeZ(j), nodeX(i + 1), nodeZ(j),
+      ROAD_W, 0.06, 0.06);
   }
 }
-for(let i = 0; i < GRID_N; i++){
-  for(let j = 0; j < GRID_N - 1; j++){
-    if(!edgeExists(i,j,'v')) continue;
-    addStrip(roadPositions, roadUVs, roadIndices, nodeX(i), nodeZ(j), nodeX(i), nodeZ(j+1), ROAD_W, 0.061, 0.06);
+// Ուղղահայաց
+for(var i2 = 0; i2 < GRID_N; i2++){
+  for(var j2 = 0; j2 < GRID_N - 1; j2++){
+    if(!edgeExists(i2, j2, 'v')) continue;
+    addStrip(roadPositions, roadUVs, roadIndices,
+      nodeX(i2), nodeZ(j2), nodeX(i2), nodeZ(j2 + 1),
+      ROAD_W, 0.061, 0.06);
   }
 }
-const SWI = ROAD_W/2 + SIDEWALK_W;
-for(let j = 0; j < GRID_N; j++){
-  for(let i = 0; i < GRID_N - 1; i++){
-    if(!edgeExists(i,j,'h')) continue;
-    const x1 = nodeX(i)+SWI, x2 = nodeX(i+1)-SWI, z = nodeZ(j);
-    if(x1 >= x2) continue;
-    addStrip(walkPositions, walkUVs, walkIndices, x1, z+ROAD_W/2+SIDEWALK_W/2, x2, z+ROAD_W/2+SIDEWALK_W/2, SIDEWALK_W, 0.22, 0.3);
-    addStrip(walkPositions, walkUVs, walkIndices, x1, z-ROAD_W/2-SIDEWALK_W/2, x2, z-ROAD_W/2-SIDEWALK_W/2, SIDEWALK_W, 0.22, 0.3);
+
+var SWI = ROAD_W / 2 + SIDEWALK_W;
+
+// Մայթեր — հորիզոնական
+for(var j3 = 0; j3 < GRID_N; j3++){
+  for(var i3 = 0; i3 < GRID_N - 1; i3++){
+    if(!edgeExists(i3, j3, 'h')) continue;
+    var x1h = nodeX(i3) + SWI;
+    var x2h = nodeX(i3 + 1) - SWI;
+    var zh = nodeZ(j3);
+    if(x1h >= x2h) continue;
+    addStrip(walkPositions, walkUVs, walkIndices,
+      x1h, zh + ROAD_W / 2 + SIDEWALK_W / 2,
+      x2h, zh + ROAD_W / 2 + SIDEWALK_W / 2,
+      SIDEWALK_W, 0.22, 0.3);
+    addStrip(walkPositions, walkUVs, walkIndices,
+      x1h, zh - ROAD_W / 2 - SIDEWALK_W / 2,
+      x2h, zh - ROAD_W / 2 - SIDEWALK_W / 2,
+      SIDEWALK_W, 0.22, 0.3);
   }
 }
-for(let i = 0; i < GRID_N; i++){
-  for(let j = 0; j < GRID_N - 1; j++){
-    if(!edgeExists(i,j,'v')) continue;
-    const z1 = nodeZ(j)+SWI, z2 = nodeZ(j+1)-SWI, x = nodeX(i);
-    if(z1 >= z2) continue;
-    addStrip(walkPositions, walkUVs, walkIndices, x+ROAD_W/2+SIDEWALK_W/2, z1, x+ROAD_W/2+SIDEWALK_W/2, z2, SIDEWALK_W, 0.22, 0.3);
-    addStrip(walkPositions, walkUVs, walkIndices, x-ROAD_W/2-SIDEWALK_W/2, z1, x-ROAD_W/2-SIDEWALK_W/2, z2, SIDEWALK_W, 0.22, 0.3);
+// Մայթեր — ուղղահայաց
+for(var i4 = 0; i4 < GRID_N; i4++){
+  for(var j4 = 0; j4 < GRID_N - 1; j4++){
+    if(!edgeExists(i4, j4, 'v')) continue;
+    var z1v = nodeZ(j4) + SWI;
+    var z2v = nodeZ(j4 + 1) - SWI;
+    var xv = nodeX(i4);
+    if(z1v >= z2v) continue;
+    addStrip(walkPositions, walkUVs, walkIndices,
+      xv + ROAD_W / 2 + SIDEWALK_W / 2, z1v,
+      xv + ROAD_W / 2 + SIDEWALK_W / 2, z2v,
+      SIDEWALK_W, 0.22, 0.3);
+    addStrip(walkPositions, walkUVs, walkIndices,
+      xv - ROAD_W / 2 - SIDEWALK_W / 2, z1v,
+      xv - ROAD_W / 2 - SIDEWALK_W / 2, z2v,
+      SIDEWALK_W, 0.22, 0.3);
   }
 }
-for(let i = 0; i < GRID_N; i++){
-  for(let j = 0; j < GRID_N; j++){
-    const cx = nodeX(i), cz = nodeZ(j);
-    const w2 = ROAD_W/2, sw = SIDEWALK_W;
-    const corners = [
-      [cx+w2, cz+w2, cx+w2+sw, cz+w2+sw],
-      [cx-w2-sw, cz+w2, cx-w2, cz+w2+sw],
-      [cx+w2, cz-w2-sw, cx+w2+sw, cz-w2],
-      [cx-w2-sw, cz-w2-sw, cx-w2, cz-w2]
+// Խաչմերուկների անկյունային մայթեր
+for(var i5 = 0; i5 < GRID_N; i5++){
+  for(var j5 = 0; j5 < GRID_N; j5++){
+    var cx = nodeX(i5), cz = nodeZ(j5);
+    var w2 = ROAD_W / 2, sw = SIDEWALK_W;
+    var corners = [
+      [cx + w2, cz + w2, cx + w2 + sw, cz + w2 + sw],
+      [cx - w2 - sw, cz + w2, cx - w2, cz + w2 + sw],
+      [cx + w2, cz - w2 - sw, cx + w2 + sw, cz - w2],
+      [cx - w2 - sw, cz - w2 - sw, cx - w2, cz - w2]
     ];
-    for(const c of corners){
-      addQuad(walkPositions, walkUVs, walkIndices, c[0],c[1], c[2],c[1], c[2],c[3], c[0],c[3], 0.22, 0.3);
+    for(var cI = 0; cI < 4; cI++){
+      var c = corners[cI];
+      addQuad(walkPositions, walkUVs, walkIndices,
+        c[0], c[1], c[2], c[1], c[2], c[3], c[0], c[3],
+        0.22, 0.3);
     }
-    addQuad(interPositions, interUVs, interIndices, cx-w2,cz-w2, cx+w2,cz-w2, cx+w2,cz+w2, cx-w2,cz+w2, 0.07, 0.15);
+    addQuad(interPositions, interUVs, interIndices,
+      cx - w2, cz - w2, cx + w2, cz - w2,
+      cx + w2, cz + w2, cx - w2, cz + w2,
+      0.07, 0.15);
   }
 }
+
 function makeMesh(pos, uv, idx, material){
-  const geo = new THREE.BufferGeometry();
+  var geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   geo.setIndex(idx);
   geo.computeVertexNormals();
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
-  const m = new THREE.Mesh(geo, material);
+  var m = new THREE.Mesh(geo, material);
   m.receiveShadow = true;
   m.frustumCulled = false;
   return m;
 }
-scene.add(makeMesh(roadPositions, roadUVs, roadIndices, new THREE.MeshStandardMaterial({ map:roadTex, roughness:0.9, metalness:0.02 })));
-scene.add(makeMesh(walkPositions, walkUVs, walkIndices, new THREE.MeshStandardMaterial({ map:walkTex, roughness:0.95, metalness:0.02 })));
-scene.add(makeMesh(interPositions, interUVs, interIndices, new THREE.MeshStandardMaterial({ map:asphaltTex, roughness:0.9 })));
+
+scene.add(makeMesh(roadPositions, roadUVs, roadIndices,
+  new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.9, metalness: 0.02 })));
+scene.add(makeMesh(walkPositions, walkUVs, walkIndices,
+  new THREE.MeshStandardMaterial({ map: walkTex, roughness: 0.95, metalness: 0.02 })));
+scene.add(makeMesh(interPositions, interUVs, interIndices,
+  new THREE.MeshStandardMaterial({ map: asphaltTex, roughness: 0.9, metalness: 0.02 })));
 
 /* ═══════ ՇԵՆՔԵՐ ═══════ */
 function makeBuildingTex(hue){
-  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 256;
-  const x = cv.getContext('2d');
-  const baseColors = ['#e0d0b8','#d8c8a8','#e8d8c8','#d0c0a8','#e8dcc8','#d8ccc0'];
+  var cv = document.createElement('canvas');
+  cv.width = 128; cv.height = 256;
+  var x = cv.getContext('2d');
+  var baseColors = ['#e0d0b8', '#d8c8a8', '#e8d8c8', '#d0c0a8', '#e8dcc8', '#d8ccc0'];
   x.fillStyle = baseColors[hue % baseColors.length];
-  x.fillRect(0,0,128,256);
-  for(let i=0;i<1500;i++){
-    x.fillStyle = `rgba(120,100,80,${Math.random()*0.1})`;
-    x.fillRect(Math.random()*128, Math.random()*256, 3, 2);
+  x.fillRect(0, 0, 128, 256);
+  for(var k = 0; k < 1500; k++){
+    x.fillStyle = 'rgba(120,100,80,' + (Math.random() * 0.1) + ')';
+    x.fillRect(Math.random() * 128, Math.random() * 256, 3, 2);
   }
-  const cols = 4, rows = 10, cw = 128/cols, ch = 256/rows;
-  for(let r=1;r<rows-1;r++){
-    for(let c=0;c<cols;c++){
+  var cols = 4, rows = 10;
+  var cw = 128 / cols, ch = 256 / rows;
+  for(var r = 1; r < rows - 1; r++){
+    for(var c = 0; c < cols; c++){
       x.fillStyle = '#3a4a5a';
-      x.fillRect(c*cw+6, r*ch+6, cw-12, ch-12);
-      x.fillStyle = Math.random()>0.5 ? '#6a8aa8' : '#4a6a88';
-      x.fillRect(c*cw+7, r*ch+7, cw-14, ch-14);
+      x.fillRect(c * cw + 6, r * ch + 6, cw - 12, ch - 12);
+      x.fillStyle = Math.random() > 0.5 ? '#6a8aa8' : '#4a6a88';
+      x.fillRect(c * cw + 7, r * ch + 7, cw - 14, ch - 14);
       x.fillStyle = 'rgba(255,255,255,0.35)';
-      x.fillRect(c*cw+8, r*ch+8, (cw-16)*0.4, (ch-16)*0.4);
+      x.fillRect(c * cw + 8, r * ch + 8, (cw - 16) * 0.4, (ch - 16) * 0.4);
     }
   }
-  const t = new THREE.CanvasTexture(cv);
+  var t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.encoding = THREE.sRGBEncoding;
   return t;
 }
-const BLD_MATS = [];
-for(let i=0;i<6;i++){
-  BLD_MATS.push(new THREE.MeshStandardMaterial({ map:makeBuildingTex(i), roughness:0.85, metalness:0.05 }));
-}
-const BOX_GEO = new THREE.BoxGeometry(1,1,1);
-const buildings = [];
-const BLD_COLLISION = [];
 
-for(let i = 0; i < GRID_N - 1; i++){
-  for(let j = 0; j < GRID_N - 1; j++){
-    let skip = false;
-    for(const k in LANDMARKS){
-      const L = LANDMARKS[k];
-      if(Math.abs(L.i-i) <= 1 && Math.abs(L.j-j) <= 1){ skip = true; break; }
+var BLD_MATS = [];
+for(var bm = 0; bm < 6; bm++){
+  BLD_MATS.push(new THREE.MeshStandardMaterial({
+    map: makeBuildingTex(bm),
+    roughness: 0.85,
+    metalness: 0.05
+  }));
+}
+
+var BOX_GEO = new THREE.BoxGeometry(1, 1, 1);
+var BLD_COLLISION = [];
+
+for(var bi = 0; bi < GRID_N - 1; bi++){
+  for(var bj = 0; bj < GRID_N - 1; bj++){
+    var skipB = false;
+    for(var lk in LANDMARKS){
+      var LK = LANDMARKS[lk];
+      if(Math.abs(LK.i - bi) <= 1 && Math.abs(LK.j - bj) <= 1){
+        skipB = true;
+        break;
+      }
     }
-    if(skip) continue;
-    if(j >= 8) continue;
-    const cellCX = nodeX(i)+SPACING/2;
-    const cellCZ = nodeZ(j)+SPACING/2;
-    const usable = SPACING - ROAD_W - 2*SIDEWALK_W;
+    if(skipB) continue;
+
+    var cellCX = nodeX(bi) + SPACING / 2;
+    var cellCZ = nodeZ(bj) + SPACING / 2;
+    var usable = SPACING - ROAD_W - 2 * SIDEWALK_W;
     if(usable < 8) continue;
-    const w = usable*(0.55 + Math.random()*0.3);
-    const d = usable*(0.55 + Math.random()*0.3);
-    const h = 12 + Math.random()*26;
-    const bx = cellCX + (Math.random()-0.5)*(usable-w)*0.8;
-    const bz = cellCZ + (Math.random()-0.5)*(usable-d)*0.8;
-    const m = new THREE.Mesh(BOX_GEO, BLD_MATS[Math.floor(Math.random()*BLD_MATS.length)]);
-    m.scale.set(w,h,d);
-    m.position.set(bx, terrainHeight(bx,bz)+h/2, bz);
-    m.rotation.y = Math.round(Math.random()*4) * Math.PI/2;
-    m.castShadow = true; m.receiveShadow = true;
-    scene.add(m);
-    buildings.push(m);
-    BLD_COLLISION.push({ x:bx, z:bz, w, d, h });
+
+    var bw = usable * (0.55 + Math.random() * 0.3);
+    var bd = usable * (0.55 + Math.random() * 0.3);
+    var bh = 14 + Math.random() * 30;
+    var bx = cellCX + (Math.random() - 0.5) * (usable - bw) * 0.7;
+    var bz = cellCZ + (Math.random() - 0.5) * (usable - bd) * 0.7;
+
+    var bmesh = new THREE.Mesh(BOX_GEO, BLD_MATS[Math.floor(Math.random() * BLD_MATS.length)]);
+    bmesh.scale.set(bw, bh, bd);
+    bmesh.position.set(bx, terrainHeight(bx, bz) + bh / 2, bz);
+    bmesh.rotation.y = Math.round(Math.random() * 4) * Math.PI / 2;
+    bmesh.castShadow = true;
+    bmesh.receiveShadow = true;
+    scene.add(bmesh);
+
+    BLD_COLLISION.push({ x: bx, z: bz, w: bw, d: bd, h: bh });
   }
 }
 
 /* ═══════ ԿԱՍԿԱԴ ═══════ */
 function buildCascade(cx, cz){
-  const g = new THREE.Group();
-  const rockMat = new THREE.MeshStandardMaterial({ color:0xb8a890, roughness:0.95 });
-  const darkRockMat = new THREE.MeshStandardMaterial({ color:0x8a7a68, roughness:0.95 });
-  const tuffMat = new THREE.MeshStandardMaterial({ color:0xd8c8a8, roughness:0.9 });
-  const waterMat = new THREE.MeshStandardMaterial({ color:0x4a8ac8, roughness:0.15, metalness:0.6 });
-  const baseY = terrainHeight(cx, cz);
-  for(let s = 0; s < 6; s++){
-    const levelY = baseY + s * 4;
-    const width = 40 - s * 4;
-    const depth = 24 - s * 3;
-    const rock = new THREE.Mesh(new THREE.BoxGeometry(width, 3.5, depth), s%2===0?rockMat:darkRockMat);
-    rock.position.set(0, levelY+1.75, s*2.5);
-    rock.castShadow = true; rock.receiveShadow = true; g.add(rock);
-    const pool = new THREE.Mesh(new THREE.BoxGeometry(width-8, 0.6, depth-8), waterMat);
-    pool.position.set(0, levelY+3.7, s*2.5); g.add(pool);
-    [-1,1].forEach(side=>{
-      const tower = new THREE.Mesh(new THREE.BoxGeometry(6,6,8), rockMat);
-      tower.position.set(side*(width/2+3), levelY+3, s*2.5);
-      tower.castShadow = true; g.add(tower);
+  var g = new THREE.Group();
+  var rockMat = new THREE.MeshStandardMaterial({ color: 0xb8a890, roughness: 0.95 });
+  var darkRockMat = new THREE.MeshStandardMaterial({ color: 0x8a7a68, roughness: 0.95 });
+  var tuffMat = new THREE.MeshStandardMaterial({ color: 0xd8c8a8, roughness: 0.9 });
+  var waterMat = new THREE.MeshStandardMaterial({ color: 0x4a8ac8, roughness: 0.15, metalness: 0.6 });
+  var baseY = terrainHeight(cx, cz);
+
+  // 7 մակարդակ ժայռափոր սանդուղք
+  for(var s = 0; s < 7; s++){
+    var levelY = baseY + s * 4.5;
+    var width = 46 - s * 4;
+    var depth = 28 - s * 3;
+
+    var rock = new THREE.Mesh(
+      new THREE.BoxGeometry(width, 4, depth),
+      s % 2 === 0 ? rockMat : darkRockMat
+    );
+    rock.position.set(0, levelY + 2, s * 3);
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    g.add(rock);
+
+    // Ջրի ավազան
+    var pool = new THREE.Mesh(
+      new THREE.BoxGeometry(width - 10, 0.6, depth - 10),
+      waterMat
+    );
+    pool.position.set(0, levelY + 4.2, s * 3);
+    g.add(pool);
+
+    // Կողային ժայռեր
+    [-1, 1].forEach(function(side){
+      var tower = new THREE.Mesh(
+        new THREE.BoxGeometry(7, 7, 9),
+        rockMat
+      );
+      tower.position.set(side * (width / 2 + 4), levelY + 3.5, s * 3);
+      tower.castShadow = true;
+      tower.receiveShadow = true;
+      g.add(tower);
     });
   }
-  const pillar = new THREE.Mesh(new THREE.CylinderGeometry(1.5,2,12,12), tuffMat);
-  pillar.position.set(0, baseY+6*4+6, 15); pillar.castShadow = true; g.add(pillar);
-  [-1,1].forEach(side=>{
-    for(let s = 0; s < 6; s++){
-      const arch = new THREE.Mesh(new THREE.BoxGeometry(3,4,6), tuffMat);
-      arch.position.set(side*22, baseY+s*4+2, s*2.5);
-      arch.castShadow = true; g.add(arch);
+
+  // Գագաթին սյուն
+  var pillar = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.6, 2.2, 14, 12),
+    tuffMat
+  );
+  pillar.position.set(0, baseY + 7 * 4.5 + 7, 18);
+  pillar.castShadow = true;
+  g.add(pillar);
+
+  // Կամարներ կողքերին
+  [-1, 1].forEach(function(side){
+    for(var s = 0; s < 7; s++){
+      var arch = new THREE.Mesh(
+        new THREE.BoxGeometry(3.5, 4.5, 7),
+        tuffMat
+      );
+      arch.position.set(side * 26, baseY + s * 4.5 + 2.2, s * 3);
+      arch.castShadow = true;
+      g.add(arch);
     }
   });
+
   g.position.set(cx, 0, cz);
   scene.add(g);
-  for(let s = 0; s < 6; s++){
-    BLD_COLLISION.push({ x:cx, z:cz+s*2.5, w:44-s*4, d:24-s*3, h:4 });
+
+  // Collision-ներ
+  for(var s2 = 0; s2 < 7; s2++){
+    BLD_COLLISION.push({
+      x: cx,
+      z: cz + s2 * 3,
+      w: 50 - s2 * 4,
+      d: 28 - s2 * 3,
+      h: 5
+    });
   }
 }
 
-/* ═══════ ՈԼՈՐՈՒՆ ՃԱՆԱՊԱՐՀ ═══════ */
-const windRoadCurve = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(nodeX(5), 0, nodeZ(6)+30),
-  new THREE.Vector3(nodeX(5)-40, 0, nodeZ(7)+10),
-  new THREE.Vector3(nodeX(5)+50, 0, nodeZ(8)-10),
-  new THREE.Vector3(nodeX(5)-30, 0, nodeZ(8)+40),
-  new THREE.Vector3(nodeX(5)+10, 0, nodeZ(9)+20),
-  new THREE.Vector3(nodeX(5), 0, nodeZ(9)+60)
-], false, 'catmullrom', 0.5);
+/* ═══════ ՈԼՈՐՈՒՆ ՎԵՐԵԼՔ ═══════ */
+function buildWindingRoad(){
+  var curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(nodeX(6), 0, nodeZ(7) + 20),
+    new THREE.Vector3(nodeX(6) - 55, 0, nodeZ(8) + 15),
+    new THREE.Vector3(nodeX(6) + 60, 0, nodeZ(9) - 10),
+    new THREE.Vector3(nodeX(6) - 45, 0, nodeZ(9) + 45),
+    new THREE.Vector3(nodeX(6) + 30, 0, nodeZ(10) + 15),
+    new THREE.Vector3(nodeX(6) - 20, 0, nodeZ(10) + 70),
+    new THREE.Vector3(nodeX(6), 0, nodeZ(11) - 30)
+  ], false, 'catmullrom', 0.5);
 
-(function buildWindingRoad(){
-  const pts = windRoadCurve.getPoints(60);
-  for(const p of pts) p.y = terrainHeight(p.x, p.z) + 0.15;
-  const roadW = 10;
-  const pos = [], uv = [], idx = [];
-  for(let i=0;i<pts.length-1;i++){
-    const p1 = pts[i], p2 = pts[i+1];
-    const dx = p2.x-p1.x, dz = p2.z-p1.z;
-    const len = Math.hypot(dx,dz);
-    if(len < 0.01) continue;
-    const nx = -dz/len, nz = dx/len;
-    const base = pos.length/3;
-    pos.push(p1.x+nx*roadW/2, p1.y, p1.z+nz*roadW/2);
-    pos.push(p1.x-nx*roadW/2, p1.y, p1.z-nz*roadW/2);
-    pos.push(p2.x+nx*roadW/2, p2.y, p2.z+nz*roadW/2);
-    pos.push(p2.x-nx*roadW/2, p2.y, p2.z-nz*roadW/2);
-    uv.push(0,0, 1,0, 0,1, 1,1);
-    idx.push(base,base+1,base+2, base+1,base+3,base+2);
+  var pts = curve.getPoints(80);
+  for(var i = 0; i < pts.length; i++){
+    pts[i].y = terrainHeight(pts[i].x, pts[i].z) + 0.15;
   }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv,2));
+
+  var roadW = 12;
+  var pos = [], uv = [], idx = [];
+  for(var i2 = 0; i2 < pts.length - 1; i2++){
+    var p1 = pts[i2], p2 = pts[i2 + 1];
+    var dx = p2.x - p1.x, dz = p2.z - p1.z;
+    var len = Math.hypot(dx, dz);
+    if(len < 0.01) continue;
+    var nx = -dz / len, nz = dx / len;
+    var base = pos.length / 3;
+    pos.push(p1.x + nx * roadW / 2, p1.y, p1.z + nz * roadW / 2);
+    pos.push(p1.x - nx * roadW / 2, p1.y, p1.z - nz * roadW / 2);
+    pos.push(p2.x + nx * roadW / 2, p2.y, p2.z + nz * roadW / 2);
+    pos.push(p2.x - nx * roadW / 2, p2.y, p2.z - nz * roadW / 2);
+    uv.push(0, 0, 1, 0, 0, 1, 1, 1);
+    idx.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
+  }
+
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   geo.setIndex(idx);
   geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map:roadTex.clone(), roughness:0.9 }));
+
+  var mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+    map: roadTex,
+    roughness: 0.9
+  }));
   mesh.receiveShadow = true;
   scene.add(mesh);
-})();
+}
 
 /* ═══════ ԱՅԼ ՎԱՅՐԵՐ ═══════ */
 function buildOpera(cx, cz){
-  const g = new THREE.Group();
-  const tuff = new THREE.MeshStandardMaterial({ color:0xe8d8b8, roughness:0.88 });
-  const roof = new THREE.MeshStandardMaterial({ color:0xa89878, roughness:0.9 });
-  const baseY = terrainHeight(cx, cz);
-  const main = new THREE.Mesh(new THREE.BoxGeometry(20,11,16), tuff);
-  main.position.set(0, baseY+5.5, 0); main.castShadow = true; main.receiveShadow = true; g.add(main);
-  const r = new THREE.Mesh(new THREE.CylinderGeometry(11,11,1.2,16), roof);
-  r.position.set(0, baseY+11.6, 0); r.castShadow = true; g.add(r);
-  for(let i=-3;i<=3;i++){
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,8,10), tuff);
-    c.position.set(i*2.8, baseY+4, 8.5); c.castShadow = true; g.add(c);
+  var g = new THREE.Group();
+  var tuff = new THREE.MeshStandardMaterial({ color: 0xe8d8b8, roughness: 0.88 });
+  var roof = new THREE.MeshStandardMaterial({ color: 0xa89878, roughness: 0.9 });
+  var baseY = terrainHeight(cx, cz);
+
+  var main = new THREE.Mesh(new THREE.BoxGeometry(22, 12, 18), tuff);
+  main.position.set(0, baseY + 6, 0);
+  main.castShadow = true;
+  main.receiveShadow = true;
+  g.add(main);
+
+  var roofM = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 1.4, 20), roof);
+  roofM.position.set(0, baseY + 12.7, 0);
+  roofM.castShadow = true;
+  g.add(roofM);
+
+  for(var i = -3; i <= 3; i++){
+    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 9, 12), tuff);
+    col.position.set(i * 3, baseY + 4.5, 9.5);
+    col.castShadow = true;
+    g.add(col);
   }
-  const green = new THREE.Mesh(new THREE.PlaneGeometry(35,25), new THREE.MeshStandardMaterial({ color:0x5a8a3a, roughness:1 }));
-  green.rotation.x = -Math.PI/2; green.position.set(0, baseY+0.3, -20); green.receiveShadow = true; g.add(green);
-  g.position.set(cx, 0, cz); scene.add(g);
-  BLD_COLLISION.push({ x:cx, z:cz, w:22, d:18, h:12 });
+
+  var green = new THREE.Mesh(new THREE.PlaneGeometry(40, 30),
+    new THREE.MeshStandardMaterial({ color: 0x5a8a3a, roughness: 1 }));
+  green.rotation.x = -Math.PI / 2;
+  green.position.set(0, baseY + 0.3, -22);
+  green.receiveShadow = true;
+  g.add(green);
+
+  g.position.set(cx, 0, cz);
+  scene.add(g);
+  BLD_COLLISION.push({ x: cx, z: cz, w: 24, d: 20, h: 13 });
 }
+
 function buildSquare(cx, cz){
-  const g = new THREE.Group();
-  const baseY = terrainHeight(cx, cz);
-  const plaza = new THREE.Mesh(new THREE.CircleGeometry(28,32), new THREE.MeshStandardMaterial({ color:0xc8b898, roughness:0.95 }));
-  plaza.rotation.x = -Math.PI/2; plaza.position.y = baseY+0.05; plaza.receiveShadow = true; g.add(plaza);
-  const fount = new THREE.Mesh(new THREE.CylinderGeometry(3.5,4,0.8,20), new THREE.MeshStandardMaterial({ color:0xb8a888, roughness:0.9 }));
-  fount.position.y = baseY+0.4; fount.castShadow = true; g.add(fount);
-  const water = new THREE.Mesh(new THREE.CylinderGeometry(3,3,0.6,20), new THREE.MeshStandardMaterial({ color:0x4a8ac8, roughness:0.15, metalness:0.6 }));
-  water.position.y = baseY+0.7; g.add(water);
-  const tuff = new THREE.MeshStandardMaterial({ color:0xe8d8b8, roughness:0.88 });
-  const roof = new THREE.MeshStandardMaterial({ color:0xa89878, roughness:0.9 });
-  [[-20,0],[20,0]].forEach(([dx,dz])=>{
-    const b = new THREE.Mesh(new THREE.BoxGeometry(11,13,15), tuff);
-    b.position.set(dx, baseY+6.5, dz); b.castShadow = true; b.receiveShadow = true; g.add(b);
-    const rr = new THREE.Mesh(new THREE.BoxGeometry(12,1,16), roof);
-    rr.position.set(dx, baseY+13.5, dz); g.add(rr);
-    for(let i=-2;i<=2;i++){
-      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,9,10), tuff);
-      col.position.set(dx, baseY+4.5, dz+8); col.castShadow = true; g.add(col);
+  var g = new THREE.Group();
+  var baseY = terrainHeight(cx, cz);
+
+  var plaza = new THREE.Mesh(new THREE.CircleGeometry(32, 36),
+    new THREE.MeshStandardMaterial({ color: 0xc8b898, roughness: 0.95 }));
+  plaza.rotation.x = -Math.PI / 2;
+  plaza.position.y = baseY + 0.05;
+  plaza.receiveShadow = true;
+  g.add(plaza);
+
+  var fount = new THREE.Mesh(new THREE.CylinderGeometry(4, 4.5, 0.9, 22),
+    new THREE.MeshStandardMaterial({ color: 0xb8a888, roughness: 0.9 }));
+  fount.position.y = baseY + 0.45;
+  fount.castShadow = true;
+  g.add(fount);
+
+  var water = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 0.7, 22),
+    new THREE.MeshStandardMaterial({ color: 0x4a8ac8, roughness: 0.15, metalness: 0.6 }));
+  water.position.y = baseY + 0.8;
+  g.add(water);
+
+  var tuff = new THREE.MeshStandardMaterial({ color: 0xe8d8b8, roughness: 0.88 });
+  var roof = new THREE.MeshStandardMaterial({ color: 0xa89878, roughness: 0.9 });
+
+  [[-22, 0], [22, 0]].forEach(function(arr){
+    var dx = arr[0], dz = arr[1];
+    var b = new THREE.Mesh(new THREE.BoxGeometry(12, 14, 16), tuff);
+    b.position.set(dx, baseY + 7, dz);
+    b.castShadow = true;
+    b.receiveShadow = true;
+    g.add(b);
+
+    var rr = new THREE.Mesh(new THREE.BoxGeometry(13, 1, 17), roof);
+    rr.position.set(dx, baseY + 14.5, dz);
+    g.add(rr);
+
+    for(var i = -2; i <= 2; i++){
+      var col = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 10, 10), tuff);
+      col.position.set(dx, baseY + 5, dz + 9);
+      col.castShadow = true;
+      g.add(col);
     }
   });
-  const tower = new THREE.Mesh(new THREE.BoxGeometry(4.5,18,4.5), tuff);
-  tower.position.set(0, baseY+9, -16); tower.castShadow = true; g.add(tower);
-  const clock = new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,0.3,20), new THREE.MeshStandardMaterial({ color:0xf0e8d0, roughness:0.7 }));
-  clock.rotation.x = Math.PI/2; clock.position.set(0, baseY+15.5, -13.7); g.add(clock);
-  g.position.set(cx, 0, cz); scene.add(g);
-  BLD_COLLISION.push({ x:cx-20, z:cz, w:11, d:15, h:14 });
-  BLD_COLLISION.push({ x:cx+20, z:cz, w:11, d:15, h:14 });
-  BLD_COLLISION.push({ x:cx, z:cz-16, w:5, d:5, h:18 });
+
+  var tower = new THREE.Mesh(new THREE.BoxGeometry(5, 20, 5), tuff);
+  tower.position.set(0, baseY + 10, -18);
+  tower.castShadow = true;
+  g.add(tower);
+
+  var clock = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.3, 20),
+    new THREE.MeshStandardMaterial({ color: 0xf0e8d0, roughness: 0.7 }));
+  clock.rotation.x = Math.PI / 2;
+  clock.position.set(0, baseY + 17, -15.5);
+  g.add(clock);
+
+  g.position.set(cx, 0, cz);
+  scene.add(g);
+  BLD_COLLISION.push({ x: cx - 22, z: cz, w: 12, d: 16, h: 15 });
+  BLD_COLLISION.push({ x: cx + 22, z: cz, w: 12, d: 16, h: 15 });
+  BLD_COLLISION.push({ x: cx, z: cz - 18, w: 5, d: 5, h: 20 });
 }
+
 function buildGallery(cx, cz){
-  const g = new THREE.Group();
-  const baseY = terrainHeight(cx, cz);
-  const tuff = new THREE.MeshStandardMaterial({ color:0xd8c8a8, roughness:0.9 });
-  const main = new THREE.Mesh(new THREE.BoxGeometry(24,14,16), tuff);
-  main.position.y = baseY+7; main.castShadow = true; main.receiveShadow = true; g.add(main);
-  const ped = new THREE.Mesh(new THREE.ConeGeometry(13,5,4), tuff);
-  ped.rotation.y = Math.PI/4; ped.position.y = baseY+16.5; ped.castShadow = true; g.add(ped);
-  for(let i=-4;i<=4;i++){
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,10,10), tuff);
-    c.position.set(i*2.6, baseY+5, 8.5); c.castShadow = true; g.add(c);
+  var g = new THREE.Group();
+  var baseY = terrainHeight(cx, cz);
+  var tuff = new THREE.MeshStandardMaterial({ color: 0xd8c8a8, roughness: 0.9 });
+
+  var main = new THREE.Mesh(new THREE.BoxGeometry(26, 15, 18), tuff);
+  main.position.y = baseY + 7.5;
+  main.castShadow = true;
+  main.receiveShadow = true;
+  g.add(main);
+
+  var ped = new THREE.Mesh(new THREE.ConeGeometry(14, 6, 4), tuff);
+  ped.rotation.y = Math.PI / 4;
+  ped.position.y = baseY + 18;
+  ped.castShadow = true;
+  g.add(ped);
+
+  for(var i = -4; i <= 4; i++){
+    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 11, 10), tuff);
+    col.position.set(i * 2.8, baseY + 5.5, 9.5);
+    col.castShadow = true;
+    g.add(col);
   }
-  g.position.set(cx, 0, cz); scene.add(g);
-  BLD_COLLISION.push({ x:cx, z:cz, w:26, d:18, h:18 });
+
+  g.position.set(cx, 0, cz);
+  scene.add(g);
+  BLD_COLLISION.push({ x: cx, z: cz, w: 28, d: 20, h: 19 });
 }
+
 function buildMatenadaran(cx, cz){
-  const g = new THREE.Group();
-  const baseY = terrainHeight(cx, cz);
-  const tuff = new THREE.MeshStandardMaterial({ color:0xe0d0b0, roughness:0.9 });
-  const dark = new THREE.MeshStandardMaterial({ color:0xa89878, roughness:0.9 });
-  const base = new THREE.Mesh(new THREE.BoxGeometry(32,5,26), dark);
-  base.position.y = baseY+2.5; base.castShadow = true; base.receiveShadow = true; g.add(base);
-  for(let i=0;i<6;i++){
-    const step = new THREE.Mesh(new THREE.BoxGeometry(16,0.6,1.5), dark);
-    step.position.set(0, baseY+5.3+i*0.6, 14+(5-i)*1.5-3); step.castShadow = true; g.add(step);
+  var g = new THREE.Group();
+  var baseY = terrainHeight(cx, cz);
+  var tuff = new THREE.MeshStandardMaterial({ color: 0xe0d0b0, roughness: 0.9 });
+  var dark = new THREE.MeshStandardMaterial({ color: 0xa89878, roughness: 0.9 });
+
+  var base = new THREE.Mesh(new THREE.BoxGeometry(36, 6, 30), dark);
+  base.position.y = baseY + 3;
+  base.castShadow = true;
+  base.receiveShadow = true;
+  g.add(base);
+
+  for(var i = 0; i < 7; i++){
+    var step = new THREE.Mesh(new THREE.BoxGeometry(18, 0.7, 1.6), dark);
+    step.position.set(0, baseY + 6.3 + i * 0.7, 16 + (6 - i) * 1.6 - 3);
+    step.castShadow = true;
+    g.add(step);
   }
-  const main = new THREE.Mesh(new THREE.BoxGeometry(26,13,18), tuff);
-  main.position.y = baseY+11.5; main.castShadow = true; main.receiveShadow = true; g.add(main);
-  for(let i=-4;i<=4;i++){
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,10,12), tuff);
-    c.position.set(i*2.8, baseY+10.5, 10); c.castShadow = true; g.add(c);
+
+  var main = new THREE.Mesh(new THREE.BoxGeometry(30, 15, 20), tuff);
+  main.position.y = baseY + 13.5;
+  main.castShadow = true;
+  main.receiveShadow = true;
+  g.add(main);
+
+  for(var i2 = -5; i2 <= 5; i2++){
+    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 12, 12), tuff);
+    col.position.set(i2 * 2.9, baseY + 12, 11);
+    col.castShadow = true;
+    g.add(col);
   }
-  g.position.set(cx, 0, cz); scene.add(g);
-  BLD_COLLISION.push({ x:cx, z:cz, w:32, d:26, h:20 });
+
+  g.position.set(cx, 0, cz);
+  scene.add(g);
+  BLD_COLLISION.push({ x: cx, z: cz, w: 36, d: 30, h: 22 });
 }
+
 function buildHotel(cx, cz){
-  const g = new THREE.Group();
-  const baseY = terrainHeight(cx, cz);
-  const tuff = new THREE.MeshStandardMaterial({ color:0xd8c8b0, roughness:0.88 });
-  const main = new THREE.Mesh(new THREE.BoxGeometry(22,16,18), tuff);
-  main.position.y = baseY+8; main.castShadow = true; main.receiveShadow = true; g.add(main);
-  const winMat = new THREE.MeshStandardMaterial({ color:0x88ccee, emissive:0x224466, emissiveIntensity:0.4, metalness:0.5, roughness:0.2 });
-  for(let r=0;r<4;r++) for(let c=-3;c<=3;c++){
-    const w = new THREE.Mesh(new THREE.BoxGeometry(1.6,2,0.2), winMat);
-    w.position.set(c*2.6, baseY+3+r*3, 9.1); g.add(w);
+  var g = new THREE.Group();
+  var baseY = terrainHeight(cx, cz);
+  var tuff = new THREE.MeshStandardMaterial({ color: 0xd8c8b0, roughness: 0.88 });
+
+  var main = new THREE.Mesh(new THREE.BoxGeometry(24, 18, 20), tuff);
+  main.position.y = baseY + 9;
+  main.castShadow = true;
+  main.receiveShadow = true;
+  g.add(main);
+
+  var winMat = new THREE.MeshStandardMaterial({
+    color: 0x88ccee, emissive: 0x224466, emissiveIntensity: 0.4,
+    metalness: 0.5, roughness: 0.2
+  });
+  for(var r = 0; r < 5; r++){
+    for(var c = -3; c <= 3; c++){
+      var w = new THREE.Mesh(new THREE.BoxGeometry(1.7, 2.1, 0.2), winMat);
+      w.position.set(c * 2.8, baseY + 3 + r * 3, 10.1);
+      g.add(w);
+    }
   }
-  g.position.set(cx, 0, cz); scene.add(g);
-  BLD_COLLISION.push({ x:cx, z:cz, w:22, d:18, h:16 });
+
+  g.position.set(cx, 0, cz);
+  scene.add(g);
+  BLD_COLLISION.push({ x: cx, z: cz, w: 24, d: 20, h: 18 });
 }
+
 function buildUniversity(cx, cz){
-  const g = new THREE.Group();
-  const baseY = terrainHeight(cx, cz);
-  const tuff = new THREE.MeshStandardMaterial({ color:0xe8d8b8, roughness:0.88 });
-  const main = new THREE.Mesh(new THREE.BoxGeometry(28,12,20), tuff);
-  main.position.y = baseY+6; main.castShadow = true; main.receiveShadow = true; g.add(main);
-  for(let i=-5;i<=5;i++){
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,10,10), tuff);
-    c.position.set(i*2.5, baseY+5, 10.5); c.castShadow = true; g.add(c);
+  var g = new THREE.Group();
+  var baseY = terrainHeight(cx, cz);
+  var tuff = new THREE.MeshStandardMaterial({ color: 0xe8d8b8, roughness: 0.88 });
+
+  var main = new THREE.Mesh(new THREE.BoxGeometry(32, 13, 22), tuff);
+  main.position.y = baseY + 6.5;
+  main.castShadow = true;
+  main.receiveShadow = true;
+  g.add(main);
+
+  for(var i = -5; i <= 5; i++){
+    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 11, 10), tuff);
+    col.position.set(i * 2.7, baseY + 5.5, 11.5);
+    col.castShadow = true;
+    g.add(col);
   }
-  const center = new THREE.Mesh(new THREE.BoxGeometry(6,6,6), tuff);
-  center.position.set(0, baseY+15, 0); center.castShadow = true; g.add(center);
-  g.position.set(cx, 0, cz); scene.add(g);
-  BLD_COLLISION.push({ x:cx, z:cz, w:28, d:20, h:18 });
+
+  var center = new THREE.Mesh(new THREE.BoxGeometry(7, 7, 7), tuff);
+  center.position.set(0, baseY + 17, 0);
+  center.castShadow = true;
+  g.add(center);
+
+  g.position.set(cx, 0, cz);
+  scene.add(g);
+  BLD_COLLISION.push({ x: cx, z: cz, w: 32, d: 22, h: 20 });
 }
-for(const k in LANDMARKS){
-  const L = LANDMARKS[k];
-  const cx = nodeX(L.i)+SPACING/2;
-  const cz = nodeZ(L.j)+SPACING/2;
-  if(k === 'cascade') buildCascade(cx, cz);
-  else if(k === 'opera') buildOpera(cx, cz);
-  else if(k === 'square') buildSquare(cx, cz);
-  else if(k === 'gallery') buildGallery(cx, cz);
-  else if(k === 'matenadaran') buildMatenadaran(cx, cz);
-  else if(k === 'marriott') buildHotel(cx, cz);
-  else if(k === 'university') buildUniversity(cx, cz);
-}
+
+/* ═══════ ՏԵՂԱԴՐՈՒՄ ═══════ */
+buildCascade(nodeX(LANDMARKS.cascade.i) + SPACING / 2, nodeZ(LANDMARKS.cascade.j) + SPACING / 2);
+buildMatenadaran(nodeX(LANDMARKS.matenadaran.i) + SPACING / 2, nodeZ(LANDMARKS.matenadaran.j) + SPACING / 2);
+buildOpera(nodeX(LANDMARKS.opera.i) + SPACING / 2, nodeZ(LANDMARKS.opera.j) + SPACING / 2);
+buildGallery(nodeX(LANDMARKS.gallery.i) + SPACING / 2, nodeZ(LANDMARKS.gallery.j) + SPACING / 2);
+buildSquare(nodeX(LANDMARKS.square.i) + SPACING / 2, nodeZ(LANDMARKS.square.j) + SPACING / 2);
+buildHotel(nodeX(LANDMARKS.marriott.i) + SPACING / 2, nodeZ(LANDMARKS.marriott.j) + SPACING / 2);
+buildUniversity(nodeX(LANDMARKS.university.i) + SPACING / 2, nodeZ(LANDMARKS.university.j) + SPACING / 2);
+
+buildWindingRoad();
 
 /* ═══════ ՄԵՔԵՆԱ ═══════ */
 function buildCar(colorHex){
-  const g = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({ color:colorHex, metalness:0.85, roughness:0.22, envMapIntensity:0.8 });
-  const darkMat = new THREE.MeshStandardMaterial({ color:0x0a0d14, metalness:0.5, roughness:0.5 });
-  const chromeMat = new THREE.MeshStandardMaterial({ color:0xdadde2, metalness:0.98, roughness:0.12 });
-  const glassMat = new THREE.MeshStandardMaterial({ color:0x0a1828, metalness:0.9, roughness:0.06, transparent:true, opacity:0.85 });
-  const tireMat = new THREE.MeshStandardMaterial({ color:0x0d0d10, roughness:0.95 });
-  const rimMat = new THREE.MeshStandardMaterial({ color:0xc8d0d8, metalness:0.95, roughness:0.18 });
-  const headMat = new THREE.MeshBasicMaterial({ color:0xfff4d0 });
-  const tailMat = new THREE.MeshBasicMaterial({ color:0xff2222 });
+  var g = new THREE.Group();
 
-  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0,0.18,4.6), darkMat);
-  chassis.position.y = 0.35; chassis.castShadow = true; g.add(chassis);
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.96,0.56,4.5), bodyMat);
-  body.position.y = 0.72; body.castShadow = true; body.receiveShadow = true; g.add(body);
-  const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.86,0.22,4.35), bodyMat);
-  shoulder.position.y = 1.08; shoulder.castShadow = true; g.add(shoulder);
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(1.78,0.5,1.2), bodyMat);
-  nose.position.set(0,0.8,2.5); nose.castShadow = true; g.add(nose);
-  const hood = new THREE.Mesh(new THREE.BoxGeometry(1.86,0.14,1.7), bodyMat);
-  hood.position.set(0,1.19,1.55); hood.rotation.x = 0.03; hood.castShadow = true; g.add(hood);
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.74,0.62,2.3), glassMat);
-  cabin.position.set(0,1.5,-0.35); cabin.castShadow = true; g.add(cabin);
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.68,0.1,2.1), bodyMat);
-  roof.position.set(0,1.85,-0.35); roof.castShadow = true; g.add(roof);
-  const pillarMat = new THREE.MeshStandardMaterial({ color:0x080c14, roughness:0.5 });
-  [-0.87,0.87].forEach(px=>{
-    const pA = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.65,0.2), pillarMat);
-    pA.position.set(px,1.5,0.75); pA.rotation.x = -0.3; g.add(pA);
-    const pB = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.65,0.14), pillarMat);
-    pB.position.set(px,1.5,-0.35); g.add(pB);
-    const pC = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.65,0.18), pillarMat);
-    pC.position.set(px,1.5,-1.4); pC.rotation.x = 0.28; g.add(pC);
+  var bodyMat = new THREE.MeshStandardMaterial({
+    color: colorHex, metalness: 0.88, roughness: 0.22, envMapIntensity: 0.9
   });
-  const fBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02,0.32,0.42), darkMat);
-  fBumper.position.set(0,0.62,2.92); fBumper.castShadow = true; g.add(fBumper);
-  const lip = new THREE.Mesh(new THREE.BoxGeometry(1.88,0.06,0.15), chromeMat);
-  lip.position.set(0,0.82,3.12); g.add(lip);
-  const rBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02,0.3,0.4), darkMat);
-  rBumper.position.set(0,0.62,-2.32); rBumper.castShadow = true; g.add(rBumper);
-  const grille = new THREE.Mesh(new THREE.BoxGeometry(1.55,0.34,0.06), chromeMat);
-  grille.position.set(0,0.72,3.14); g.add(grille);
-  for(let i=-3;i<=3;i++){
-    const b = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.28,0.04), darkMat);
-    b.position.set(i*0.22,0.72,3.16); g.add(b);
+  var darkMat = new THREE.MeshStandardMaterial({ color: 0x0a0d14, metalness: 0.5, roughness: 0.5 });
+  var chromeMat = new THREE.MeshStandardMaterial({ color: 0xdadde2, metalness: 0.98, roughness: 0.10 });
+  var glassMat = new THREE.MeshStandardMaterial({
+    color: 0x0a1828, metalness: 0.9, roughness: 0.06,
+    transparent: true, opacity: 0.85
+  });
+  var tireMat = new THREE.MeshStandardMaterial({ color: 0x0d0d10, roughness: 0.95 });
+  var rimMat = new THREE.MeshStandardMaterial({ color: 0xc8d0d8, metalness: 0.95, roughness: 0.18 });
+  var headMat = new THREE.MeshBasicMaterial({ color: 0xfff4d0 });
+  var tailMat = new THREE.MeshBasicMaterial({ color: 0xff2222 });
+
+  // Ստորին շասի
+  var chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.2, 4.7), darkMat);
+  chassis.position.y = 0.36;
+  chassis.castShadow = true;
+  g.add(chassis);
+
+  // Հիմնական մարմին
+  var body = new THREE.Mesh(new THREE.BoxGeometry(1.96, 0.6, 4.6), bodyMat);
+  body.position.y = 0.75;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  g.add(body);
+
+  // Ուսեր
+  var shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.22, 4.45), bodyMat);
+  shoulder.position.y = 1.14;
+  shoulder.castShadow = true;
+  g.add(shoulder);
+
+  // Քիթ
+  var nose = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.52, 1.25), bodyMat);
+  nose.position.set(0, 0.82, 2.55);
+  nose.castShadow = true;
+  g.add(nose);
+
+  // Կապոտ
+  var hood = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.15, 1.75), bodyMat);
+  hood.position.set(0, 1.22, 1.6);
+  hood.rotation.x = 0.03;
+  hood.castShadow = true;
+  g.add(hood);
+
+  // Կաբինա (ապակի)
+  var cabin = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.66, 2.35), glassMat);
+  cabin.position.set(0, 1.55, -0.35);
+  cabin.castShadow = true;
+  g.add(cabin);
+
+  // Տանիք
+  var roof = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.11, 2.15), bodyMat);
+  roof.position.set(0, 1.92, -0.35);
+  roof.castShadow = true;
+  g.add(roof);
+
+  // Սյուներ
+  var pillarMat = new THREE.MeshStandardMaterial({ color: 0x080c14, roughness: 0.5 });
+  [-0.87, 0.87].forEach(function(px){
+    var pA = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.22), pillarMat);
+    pA.position.set(px, 1.55, 0.78);
+    pA.rotation.x = -0.3;
+    g.add(pA);
+
+    var pB = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.14), pillarMat);
+    pB.position.set(px, 1.55, -0.35);
+    g.add(pB);
+
+    var pC = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.2), pillarMat);
+    pC.position.set(px, 1.55, -1.42);
+    pC.rotation.x = 0.28;
+    g.add(pC);
+  });
+
+  // Առջի բամպեր
+  var fBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.34, 0.44), darkMat);
+  fBumper.position.set(0, 0.62, 2.98);
+  fBumper.castShadow = true;
+  g.add(fBumper);
+
+  // Քրոմե շուրթ
+  var lip = new THREE.Mesh(new THREE.BoxGeometry(1.88, 0.07, 0.16), chromeMat);
+  lip.position.set(0, 0.84, 3.18);
+  g.add(lip);
+
+  // Հետևի բամպեր
+  var rBumper = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.32, 0.42), darkMat);
+  rBumper.position.set(0, 0.62, -2.4);
+  rBumper.castShadow = true;
+  g.add(rBumper);
+
+  // Գրիլ
+  var grille = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.36, 0.06), chromeMat);
+  grille.position.set(0, 0.74, 3.2);
+  g.add(grille);
+
+  for(var gI = -3; gI <= 3; gI++){
+    var gb = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.04), darkMat);
+    gb.position.set(gI * 0.22, 0.74, 3.22);
+    g.add(gb);
   }
-  const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.86,0.14,1.2), bodyMat);
-  trunk.position.set(0,1.14,-1.9); g.add(trunk);
-  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.72,0.08,0.5), darkMat);
-  spoiler.position.set(0,1.32,-2.15); spoiler.castShadow = true; g.add(spoiler);
-  [-0.68,0.68].forEach(x=>{
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.22,0.14), darkMat);
-    leg.position.set(x,1.2,-2.15); g.add(leg);
-  });
-  [-1.02,1.02].forEach(x=>{
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.05,0.08), darkMat);
-    arm.position.set(x*0.95,1.42,0.78); g.add(arm);
-    const mir = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.1,0.14), bodyMat);
-    mir.position.set(x*1.15,1.4,0.78); g.add(mir);
-  });
-  [-0.62,0.62].forEach(x=>{
-    const h = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.22,0.08), headMat);
-    h.position.set(x,0.85,3.05); g.add(h);
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.35,8,8), new THREE.MeshBasicMaterial({ color:0xfff4d0, transparent:true, opacity:0.35 }));
-    glow.position.set(x,0.85,3.1); g.add(glow);
-  });
-  [-0.62,0.62].forEach(x=>{
-    const t = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.18,0.08), tailMat);
-    t.position.set(x,0.85,-2.42); g.add(t);
+
+  // Բեռնախցիկ
+  var trunk = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.15, 1.25), bodyMat);
+  trunk.position.set(0, 1.18, -1.95);
+  g.add(trunk);
+
+  // Սփոյլեր
+  var spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.09, 0.55), darkMat);
+  spoiler.position.set(0, 1.36, -2.2);
+  spoiler.castShadow = true;
+  g.add(spoiler);
+
+  [-0.68, 0.68].forEach(function(x){
+    var leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.24, 0.15), darkMat);
+    leg.position.set(x, 1.24, -2.2);
+    g.add(leg);
   });
 
+  // Հայելիներ
+  [-1.02, 1.02].forEach(function(x){
+    var arm = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.05, 0.09), darkMat);
+    arm.position.set(x * 0.95, 1.48, 0.78);
+    g.add(arm);
+
+    var mir = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.1, 0.15), bodyMat);
+    mir.position.set(x * 1.15, 1.45, 0.78);
+    g.add(mir);
+  });
+
+  // Առջի լուսարձակներ
+  [-0.62, 0.62].forEach(function(x){
+    var h = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.24, 0.08), headMat);
+    h.position.set(x, 0.88, 3.12);
+    g.add(h);
+
+    var glow = new THREE.Mesh(
+      new THREE.SphereGeometry(0.34, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xfff4d0, transparent: true, opacity: 0.32 })
+    );
+    glow.position.set(x, 0.88, 3.18);
+    g.add(glow);
+  });
+
+  // Հետևի լույսեր
+  [-0.62, 0.62].forEach(function(x){
+    var t = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.2, 0.08), tailMat);
+    t.position.set(x, 0.88, -2.5);
+    g.add(t);
+  });
+
+  // Անիվներ
   function makeWheel(){
-    const steer = new THREE.Group();
-    const roll = new THREE.Group();
+    var steer = new THREE.Group();
+    var roll = new THREE.Group();
     steer.add(roll);
-    const tireGeo = new THREE.TorusGeometry(0.42,0.15,10,24);
-    tireGeo.rotateY(Math.PI/2);
-    const tire = new THREE.Mesh(tireGeo, tireMat);
-    tire.castShadow = true; roll.add(tire);
-    const discGeo = new THREE.CylinderGeometry(0.3,0.3,0.24,20);
-    discGeo.rotateZ(Math.PI/2);
-    const disc = new THREE.Mesh(discGeo, rimMat);
+
+    // Անվադող — օղակ
+    var tireGeo = new THREE.TorusGeometry(0.44, 0.17, 12, 28);
+    tireGeo.rotateY(Math.PI / 2);
+    var tire = new THREE.Mesh(tireGeo, tireMat);
+    tire.castShadow = true;
+    roll.add(tire);
+
+    // Սկավառակ
+    var discGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.26, 24);
+    discGeo.rotateZ(Math.PI / 2);
+    var disc = new THREE.Mesh(discGeo, rimMat);
     roll.add(disc);
-    for(let i = 0; i < 5; i++){
-      const a = (i / 5) * Math.PI * 2;
-      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.055,0.5), rimMat);
+
+    // 5 շպից
+    for(var sp = 0; sp < 5; sp++){
+      var a = (sp / 5) * Math.PI * 2;
+      var spokeGeo = new THREE.BoxGeometry(0.07, 0.06, 0.55);
+      var spoke = new THREE.Mesh(spokeGeo, rimMat);
       spoke.rotation.x = a;
-      spoke.position.y = Math.sin(a) * 0.14;
-      spoke.position.z = Math.cos(a) * 0.14;
+      spoke.position.y = Math.sin(a) * 0.15;
+      spoke.position.z = Math.cos(a) * 0.15;
       spoke.scale.z = 0.95;
       roll.add(spoke);
     }
-    const capGeo = new THREE.CylinderGeometry(0.1,0.1,0.26,12);
-    capGeo.rotateZ(Math.PI/2);
-    const cap = new THREE.Mesh(capGeo, chromeMat);
+
+    // Կենտրոն
+    var capGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.28, 14);
+    capGeo.rotateZ(Math.PI / 2);
+    var cap = new THREE.Mesh(capGeo, chromeMat);
     roll.add(cap);
-    const ringGeo = new THREE.TorusGeometry(0.3,0.03,6,20);
-    ringGeo.rotateY(Math.PI/2);
-    const ring = new THREE.Mesh(ringGeo, chromeMat);
+
+    // Արտաքին օղակ
+    var ringGeo = new THREE.TorusGeometry(0.32, 0.035, 6, 24);
+    ringGeo.rotateY(Math.PI / 2);
+    var ring = new THREE.Mesh(ringGeo, chromeMat);
     roll.add(ring);
-    return { steer, roll };
+
+    return { steer: steer, roll: roll };
   }
-  const wheels = [];
-  const wheelPositions = [
-    { x:-1.02, z:1.5, tag:'fl' }, { x:1.02, z:1.5, tag:'fr' },
-    { x:-1.02, z:-1.5, tag:'rl' }, { x:1.02, z:-1.5, tag:'rr' }
+
+  var wheels = [];
+  var wheelPositions = [
+    { x: -1.02, z: 1.5, tag: 'fl' },
+    { x:  1.02, z: 1.5, tag: 'fr' },
+    { x: -1.02, z: -1.5, tag: 'rl' },
+    { x:  1.02, z: -1.5, tag: 'rr' }
   ];
-  for(const wp of wheelPositions){
-    const w = makeWheel();
-    w.steer.position.set(wp.x, 0.44, wp.z);
+  for(var wi = 0; wi < wheelPositions.length; wi++){
+    var wp = wheelPositions[wi];
+    var w = makeWheel();
+    w.steer.position.set(wp.x, 0.46, wp.z);
     g.add(w.steer);
-    wheels.push({ steer:w.steer, roll:w.roll, tag:wp.tag });
+    wheels.push({ steer: w.steer, roll: w.roll, tag: wp.tag });
   }
-  const brakeLight = new THREE.PointLight(0xff2020, 0, 6);
-  brakeLight.position.set(0, 0.85, -2.5);
+
+  // Արգելակի լույս
+  var brakeLight = new THREE.PointLight(0xff2020, 0, 8);
+  brakeLight.position.set(0, 0.88, -2.6);
   g.add(brakeLight);
-  return { group:g, wheels, brakeLight, tailMat };
+
+  return { group: g, wheels: wheels, brakeLight: brakeLight, tailMat: tailMat };
 }
-const player = buildCar(0xe83030);
+
+var player = buildCar(0xe83030);
 scene.add(player.group);
 
 /* ═══════ ՖԻԶԻԿԱ ═══════ */
 function updatePhysics(dt){
-  let target = 0;
+  // ՂԵԿ
+  var target = 0;
   if(IN.left) target = -1;
   if(IN.right) target = 1;
+
   S.steer += (target - S.steer) * Math.min(1, 6 * dt);
   if(!IN.left && !IN.right){
     S.steer += (0 - S.steer) * Math.min(1, 5 * dt);
     if(Math.abs(S.steer) < 0.003) S.steer = 0;
   }
-  if(IN.gas) S.speed += (S.speed < 40 ? 34 : 20) * dt;
-  if(IN.brake){
-    if(S.speed > 0.5) S.speed -= 58 * dt;
-    else S.speed -= 26 * dt;
+
+  // ԳԱԶ
+  if(IN.gas){
+    S.speed += (S.speed < 40 ? 36 : 22) * dt;
   }
-  if(!IN.gas && !IN.brake){
-    if(S.speed > 0.05) S.speed -= 9 * dt;
-    else if(S.speed < -0.05) S.speed += 9 * dt;
-    else S.speed = 0;
-  }
-  const fx = Math.sin(S.heading), fz = Math.cos(S.heading);
-  const aheadH = terrainHeight(S.x + fx*6, S.z + fz*6);
-  const behindH = terrainHeight(S.x - fx*6, S.z - fz*6);
-  S.speed -= ((aheadH - behindH) / 12) * 18 * dt;
-  S.speed = Math.max(-MAX_REV_KMH, Math.min(MAX_KMH, S.speed));
-  const v = S.speed / 3.6;
-  const spdFac = Math.min(1, v / 10);
-  S.heading -= S.steer * 1.65 * spdFac * dt;
-  const nfx = Math.sin(S.heading), nfz = Math.cos(S.heading);
-  S.x += nfx * v * dt;
-  S.z += nfz * v * dt;
-  const lim = HALF_CITY + 80;
-  S.x = Math.max(-lim, Math.min(lim, S.x));
-  S.z = Math.max(-lim, Math.min(lim, S.z));
-  for(const b of BLD_COLLISION){
-    const hw = b.w/2 + 1.2, hd = b.d/2 + 1.2;
-    const dx = S.x - b.x, dz = S.z - b.z;
-    if(Math.abs(dx) < hw && Math.abs(dz) < hd){
-      const ox = hw - Math.abs(dx), oz = hd - Math.abs(dz);
-      if(ox < oz) S.x = b.x + Math.sign(dx) * hw;
-      else S.z = b.z + Math.sign(dz) * hd;
-      S.speed *= 0.5; S.targetSusp = -0.15;
+
+  // ՀԵՏ / ԱՐԳԵԼԱԿ
+  if(IN.rev){
+    if(S.speed > 0.5){
+      S.speed -= 60 * dt;
+    } else {
+      S.speed -= 28 * dt;
     }
   }
-  const groundY = terrainHeight(S.x, S.z);
+
+  // ԻՆԵՐՑԻԱ
+  if(!IN.gas && !IN.rev){
+    if(S.speed > 0.05) S.speed -= 10 * dt;
+    else if(S.speed < -0.05) S.speed += 10 * dt;
+    else S.speed = 0;
+  }
+
+  // ԹԵՔՈՒԹՅՈՒՆ
+  var fx = Math.sin(S.heading), fz = Math.cos(S.heading);
+  var aheadH = terrainHeight(S.x + fx * 6, S.z + fz * 6);
+  var behindH = terrainHeight(S.x - fx * 6, S.z - fz * 6);
+  var slope = (aheadH - behindH) / 12;
+  S.speed -= slope * 20 * dt;
+
+  S.speed = Math.max(-MAX_REV_KMH, Math.min(MAX_KMH, S.speed));
+
+  // ՊՏՈՒՅՏ
+  var v = S.speed / 3.6;
+  var spdFac = Math.min(1, Math.abs(v) / 10);
+  S.heading -= S.steer * 1.7 * spdFac * dt;
+
+  // ԴԻՐՔ
+  var nfx = Math.sin(S.heading), nfz = Math.cos(S.heading);
+  S.x += nfx * v * dt;
+  S.z += nfz * v * dt;
+
+  // Սահման
+  var lim = HALF_CITY + 100;
+  S.x = Math.max(-lim, Math.min(lim, S.x));
+  S.z = Math.max(-lim, Math.min(lim, S.z));
+
+  // ՇԵՆՔԵՐԻ ՀԵՏ ԲԱԽՈՒՄ
+  for(var ci = 0; ci < BLD_COLLISION.length; ci++){
+    var b = BLD_COLLISION[ci];
+    var hw = b.w / 2 + 1.2;
+    var hd = b.d / 2 + 1.2;
+    var ddx = S.x - b.x;
+    var ddz = S.z - b.z;
+    if(Math.abs(ddx) < hw && Math.abs(ddz) < hd){
+      var ox = hw - Math.abs(ddx);
+      var oz = hd - Math.abs(ddz);
+      if(ox < oz){
+        S.x = b.x + Math.sign(ddx) * hw;
+      } else {
+        S.z = b.z + Math.sign(ddz) * hd;
+      }
+      S.speed *= 0.5;
+    }
+  }
+
+  // ⚠️ ՏԵՍՔ + ԱՄՈՐՏԻԶԱՑԻԱ
+  var groundY = terrainHeight(S.x, S.z);
   player.group.position.set(S.x, groundY + S.suspensionY, S.z);
   player.group.rotation.y = S.heading;
-  const terrainRoll = Math.atan2(terrainHeight(S.x-1,S.z)-terrainHeight(S.x+1,S.z), 2) * 0.75;
-  S.targetRoll = -S.steer * 0.06 + terrainRoll;
-  S.bodyRollV += (S.targetRoll - S.bodyRoll) * 14 * dt - S.bodyRollV * 6 * dt;
+
+  // Թեքվածություն
+  var terrainRoll = Math.atan2(
+    terrainHeight(S.x - 1, S.z) - terrainHeight(S.x + 1, S.z),
+    2
+  ) * 0.7;
+  var targetRoll = -S.steer * 0.05 + terrainRoll;
+  S.bodyRollV += (targetRoll - S.bodyRoll) * 15 * dt - S.bodyRollV * 7 * dt;
   S.bodyRoll += S.bodyRollV * dt;
   player.group.rotation.z = S.bodyRoll;
-  S.suspensionV += (S.targetSusp - S.suspensionY) * 55 * dt - S.suspensionV * 8 * dt;
+
+  // Կախոց
+  var targetSusp = -slope * 0.05;
+  S.suspensionV += (targetSusp - S.suspensionY) * 50 * dt - S.suspensionV * 8 * dt;
   S.suspensionY += S.suspensionV * dt;
-  S.targetSusp *= Math.pow(0.1, dt);
-  player.group.scale.y = 1 + S.suspensionY * 0.15;
-  const spin = v * dt * 1.9;
-  for(const w of player.wheels){
+
+  // ⚠️ ԱՆԻՎՆԵՐԻ ՊՏՈՒՅՏ
+  var spin = v * dt * 2.0;
+  S.wheelSpin += spin;
+  for(var wk = 0; wk < player.wheels.length; wk++){
+    var w = player.wheels[wk];
     w.roll.rotation.x -= spin;
-    if(w.tag === 'fl' || w.tag === 'fr') w.steer.rotation.y = S.steer * 0.5;
+    if(w.tag === 'fl' || w.tag === 'fr'){
+      w.steer.rotation.y = S.steer * 0.5;
+    }
   }
-  const braking = IN.brake || (!IN.gas && S.speed > 3);
+
+  // Brake light
+  var braking = IN.rev || (!IN.gas && Math.abs(S.speed) > 3);
   player.brakeLight.intensity = braking ? 1.5 : 0;
   player.tailMat.color.setHex(braking ? 0xff1010 : 0xff2222);
+
   updateLocationName();
 }
+
 function updateLocationName(){
-  let closest = 'Երևան', minD = Infinity;
-  for(const k in LANDMARKS){
-    const L = LANDMARKS[k];
-    const lx = nodeX(L.i)+SPACING/2, lz = nodeZ(L.j)+SPACING/2;
-    const d = Math.hypot(S.x-lx, S.z-lz);
-    if(d < minD){ minD = d; closest = L.name; }
+  var closest = 'Երևան';
+  var minD = Infinity;
+  for(var k in LANDMARKS){
+    var L = LANDMARKS[k];
+    var lx = nodeX(L.i) + SPACING / 2;
+    var lz = nodeZ(L.j) + SPACING / 2;
+    var d = Math.hypot(S.x - lx, S.z - lz);
+    if(d < minD){
+      minD = d;
+      closest = L.name;
+    }
   }
-  S.loc = minD < 100 ? closest : 'Երևան';
-  const el = document.getElementById('locName');
+  S.loc = minD < 110 ? closest : 'Երևան';
+  var el = document.getElementById('locName');
   if(el && el.textContent !== S.loc) el.textContent = S.loc;
 }
 
 /* ═══════ ԿԱՄԵՐԱ ═══════ */
 function updateCamera(dt){
-  const h = S.heading;
-  const fx = Math.sin(h), fz = Math.cos(h);
-  const dist = S.camDist - S.camPitch * 1.2;
-  const high = 2.8 + S.camPitch * 3.5;
-  const tx = S.x - fx*dist, tz = S.z - fz*dist;
-  const ty = terrainHeight(tx, tz) + high;
-  const k = 1 - Math.exp(-8 * dt);
-  S.camX += (tx-S.camX)*k; S.camY += (ty-S.camY)*k; S.camZ += (tz-S.camZ)*k;
-  const lx = S.x + fx*10, lz = S.z + fz*10;
-  const ly = terrainHeight(S.x, S.z) + 1.2;
-  const lk = 1 - Math.exp(-10 * dt);
-  S.camLX += (lx-S.camLX)*lk; S.camLY += (ly-S.camLY)*lk; S.camLZ += (lz-S.camLZ)*lk;
+  var h = S.heading;
+  var fx = Math.sin(h), fz = Math.cos(h);
+
+  var dist = S.camDist - S.camPitch * 1.2;
+  var high = 2.9 + S.camPitch * 3.8;
+
+  var tx = S.x - fx * dist;
+  var tz = S.z - fz * dist;
+  var ty = terrainHeight(tx, tz) + high;
+
+  var k = 1 - Math.exp(-8 * dt);
+  S.camX += (tx - S.camX) * k;
+  S.camY += (ty - S.camY) * k;
+  S.camZ += (tz - S.camZ) * k;
+
+  var lx = S.x + fx * 10;
+  var lz = S.z + fz * 10;
+  var ly = terrainHeight(S.x, S.z) + 1.2;
+  var lk = 1 - Math.exp(-10 * dt);
+  S.camLX += (lx - S.camLX) * lk;
+  S.camLY += (ly - S.camLY) * lk;
+  S.camLZ += (lz - S.camLZ) * lk;
+
   camera.position.set(S.camX, S.camY, S.camZ);
   camera.lookAt(S.camLX, S.camLY, S.camLZ);
-  const tFov = 62 + Math.abs(S.speed/MAX_KMH) * 8;
-  camera.fov += (tFov - camera.fov) * Math.min(1, 3*dt);
+
+  var tFov = 60 + Math.abs(S.speed / MAX_KMH) * 10;
+  camera.fov += (tFov - camera.fov) * Math.min(1, 3 * dt);
   camera.updateProjectionMatrix();
   camera.rotation.z += S.steer * 0.018;
+
+  // Արևը հետևում է մեքենային
   sunTarget.position.copy(player.group.position);
-  sun.position.copy(player.group.position).add(new THREE.Vector3(-100, 200, 80));
+  sun.position.copy(player.group.position).add(new THREE.Vector3(-120, 220, 90));
 }
 
 /* ═══════ HUD ═══════ */
 function updateHUD(){
-  const spd = Math.round(Math.abs(S.speed));
-  const spdEl = document.getElementById('spdVal');
+  var spd = Math.round(Math.abs(S.speed));
+  var spdEl = document.getElementById('spdVal');
   if(spdEl.textContent !== String(spd)) spdEl.textContent = spd;
-  document.getElementById('compassArrow').style.transform = `rotate(${-S.heading * 180 / Math.PI}deg)`;
+
+  var compassDeg = S.heading * 180 / Math.PI;
+  document.getElementById('compassArrow').style.transform =
+    'rotate(' + (-compassDeg) + 'deg)';
 }
 
 /* ═══════ ՁԱՅՆ ═══════ */
-const Aud = {
-  ctx:null, ready:false, _master:null, engGain:null, engFilt:null, o1:null, o2:null,
-  init(){
+var Aud = {
+  ctx: null, ready: false, _master: null,
+  engGain: null, engFilt: null, o1: null, o2: null,
+
+  init: function(){
     if(this.ctx) return;
-    const AC = window.AudioContext||window.webkitAudioContext;
+    var AC = window.AudioContext || window.webkitAudioContext;
     if(!AC) return;
-    try{
+    try {
       this.ctx = new AC();
-      this._master = this.ctx.createGain(); this._master.gain.value = 0.6;
+      this._master = this.ctx.createGain();
+      this._master.gain.value = 0.6;
       this._master.connect(this.ctx.destination);
-      this.engGain = this.ctx.createGain(); this.engGain.gain.value = 0;
-      this.engFilt = this.ctx.createBiquadFilter(); this.engFilt.type = 'lowpass';
+
+      this.engGain = this.ctx.createGain();
+      this.engGain.gain.value = 0;
+      this.engFilt = this.ctx.createBiquadFilter();
+      this.engFilt.type = 'lowpass';
       this.engFilt.frequency.value = 400;
       this.engFilt.connect(this.engGain);
       this.engGain.connect(this._master);
-      this.o1 = this.ctx.createOscillator(); this.o1.type = 'sine'; this.o1.frequency.value = 45;
-      const g1 = this.ctx.createGain(); g1.gain.value = 1;
-      this.o1.connect(g1); g1.connect(this.engFilt); this.o1.start();
-      this.o2 = this.ctx.createOscillator(); this.o2.type = 'triangle'; this.o2.frequency.value = 68;
-      const g2 = this.ctx.createGain(); g2.gain.value = 0.5;
-      this.o2.connect(g2); g2.connect(this.engFilt); this.o2.start();
+
+      this.o1 = this.ctx.createOscillator();
+      this.o1.type = 'sine';
+      this.o1.frequency.value = 45;
+      var g1 = this.ctx.createGain();
+      g1.gain.value = 1;
+      this.o1.connect(g1);
+      g1.connect(this.engFilt);
+      this.o1.start();
+
+      this.o2 = this.ctx.createOscillator();
+      this.o2.type = 'triangle';
+      this.o2.frequency.value = 68;
+      var g2 = this.ctx.createGain();
+      g2.gain.value = 0.5;
+      this.o2.connect(g2);
+      g2.connect(this.engFilt);
+      this.o2.start();
+
       this.ready = true;
-    }catch(e){ console.warn('Audio init failed', e); }
+    } catch(e){
+      console.warn('Audio init failed', e);
+    }
   },
-  resume(){ if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
-  setEngine(kmh, gas, run){
+
+  resume: function(){
+    if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+
+  setEngine: function(kmh, gas, run){
     if(!this.ready) return;
-    try{
-      const t = this.ctx.currentTime;
-      const a = Math.abs(kmh);
-      const f = 40 + a * 0.9;
+    try {
+      var t = this.ctx.currentTime;
+      var a = Math.abs(kmh);
+      var f = 40 + a * 0.9;
       this.o1.frequency.setTargetAtTime(f, t, 0.14);
-      this.o2.frequency.setTargetAtTime(f*1.5, t, 0.14);
-      this.engFilt.frequency.setTargetAtTime(300 + a*5 + (gas?200:0), t, 0.2);
-      this.engGain.gain.setTargetAtTime(run ? (0.05 + (a/MAX_KMH)*0.1) : 0, t, 0.25);
-    }catch(e){}
+      this.o2.frequency.setTargetAtTime(f * 1.5, t, 0.14);
+      this.engFilt.frequency.setTargetAtTime(300 + a * 5 + (gas ? 200 : 0), t, 0.2);
+      var vol = run ? (0.05 + (a / MAX_KMH) * 0.1) : 0;
+      this.engGain.gain.setTargetAtTime(vol, t, 0.25);
+    } catch(e){}
   },
-  beep(){
+
+  beep: function(){
     if(!this.ready) return;
-    try{
-      const t = this.ctx.currentTime;
-      const o = this.ctx.createOscillator();
-      o.type = 'sine'; o.frequency.value = 660;
-      const g = this.ctx.createGain();
+    try {
+      var t = this.ctx.currentTime;
+      var o = this.ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = 660;
+      var g = this.ctx.createGain();
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.25, t+0.015);
-      g.gain.exponentialRampToValueAtTime(0.0001, t+0.15);
-      o.connect(g); g.connect(this._master);
-      o.start(t); o.stop(t+0.2);
-    }catch(e){}
+      g.gain.exponentialRampToValueAtTime(0.25, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+      o.connect(g);
+      g.connect(this._master);
+      o.start(t);
+      o.stop(t + 0.2);
+    } catch(e){}
   }
 };
 
 /* ═══════ INPUT ═══════ */
 function bindHold(el, key){
   if(!el) return;
-  const on = e => { e.preventDefault(); IN[key]=true; el.classList.add('on'); Aud.init(); Aud.resume(); };
-  const off = e => { e.preventDefault(); IN[key]=false; el.classList.remove('on'); };
-  el.addEventListener('touchstart', on, {passive:false});
-  el.addEventListener('touchend', off); el.addEventListener('touchcancel', off);
-  el.addEventListener('mousedown', on); el.addEventListener('mouseup', off); el.addEventListener('mouseleave', off);
+  var on = function(e){
+    e.preventDefault();
+    IN[key] = true;
+    el.classList.add('on');
+    Aud.init();
+    Aud.resume();
+  };
+  var off = function(e){
+    e.preventDefault();
+    IN[key] = false;
+    el.classList.remove('on');
+  };
+  el.addEventListener('touchstart', on, {passive: false});
+  el.addEventListener('touchend', off);
+  el.addEventListener('touchcancel', off);
+  el.addEventListener('mousedown', on);
+  el.addEventListener('mouseup', off);
+  el.addEventListener('mouseleave', off);
 }
+
 bindHold(document.getElementById('btnGas'), 'gas');
-bindHold(document.getElementById('btnBrake'), 'brake');
+bindHold(document.getElementById('btnRev'), 'rev');
 bindHold(document.getElementById('btnL'), 'left');
 bindHold(document.getElementById('btnR'), 'right');
 
-addEventListener('keydown', e=>{
-  const k = e.key.toLowerCase();
+window.addEventListener('keydown', function(e){
+  var k = e.key.toLowerCase();
   if(e.repeat) return;
-  if(k==='arrowup'||k==='w') IN.gas = true;
-  if(k==='arrowdown'||k==='s') IN.brake = true;
-  if(k==='arrowleft'||k==='a') IN.left = true;
-  if(k==='arrowright'||k==='d') IN.right = true;
-});
-addEventListener('keyup', e=>{
-  const k = e.key.toLowerCase();
-  if(k==='arrowup'||k==='w') IN.gas = false;
-  if(k==='arrowdown'||k==='s') IN.brake = false;
-  if(k==='arrowleft'||k==='a') IN.left = false;
-  if(k==='arrowright'||k==='d') IN.right = false;
+  if(k === 'arrowup' || k === 'w') IN.gas = true;
+  if(k === 'arrowdown' || k === 's') IN.rev = true;
+  if(k === 'arrowleft' || k === 'a') IN.left = true;
+  if(k === 'arrowright' || k === 'd') IN.right = true;
+  Aud.init();
+  Aud.resume();
 });
 
+window.addEventListener('keyup', function(e){
+  var k = e.key.toLowerCase();
+  if(k === 'arrowup' || k === 'w') IN.gas = false;
+  if(k === 'arrowdown' || k === 's') IN.rev = false;
+  if(k === 'arrowleft' || k === 'a') IN.left = false;
+  if(k === 'arrowright' || k === 'd') IN.right = false;
+});
+
+// ԿԱՄԵՐԱՅԻ ԿԱՌԱՎԱՐՈՒՄ
 (function(){
-  const z = document.getElementById('camZone');
+  var z = document.getElementById('camZone');
   if(!z) return;
-  let drag = false, sy = 0, sp = 0;
-  const dn = e => { e.preventDefault(); drag=true; const t=e.touches?e.touches[0]:e; sy=t.clientY; sp=S.camPitch; };
-  const mv = e => {
+  var drag = false, sy = 0, sp = 0;
+  var dn = function(e){
+    e.preventDefault();
+    drag = true;
+    var t = e.touches ? e.touches[0] : e;
+    sy = t.clientY;
+    sp = S.camPitch;
+  };
+  var mv = function(e){
     if(!drag) return;
     e.preventDefault();
-    const t = e.touches?e.touches[0]:e;
-    S.camPitch = Math.max(0.05, Math.min(0.85, sp - (t.clientY - sy)/320));
+    var t = e.touches ? e.touches[0] : e;
+    S.camPitch = Math.max(0.05, Math.min(0.85, sp - (t.clientY - sy) / 320));
   };
-  const up = ()=> drag=false;
-  z.addEventListener('touchstart', dn, {passive:false});
-  z.addEventListener('touchmove', mv, {passive:false});
+  var up = function(){ drag = false; };
+
+  z.addEventListener('touchstart', dn, {passive: false});
+  z.addEventListener('touchmove', mv, {passive: false});
   z.addEventListener('touchend', up);
   z.addEventListener('mousedown', dn);
-  addEventListener('mousemove', mv);
-  addEventListener('mouseup', up);
+  window.addEventListener('mousemove', mv);
+  window.addEventListener('mouseup', up);
 })();
 
-document.addEventListener('gesturestart', e=>e.preventDefault());
-document.addEventListener('gesturechange', e=>e.preventDefault());
-document.addEventListener('contextmenu', e=>e.preventDefault());
-document.addEventListener('dblclick', e=>e.preventDefault());
-document.addEventListener('selectstart', e=>e.preventDefault());
-document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
+document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+document.addEventListener('gesturechange', function(e){ e.preventDefault(); });
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('dblclick', function(e){ e.preventDefault(); });
+document.addEventListener('selectstart', function(e){ e.preventDefault(); });
+document.addEventListener('touchmove', function(e){
+  if(e.touches.length > 1) e.preventDefault();
+}, {passive: false});
 
 /* ═══════ START GAME ═══════ */
 function startGame(){
-  /* ⚠️ ՈՒՂՂՎԱԾ ՍԿԶԲՆԱԿԱՆ ՏԵՂ
-     nodeX(5) = 0, nodeZ(3) = -120 → խաչմերուկ
-     + 30 դեպի հյուսիս → ճանապարհի մեջտեղում
-     ուղղված +Z (հյուսիս, դեպի Կասկադ) */
-  S.x = nodeX(5);           // = 0 (հորիզոնական ճանապարհ)
-  S.z = nodeZ(3) + 30;      // = -90 (ուղղահայաց ճանապարհի վրա)
-  S.heading = 0;
+  // ✅ ՍԿԶԲՆԱԿԱՆ ՏԵՂ - ճանապարհի կենտրոն
+  // nodeX(6) = 0, nodeZ(3) = -180
+  // Ուղղահայաց ճանապարհը i=6-ում անցնում է x=0-ով
+  // Երկու հանգույցների արանքում՝ z = -180 + 30 = -150
+  S.x = nodeX(6);
+  S.z = nodeZ(3) + 30;
+  S.heading = 0; // դեպի +Z (հյուսիս, դեպի Կասկադ)
   S.speed = 0;
   S.steer = 0;
-  S.suspensionY = 0; S.suspensionV = 0; S.targetSusp = 0;
-  S.bodyRoll = 0; S.bodyRollV = 0;
+  S.suspensionY = 0;
+  S.suspensionV = 0;
+  S.bodyRoll = 0;
+  S.bodyRollV = 0;
 
-  const dist = S.camDist, fx = Math.sin(S.heading), fz = Math.cos(S.heading);
-  S.camX = S.x - fx*dist;
-  S.camY = terrainHeight(S.x - fx*dist, S.z - fz*dist) + 3;
-  S.camZ = S.z - fz*dist;
-  S.camLX = S.x + fx*10;
+  var dist = S.camDist;
+  var fx = Math.sin(S.heading), fz = Math.cos(S.heading);
+  S.camX = S.x - fx * dist;
+  S.camY = terrainHeight(S.x - fx * dist, S.z - fz * dist) + 3.2;
+  S.camZ = S.z - fz * dist;
+  S.camLX = S.x + fx * 10;
   S.camLY = terrainHeight(S.x, S.z) + 1.2;
-  S.camLZ = S.z + fz*10;
+  S.camLZ = S.z + fz * 10;
 
   player.group.position.set(S.x, terrainHeight(S.x, S.z), S.z);
   player.group.rotation.y = S.heading;
   player.group.rotation.z = 0;
 
   S.phase = 'play';
-  const loader = document.getElementById('loader');
-  if(loader) loader.classList.add('hide');
   updateLocationName();
-  Aud.init(); Aud.resume();
+  Aud.init();
+  Aud.resume();
 }
 
-document.getElementById('pauseBtn').onclick = ()=>{
-  S.phase = S.phase === 'play' ? 'paused' : (S.phase === 'paused' ? 'play' : S.phase);
-  document.getElementById('pauseBtn').textContent = S.phase === 'paused' ? '▶' : '⏸';
-};
+/* ═══════ PAUSE ═══════ */
+var pauseBtn = document.getElementById('pauseBtn');
+if(pauseBtn){
+  pauseBtn.onclick = function(){
+    if(S.phase === 'play'){
+      S.phase = 'paused';
+      pauseBtn.textContent = '▶';
+    } else if(S.phase === 'paused'){
+      S.phase = 'play';
+      pauseBtn.textContent = '⏸';
+    }
+  };
+}
 
 /* ═══════ ՉԱՓԵՐ ═══════ */
 function resize(){
-  const w = app.clientWidth || window.innerWidth;
-  const h = app.clientHeight || window.innerHeight;
+  var w = app.clientWidth || window.innerWidth;
+  var h = app.clientHeight || window.innerHeight;
   renderer.setSize(w, h, false);
   cvs.style.width = '100%';
   cvs.style.height = '100%';
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
-addEventListener('resize', resize);
-addEventListener('orientationchange', ()=>setTimeout(resize, 150));
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', function(){
+  setTimeout(resize, 150);
+});
 
 /* ═══════ ՑԻԿԼ ═══════ */
-let lastT = performance.now();
+var lastT = performance.now();
+
 function loop(now){
   requestAnimationFrame(loop);
-  const rawDt = Math.min(0.4, (now - lastT) / 1000);
+  var rawDt = Math.min(0.4, (now - lastT) / 1000);
   lastT = now;
-  const dt = Math.min(0.028, rawDt);
-  if(S.phase === 'play') updatePhysics(dt);
+  var dt = Math.min(0.028, rawDt);
+
+  if(S.phase === 'play'){
+    updatePhysics(dt);
+  }
   updateCamera(dt);
   updateHUD();
   Aud.setEngine(S.speed, IN.gas, S.phase === 'play');
@@ -1058,40 +1645,36 @@ function loop(now){
 
 /* ═══════ INIT ═══════ */
 resize();
-S.x = nodeX(5);
+
+// Սկզբնական դիրք
+S.x = nodeX(6);
 S.z = nodeZ(3) + 30;
 S.heading = 0;
-S.camX = S.x; S.camY = terrainHeight(S.x, S.z) + 3; S.camZ = S.z - S.camDist;
-S.camLX = S.x; S.camLY = terrainHeight(S.x, S.z) + 1.2; S.camLZ = S.z + 10;
+S.camX = S.x;
+S.camY = terrainHeight(S.x, S.z) + 3.2;
+S.camZ = S.z - S.camDist;
+S.camLX = S.x;
+S.camLY = terrainHeight(S.x, S.z) + 1.2;
+S.camLZ = S.z + 10;
+
 player.group.position.set(S.x, terrainHeight(S.x, S.z), S.z);
 player.group.rotation.y = S.heading;
 updateLocationName();
+
 requestAnimationFrame(loop);
 
-['touchstart','mousedown','keydown'].forEach(ev => {
-  window.addEventListener(ev, ()=>{ Aud.init(); Aud.resume(); }, {once:true});
+// Աուդիոն առաջին դիպչելիս
+['touchstart', 'mousedown', 'keydown'].forEach(function(ev){
+  window.addEventListener(ev, function(){
+    Aud.init();
+    Aud.resume();
+  }, {once: true});
 });
 
-/* ⚠️ ԱՐԱԳ LOADING — 1.2 վրկ և ավտոմատ սկիզբ */
-(function autoLoad(){
-  const fill = document.getElementById('barFill');
-  const text = document.getElementById('barText');
-  let p = 0;
-  const iv = setInterval(()=>{
-    p += 8 + Math.random()*6;
-    if(p >= 100){
-      p = 100;
-      clearInterval(iv);
-      if(fill) fill.style.width = '100%';
-      if(text) text.textContent = 'ՊԱՏՐԱՍՏ';
-      setTimeout(startGame, 200);
-    }
-    if(fill) fill.style.width = p + '%';
-    if(text) text.textContent = p < 40 ? 'ԲԵՌՆՈՒՄ...' : p < 80 ? 'ԿԱՌՈՒՑՈՒՄ...' : 'ՊԱՏՐԱՍՏՎՈՒՄ...';
-  }, 55);
-})();
+// ⚠️ ՓՈԽԱՆՑՆՈՒՄ ԵՆՔ START ՖՈՒՆԿՑԻԱՆ loading-ին
+window.__gameStartFn = startGame;
 
 })();
 </script>
 </body>
-  </html>
+</html>
