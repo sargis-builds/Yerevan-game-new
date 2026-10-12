@@ -1,2518 +1,1355 @@
 <!DOCTYPE html>
 <html lang="hy">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a1020">
-<link rel="manifest" href='data:application/manifest+json,{"name":"Yerevan 3D","short_name":"Yerevan","display":"fullscreen","orientation":"landscape","start_url":".","background_color":"#0a1020","theme_color":"#0a1020"}'>
-<title>Երևան · 3D</title>
+<title>Երևան · Առաքիչ</title>
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   GLOBAL RESET + FULLSCREEN + SAFE AREA
-   ═══════════════════════════════════════════════════════════════ */
-*{
-  margin:0;padding:0;box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-  user-select:none;-webkit-user-select:none;
-  font-family:system-ui,-apple-system,'Segoe UI',sans-serif
-}
-html,body{
-  width:100vw;height:100vh;height:100dvh;
-  overflow:hidden;background:#0a1020;color:#fff;
-  touch-action:none;overscroll-behavior:none;
-  position:fixed;inset:0
-}
-#app{position:fixed;inset:0;overflow:hidden}
-canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
-
-/* ═══════════════════════════════════════════════════════════════
-   HUD PANELS
-   ═══════════════════════════════════════════════════════════════ */
-#hud{position:absolute;inset:0;pointer-events:none;z-index:10}
-.panel{
-  background:linear-gradient(165deg,rgba(255,255,255,.94),rgba(230,238,250,.88));
-  border:1px solid rgba(30,60,110,.2);
-  border-radius:14px;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  box-shadow:0 6px 20px rgba(0,20,60,.2);
-  color:#0a1a30
-}
-#topLeft{
-  position:absolute;
-  top:calc(12px + env(safe-area-inset-top));
-  left:calc(12px + env(safe-area-inset-left));
-  padding:9px 16px;z-index:12
-}
-#lvlName{font-size:10px;letter-spacing:2.5px;color:#3a6ea5;font-weight:800}
-#locName{font-size:19px;font-weight:800;margin-top:2px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-#topRight{
-  position:absolute;
-  top:calc(12px + env(safe-area-inset-top));
-  right:calc(12px + env(safe-area-inset-right));
-  padding:9px 16px;text-align:right;min-width:120px;z-index:12
-}
-#spdVal{font-size:32px;font-weight:900;line-height:1;color:#0a1a30}
-#spdUnit{font-size:10px;color:#3a6ea5;letter-spacing:3px;font-weight:700;margin-top:1px}
-
-#minimapWrap{
-  position:absolute;
-  top:calc(80px + env(safe-area-inset-top));
-  left:calc(12px + env(safe-area-inset-left));
-  width:132px;height:132px;
-  border-radius:14px;overflow:hidden;
-  border:2px solid rgba(255,255,255,.85);
-  box-shadow:0 4px 16px rgba(0,20,60,.35);
-  background:#1a2a3a;z-index:12
-}
-#minimap{width:100%;height:100%;display:block}
-
-#compass{
-  position:absolute;
-  top:calc(226px + env(safe-area-inset-top));
-  left:calc(12px + env(safe-area-inset-left));
-  padding:6px 12px;text-align:center;z-index:12
-}
-#compassArrow{font-size:20px;color:#0a1a30;display:block;transition:transform .1s}
-#compassN{font-size:9px;font-weight:900;color:#e11d48;letter-spacing:2px}
-
-/* ═══════════════════════════════════════════════════════════════
-   CONTROL BUTTONS
-   ═══════════════════════════════════════════════════════════════ */
-#controls{position:absolute;inset:0;z-index:20;pointer-events:none}
-.btn{
-  position:absolute;pointer-events:auto;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:50%;
-  background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(210,225,245,.92));
-  border:2.5px solid rgba(50,90,150,.45);
-  box-shadow:0 8px 22px rgba(0,20,60,.3),inset 0 2px 0 rgba(255,255,255,.8);
-  color:#1a3050;font-weight:900;
-  transition:transform .08s,background .12s;
-  touch-action:none;font-family:system-ui,sans-serif
-}
-.btn:active,.btn.on{
-  transform:scale(.94);
-  background:linear-gradient(160deg,rgba(120,180,255,.96),rgba(70,130,220,.96));
-  border-color:rgba(30,80,160,.9);color:#fff
-}
-#btnL{
-  left:calc(20px + env(safe-area-inset-left));
-  bottom:calc(24px + env(safe-area-inset-bottom));
-  width:96px;height:96px;font-size:36px
-}
-#btnR{
-  left:calc(128px + env(safe-area-inset-left));
-  bottom:calc(24px + env(safe-area-inset-bottom));
-  width:96px;height:96px;font-size:36px
-}
-#btnGas{
-  right:calc(20px + env(safe-area-inset-right));
-  bottom:calc(20px + env(safe-area-inset-bottom));
-  width:112px;height:112px;font-size:15px;letter-spacing:2px;
-  border-color:rgba(40,160,80,.55);color:#0a6030
-}
-#btnGas:active,#btnGas.on{background:linear-gradient(160deg,rgba(70,220,120,.96),rgba(30,150,70,.96));color:#fff}
-#btnRev{
-  right:calc(148px + env(safe-area-inset-right));
-  bottom:calc(28px + env(safe-area-inset-bottom));
-  width:88px;height:88px;font-size:13px;letter-spacing:1.5px;
-  border-color:rgba(200,60,60,.55);color:#a02020
-}
-#btnRev:active,#btnRev.on{background:linear-gradient(160deg,rgba(255,80,80,.96),rgba(180,30,30,.96));color:#fff}
-
-/* Camera drag zone — upper-right quadrant, avoids buttons */
-#camZone{
-  position:absolute;top:0;right:0;
-  width:62%;height:56%;
-  z-index:11;pointer-events:auto;touch-action:none
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LOADER SCREEN
-   ═══════════════════════════════════════════════════════════════ */
-#loader{
-  position:absolute;inset:0;z-index:100;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:22px;
-  background:radial-gradient(ellipse at 50% 40%,#16264a,#040810 75%);
-  transition:opacity .6s ease-out
-}
-#loader.done{opacity:0;pointer-events:none}
-#loaderTitle{
-  font-size:clamp(34px,7vw,58px);font-weight:900;letter-spacing:14px;
-  background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6,#7dd3fc);
-  background-size:300% 100%;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:shine 3s linear infinite;
-  text-shadow:0 0 60px rgba(120,180,255,.5)
-}
-@keyframes shine{to{background-position:300% 0}}
-#loaderSub{font-size:11px;letter-spacing:7px;color:#8ea8c8;font-weight:700}
-#barWrap{
-  width:280px;height:6px;border-radius:3px;
-  background:rgba(255,255,255,.13);overflow:hidden;
-  box-shadow:0 0 24px rgba(120,180,255,.35);margin-top:8px
-}
-#barFill{
-  height:100%;width:0%;
-  background:linear-gradient(90deg,#7dd3fc,#fbbf24,#f472b6);
-  border-radius:3px;transition:width .15s linear;
-  box-shadow:0 0 14px rgba(120,180,255,.9)
-}
-#barText{font-size:11px;letter-spacing:3px;color:#a8c0dc;font-weight:600;min-height:14px;margin-top:4px}
-
-#playBtn{
-  position:absolute;bottom:80px;left:50%;transform:translateX(-50%);
-  padding:18px 54px;border-radius:60px;
-  background:linear-gradient(160deg,#7dd3fc,#3b82f6);color:#fff;
-  font-size:18px;font-weight:900;letter-spacing:6px;
-  border:none;cursor:pointer;
-  box-shadow:0 10px 40px rgba(59,130,246,.55),inset 0 2px 0 rgba(255,255,255,.3);
-  display:none;font-family:system-ui,sans-serif;z-index:110;pointer-events:auto
-}
-#playBtn:active{transform:translateX(-50%) scale(.95)}
-#playBtn.show{display:block;animation:pop .4s ease-out}
-@keyframes pop{
-  0%{opacity:0;transform:translateX(-50%) scale(.8)}
-  100%{opacity:1;transform:translateX(-50%) scale(1)}
-}
-#playHint{
-  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
-  color:#8ea8c8;font-size:11px;letter-spacing:4px;font-weight:700;
-  display:none
-}
-#playHint.show{display:block}
-
-/* ═══════════════════════════════════════════════════════════════
-   ERROR + PERF OVERLAY
-   ═══════════════════════════════════════════════════════════════ */
-#errorBox{
-  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
-  background:rgba(200,30,30,.9);color:#fff;
-  padding:10px 20px;border-radius:10px;
-  font-size:12px;font-family:monospace;
-  max-width:90vw;display:none;z-index:200;word-break:break-all
-}
-#perfInfo{
-  position:absolute;
-  top:calc(80px + env(safe-area-inset-top));
-  right:calc(12px + env(safe-area-inset-right));
-  padding:6px 10px;
-  border-radius:8px;
-  background:rgba(10,20,40,.7);
-  color:#7dd3fc;
-  font-size:9px;
-  font-family:monospace;
-  letter-spacing:1px;
-  display:none;
-  z-index:15;
-  pointer-events:none
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   EDGE SWIPE INDICATOR — appears briefly when user touches edge
-   ═══════════════════════════════════════════════════════════════ */
-#edgeHint{
-  position:fixed;
-  top:50%;transform:translateY(-50%);
-  padding:10px 14px;
-  background:rgba(255,255,255,.9);
-  color:#0a1a30;
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:2px;
-  border-radius:10px;
-  opacity:0;
-  transition:opacity .25s;
-  pointer-events:none;
-  z-index:99
-}
-#edgeHintL{left:12px}
-#edgeHintR{right:12px}
-#edgeHint.show{opacity:1}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#9cc3e6;font-family:"Segoe UI","Noto Sans Armenian","Sylfaen",system-ui,sans-serif;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hud{position:fixed;pointer-events:none;color:#fff;text-shadow:0 1px 5px rgba(0,0,0,.5)}
+.pill{background:rgba(12,18,30,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:8px 14px}
+small{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;display:block}
+#tl{top:calc(10px + env(safe-area-inset-top));left:calc(12px + env(safe-area-inset-left));font-size:15px}
+#tl b{color:#ffcf5a}
+#tr{top:calc(10px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));text-align:right}
+#score{font-size:26px;font-weight:700;line-height:1}
+#tc{top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);text-align:center;min-width:170px;max-width:46vw}
+#mname{font-size:14px;font-weight:600;color:#ff8fc8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mrow{display:flex;align-items:center;justify-content:center;gap:10px}
+#mdist{font-size:24px;font-weight:700;line-height:1.1}
+#arrow{font-size:20px;color:#ff8fc8;display:inline-block;transition:transform .08s linear}
+#bl{left:calc(14px + env(safe-area-inset-left));bottom:calc(140px + env(safe-area-inset-bottom))}
+#time{font-size:26px;font-weight:700;line-height:1}
+#br{right:calc(14px + env(safe-area-inset-right));bottom:calc(140px + env(safe-area-inset-bottom));text-align:right}
+#speed{font-size:40px;font-weight:800;line-height:1}
+#toast{position:fixed;left:50%;top:30%;transform:translate(-50%,0);font-size:34px;font-weight:800;color:#fff36b;text-shadow:0 2px 12px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .3s,transform .6s;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,-30px)}
+.btn{position:fixed;pointer-events:auto;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(20,26,40,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:none;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.btn.on{filter:brightness(1.5);transform:scale(.94)}
+#bL,#bR{width:78px;height:78px;font-size:30px;bottom:calc(26px + env(safe-area-inset-bottom))}
+#bL{left:calc(16px + env(safe-area-inset-left))}
+#bR{left:calc(104px + env(safe-area-inset-left))}
+#bGas{width:112px;height:112px;font-size:22px;right:calc(16px + env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));background:rgba(40,170,80,.62)}
+#bBrake{width:80px;height:80px;font-size:16px;right:calc(140px + env(safe-area-inset-right));bottom:calc(26px + env(safe-area-inset-bottom));background:rgba(210,50,50,.62)}
+#loading{position:fixed;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;background:linear-gradient(#27415f,#6d90b6);color:#fff;font-size:22px;z-index:9;transition:opacity .6s}
+#loading small{font-size:13px;max-width:80vw;text-align:center;text-transform:none;letter-spacing:0}
+#help{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:13px;opacity:.9;pointer-events:none;color:#fff;text-shadow:0 1px 4px #000;text-align:center;transition:opacity 1s}
+@media (max-height:480px){#bl,#br{bottom:calc(112px + env(safe-area-inset-bottom))}#bL,#bR{width:64px;height:64px}#bR{left:calc(88px + env(safe-area-inset-left))}#bGas{width:92px;height:92px}#bBrake{width:68px;height:68px;right:calc(120px + env(safe-area-inset-right))}}
 </style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
 </head>
 <body>
-<div id="app">
-  <canvas id="c"></canvas>
+<canvas id="c"></canvas>
+<div id="loading"><div>Բեռնվում է Երևանը…</div><small id="lmsg">Շինում եմ քաղաքը</small></div>
+<div class="hud pill" id="tl"><b>Երևան</b> · Առաքիչ</div>
+<div class="hud pill" id="tr"><small>Միավոր</small><span id="score">0</span></div>
+<div class="hud pill" id="tc"><small>Առաքում</small><div id="mname">—</div><div id="mrow"><span id="arrow">▲</span><span id="mdist">0 մ</span></div></div>
+<div class="hud pill" id="bl"><small>Ժամանակ</small><span id="time">0:00</span></div>
+<div class="hud pill" id="br"><span id="speed">0</span><small>կմ/ժ</small></div>
+<div id="help">WASD / ստեղնաշար՝ վարել · Space՝ արգելակ · քաշիր էկրանը՝ կամերան պտտելու համար</div>
+<div id="toast"></div>
+<div class="btn" id="bL">◀</div>
+<div class="btn" id="bR">▶</div>
+<div class="btn" id="bBrake">ՀԵՏ</div>
+<div class="btn" id="bGas">ԳԱԶ</div>
 
-  <!-- ═══════ HUD ═══════ -->
-  <div id="hud">
-    <div class="panel" id="topLeft">
-      <div id="lvlName">ԵՐԵՎԱՆ · 3D</div>
-      <div id="locName">Երևան</div>
-    </div>
-    <div class="panel" id="topRight">
-      <div id="spdVal">0</div>
-      <div id="spdUnit">ԿՄ/Ժ</div>
-    </div>
-    <div id="minimapWrap">
-      <canvas id="minimap" width="264" height="264"></canvas>
-    </div>
-    <div class="panel" id="compass">
-      <span id="compassArrow">↑</span>
-      <span id="compassN">N</span>
-    </div>
-    <div id="perfInfo">—</div>
-  </div>
+<script type="module">
+import * as THREE from 'three';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
-  <!-- ═══════ CONTROLS ═══════ -->
-  <div id="controls">
-    <div class="btn" id="btnL">◀</div>
-    <div class="btn" id="btnR">▶</div>
-    <div class="btn" id="btnGas">ԳԱԶ</div>
-    <div class="btn" id="btnRev">ՀԵՏ</div>
-  </div>
+const $=id=>document.getElementById(id);
+const FAILSAFE=setTimeout(()=>{},0);
 
-  <div id="camZone"></div>
+/* ════════════════════════════════════════════════════════════
+   1. ՕԳՆԱԿԱՆ ՖՈՒՆԿՑԻԱՆԵՐ (math, noise, rng)
+   ════════════════════════════════════════════════════════════ */
+const TAU=Math.PI*2;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const sstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+const angDiff=(a,b)=>{let d=a-b;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;return d;};
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rng=mulberry(1210);
+const rr=(a,b)=>a+(b-a)*rng();
+const hash2=(x,y)=>{const h=Math.sin(x*127.1+y*311.7)*43758.5453;return h-Math.floor(h);};
+function vnoise(x,y){
+  const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy;
+  const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
+  return lerp(lerp(hash2(ix,iy),hash2(ix+1,iy),u),lerp(hash2(ix,iy+1),hash2(ix+1,iy+1),u),v);
+}
+function fbm(x,y,o=4){let a=.5,s=0,f=1;for(let i=0;i<o;i++){s+=a*vnoise(x*f,y*f);f*=2;a*=.5;}return s/(1-Math.pow(.5,o));}
+const ridged=(x,z)=>1-Math.abs(2*fbm(x*0.004+3.1,z*0.004+9.7,4)-1);
 
-  <!-- ═══════ EDGE SWIPE HINTS ═══════ -->
-  <div id="edgeHintL" class="edge-hint">‹ ՔԱՇԵՔ</div>
-  <div id="edgeHintR" class="edge-hint">ՔԱՇԵՔ ›</div>
-  <style>
-    .edge-hint{
-      position:fixed;top:50%;transform:translateY(-50%);
-      padding:10px 14px;background:rgba(255,255,255,.9);
-      color:#0a1a30;font-size:10px;font-weight:800;
-      letter-spacing:2px;border-radius:10px;
-      opacity:0;transition:opacity .25s;pointer-events:none;z-index:99
-    }
-    #edgeHintL{left:12px}
-    #edgeHintR{right:12px}
-    .edge-hint.show{opacity:1}
-  </style>
-
-  <!-- ═══════ LOADER ═══════ -->
-  <div id="loader">
-    <div id="loaderTitle">ԵՐԵՎԱՆ</div>
-    <div id="loaderSub">3D · ՔԱՂԱՔ · ՌԵԼԻԵՖ</div>
-    <div id="barWrap"><div id="barFill"></div></div>
-    <div id="barText">ՄԻԱՑՈՒՄ...</div>
-    <button id="playBtn">ՍԿՍԵԼ</button>
-    <div id="playHint">Խաղը լիաէկրան կբացվի</div>
-  </div>
-
-  <div id="errorBox"></div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     LOADER + FULLSCREEN SCRIPT
-     ═══════════════════════════════════════════════════════════════ -->
-<script>
-window.__gameStartFn = null;
-window.__gameReady = false;
-
-window.addEventListener('error', function(e){
-  var eb = document.getElementById('errorBox');
-  if(eb){
-    eb.style.display = 'block';
-    eb.textContent = 'ՍԽԱԼ՝ ' + (e.message || '') + ' @' + (e.lineno || '?');
-  }
-});
-
-(function(){
-  var fill = document.getElementById('barFill');
-  var text = document.getElementById('barText');
-  var loader = document.getElementById('loader');
-  var playBtn = document.getElementById('playBtn');
-  var playHint = document.getElementById('playHint');
-  var p = 0;
-
-  var iv = setInterval(function(){
-    p += 8 + Math.random() * 8;
-    if(p > 100) p = 100;
-    if(fill) fill.style.width = p + '%';
-    if(text){
-      if(p < 35) text.textContent = 'ՄԻԱՑՈՒՄ...';
-      else if(p < 70) text.textContent = 'ԿԱՌՈՒՑՈՒՄ...';
-      else if(p < 100) text.textContent = 'ՊԱՏՐԱՍՏՎՈՒՄ...';
-      else text.textContent = 'ՊԱՏՐԱՍՏ Է';
-    }
-    if(p >= 100){
-      clearInterval(iv);
-      if(window.__gameReady){
-        playBtn.classList.add('show');
-        playHint.classList.add('show');
-      }
-    }
-  }, 40);
-
-  setInterval(function(){
-    if(window.__gameReady && p >= 100){
-      playBtn.classList.add('show');
-      playHint.classList.add('show');
-    }
-  }, 100);
-
-  function enterFullscreenAndStart(){
-    var el = document.documentElement;
-    var req = el.requestFullscreen
-      || el.webkitRequestFullscreen
-      || el.mozRequestFullScreen
-      || el.msRequestFullscreen;
-    if(req){
-      try {
-        var res = req.call(el, { navigationUI: 'hide' });
-        if(res && res.catch) res.catch(function(){});
-      } catch(e){}
-    }
-    try {
-      if(screen.orientation && screen.orientation.lock){
-        screen.orientation.lock('landscape').catch(function(){});
-      }
-    } catch(e){}
-
-    setTimeout(function(){ window.scrollTo(0, 1); }, 100);
-    setTimeout(function(){ window.scrollTo(0, 1); }, 500);
-    setTimeout(function(){ window.scrollTo(0, 1); }, 1500);
-
-    setTimeout(function(){
-      if(window.__gameStartFn){
-        try { window.__gameStartFn(); }
-        catch(err){ console.error(err); }
-      }
-      loader.classList.add('done');
-    }, 250);
-  }
-
-  playBtn.addEventListener('click', enterFullscreenAndStart);
-  playBtn.addEventListener('touchend', function(e){
-    e.preventDefault();
-    enterFullscreenAndStart();
-  }, {passive: false});
-})();
-</script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     MAIN GAME
-     ═══════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-'use strict';
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 1 — CONSTANTS
-   ═══════════════════════════════════════════════════════════════════ */
-var MAX_KMH          = 110;
-var MAX_REV_KMH      = 25;
-var HASH_SIZE        = 50;
-var TERRAIN_SIZE     = 1400;
-var TERRAIN_RES      = 80;
-var WORLD_LIMIT      = 600;
-var CASCADE_BASE_Z   = 320;
-var CASCADE_PEAK_Z   = 560;
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 2 — TERRAIN HEIGHT
-   ────────────────────────────────────────────────────────────────
-   The Cascade hill rises from z=280 and peaks at z=560 with
-   a smooth bell-shaped profile. Its peak reaches ~130 world units
-   — the HIGHEST point in the map. The city plain is at y≈0.
-   ═══════════════════════════════════════════════════════════════════ */
-function terrainHeight(x, z){
-  var y = 0;
-
-  /* ── Base gentle wave across the whole plain ── */
-  y += 0.4 * Math.sin(x * 0.008) * Math.cos(z * 0.006);
-
-  /* ── CASCADE HILL ──
-     t goes from 0 at z=280 to 1 at z=560.
-     pow(t, 1.6) gives a smooth rise.
-     xF is a bell curve in x — hill is centered around x=0. */
-  var t = (z - 280) / 280;
-  if(t > 0){
-    if(t > 1) t = 1;
-    var xF = Math.exp(-(x * x) / 50000);
-    y += Math.pow(t, 1.6) * 130 * xF;
-  }
-
-  /* ── Beyond Cascade, gently descend ── */
-  if(z > 560){
-    var pz = z - 560;
-    y -= Math.min(pz * 0.04, 20);
-  }
-
-  /* ── Matenadaran hill (northwest) ── */
-  var dx1 = x + 330, dz1 = z - 240;
-  y += 42 * Math.exp(-(dx1 * dx1 + dz1 * dz1) / 22000);
-
-  /* ── Opera gentle mound ── */
-  var dx2 = x + 200, dz2 = z - 100;
-  y += 6 * Math.exp(-(dx2 * dx2 + dz2 * dz2) / 14000);
-
-  return y;
+/* ════════════════════════════════════════════════════════════
+   2. ՌԵԼԻԵՖ — հարթավայր + լեռնաշղթա + Կասկադ (աստիճանաձև լեռ)
+   x = արևելք, z = հյուսիս, y = վերև
+   ════════════════════════════════════════════════════════════ */
+const CAS={z0:260,z1:760,n:7,rise:22,half:48};
+const STEPLEN=(CAS.z1-CAS.z0)/CAS.n;
+function mountainH(x,z){
+  const f=0.55+0.45*ridged(x,z);
+  const N=sstep(600,1500,z)*60*1.9;      // հյուսիս 1.9x
+  const S=sstep(500,1300,-z)*60*0.35;    // հարավ 0.35x
+  const E=sstep(600,1400,x)*60*0.95;     // արևելք 0.95x
+  const W=sstep(600,1400,-x)*60*1.15;    // արևմուտք 1.15x
+  return Math.max(N,S,E,W)*f;
+}
+function cascadeH(x,z){
+  const t=(z-CAS.z0)/(CAS.z1-CAS.z0); if(t<=0) return 0;
+  const tc=Math.min(t,1), k=Math.min(CAS.n-1,Math.floor(tc*CAS.n)), fr=tc*CAS.n-k;
+  const c=CAS.rise*(k+sstep(0,0.28,fr));
+  const half=150-25*tc;
+  const m=1-sstep(half,half+170,Math.abs(x));
+  const fade=1-sstep(CAS.z1,CAS.z1+340,z);
+  return c*m*fade;
+}
+function terrainH(x,z){
+  const base=1.2+(fbm(x*0.0035+11,z*0.0035+7,3)-0.5)*2.4;   // 0…2.4 հարթավայր
+  return Math.max(base+mountainH(x,z),cascadeH(x,z));
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 3 — RENDERER + SCENE
-   ═══════════════════════════════════════════════════════════════════ */
-var app = document.getElementById('app');
-var cvs = document.getElementById('c');
+/* ════════════════════════════════════════════════════════════
+   3. RENDERER / SCENE / ԼՈՒՅՍ / ԵՐԿԻՆՔ
+   ════════════════════════════════════════════════════════════ */
+const canvas=$('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
+let pixScale=1;
+renderer.setPixelRatio(pixScale);               // pixel ratio = 1
+renderer.setSize(innerWidth,innerHeight,false);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.0;
+renderer.shadowMap.enabled=false;               // ստվերներ OFF
+const scene=new THREE.Scene();
+const FOG=0xd3e4f0;
+scene.background=new THREE.Color(FOG);
+scene.fog=new THREE.Fog(FOG,600,5000);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,0.8,7500);
+scene.add(new THREE.HemisphereLight(0xdfeaff,0x77744f,1.55));
+const sun=new THREE.DirectionalLight(0xfff1d6,2.4);
+sun.position.set(-500,800,350);scene.add(sun);
 
-var renderer = new THREE.WebGLRenderer({
-  canvas:           cvs,
-  antialias:        false,               // ⚡ Perf — no MSAA
-  powerPreference:  'high-performance',
-  stencil:          false,
-  depth:            true,
-  alpha:            false
-});
-renderer.setPixelRatio(1);                // ⚡ Always 1, never devicePixelRatio
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
-renderer.shadowMap.enabled = false;        // ⚡ No shadows — biggest perf win
-renderer.setClearColor(0xa8c8e8, 1);
+const sky=(()=>{
+  const g=new THREE.SphereGeometry(6800,24,14);
+  const p=g.attributes.position,cols=[],top=new THREE.Color(0x3d83cf),hor=new THREE.Color(FOG),c=new THREE.Color();
+  for(let i=0;i<p.count;i++){const t=clamp(p.getY(i)/6800,0,1);c.copy(hor).lerp(top,Math.pow(t,0.55));cols.push(c.r,c.g,c.b);}
+  g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide,fog:false,depthWrite:false}));
+  m.renderOrder=-10;m.frustumCulled=false;scene.add(m);return m;
+})();
 
-var scene = new THREE.Scene();
-scene.background = new THREE.Color(0xa8c8e8);
-scene.fog = new THREE.Fog(0xc0d8e8, 300, 900);
-
-var camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.5, 2500);
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 4 — SKY + ARARAT (north, behind Cascade)
-   ═══════════════════════════════════════════════════════════════════ */
-(function(){
-  /* ── Sky dome with 3-stop gradient shader ── */
-  var skyGeo = new THREE.SphereGeometry(1800, 32, 16);
-  var skyMat = new THREE.ShaderMaterial({
-    uniforms: {
-      cTop: { value: new THREE.Color(0x2a72c8) },
-      cMid: { value: new THREE.Color(0x9cc0e0) },
-      cHor: { value: new THREE.Color(0xf4dcb0) }
-    },
-    vertexShader: [
-      'varying vec3 vP;',
-      'void main(){',
-      '  vP = position;',
-      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);',
-      '}'
-    ].join('\n'),
-    fragmentShader: [
-      'uniform vec3 cTop; uniform vec3 cMid; uniform vec3 cHor;',
-      'varying vec3 vP;',
-      'void main(){',
-      '  float h = normalize(vP).y;',
-      '  vec3 col = h > 0.0 ? mix(cMid, cTop, pow(h, 0.65)) : cMid;',
-      '  float hor = exp(-abs(h) * 5.5);',
-      '  col = mix(col, cHor, hor * 0.7);',
-      '  gl_FragColor = vec4(col, 1.0);',
-      '}'
-    ].join('\n'),
-    side: THREE.BackSide,
-    depthWrite: false,
-    fog: false
+/* ════════════════════════════════════════════════════════════
+   4. ՏԵՔՍՏՈՒՐՆԵՐ ԵՎ ՆՅՈՒԹԵՐ (canvas-ով, արտաքին ֆայլեր չկան)
+   ════════════════════════════════════════════════════════════ */
+function mkTex(w,h,fn){
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  fn(c.getContext('2d'),w,h);
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t;
+}
+function facTex(base,trim,glass,kind,W=128,H=128){
+  return mkTex(W,H,(g)=>{
+    g.fillStyle=base;g.fillRect(0,0,W,H);
+    for(let i=0;i<240;i++){g.fillStyle=Math.random()<.5?'rgba(255,255,255,.05)':'rgba(0,0,0,.05)';g.fillRect(Math.random()*W,Math.random()*H,3+Math.random()*10,1+Math.random()*3);}
+    g.fillStyle=trim;g.fillRect(0,H-7,W,7);g.fillRect(0,0,W,3);
+    const n=kind==='hotel'?3:1;
+    for(let i=0;i<n;i++){
+      const cw=W/n,cx=cw*(i+.5);
+      const ww=kind==='slit'?cw*.15:(kind==='hotel'?cw*.6:cw*.42);
+      const wh=kind==='hotel'?H*.5:H*.54, y0=kind==='hotel'?H*.25:H*.2;
+      const gr=g.createLinearGradient(0,y0,0,y0+wh);gr.addColorStop(0,glass[0]);gr.addColorStop(1,glass[1]);
+      if(kind==='arch'){
+        g.fillStyle=trim;g.beginPath();g.moveTo(cx-ww/2-4,y0+wh+3);g.lineTo(cx-ww/2-4,y0);g.arc(cx,y0,ww/2+4,Math.PI,0);g.lineTo(cx+ww/2+4,y0+wh+3);g.fill();
+        g.fillStyle=gr;g.beginPath();g.moveTo(cx-ww/2,y0+wh);g.lineTo(cx-ww/2,y0);g.arc(cx,y0,ww/2,Math.PI,0);g.lineTo(cx+ww/2,y0+wh);g.fill();
+        g.fillStyle='rgba(255,255,255,.35)';g.fillRect(cx-1,y0-ww/2,2,wh+ww/2);
+      }else{
+        g.fillStyle=trim;g.fillRect(cx-ww/2-3,y0-3,ww+6,wh+9);
+        g.fillStyle=gr;g.fillRect(cx-ww/2,y0,ww,wh);
+        if(kind!=='slit'){g.fillStyle='rgba(255,255,255,.3)';g.fillRect(cx-1,y0,2,wh);g.fillRect(cx-ww/2,y0+wh*.45,ww,2);}
+      }
+    }
   });
-  scene.add(new THREE.Mesh(skyGeo, skyMat));
-
-  /* ── Ararat silhouettes ── */
-  var mtnMat = new THREE.MeshBasicMaterial({ color: 0xb8c4d8, fog: false });
-  var snowMat = new THREE.MeshBasicMaterial({ color: 0xf0f4f8, fog: false });
-
-  /* Big Ararat (Masis) */
-  var a1 = new THREE.Mesh(new THREE.ConeGeometry(280, 220, 6), mtnMat);
-  a1.position.set(280, 40, 1350);
-  a1.rotation.y = 0.4;
-  scene.add(a1);
-  var c1 = new THREE.Mesh(new THREE.ConeGeometry(95, 75, 6), snowMat);
-  c1.position.set(280, 145, 1350);
-  c1.rotation.y = 0.4;
-  scene.add(c1);
-
-  /* Small Ararat (Sis) */
-  var a2 = new THREE.Mesh(new THREE.ConeGeometry(180, 150, 6), mtnMat);
-  a2.position.set(120, 30, 1300);
-  a2.rotation.y = -0.2;
-  scene.add(a2);
-  var c2 = new THREE.Mesh(new THREE.ConeGeometry(62, 50, 6), snowMat);
-  c2.position.set(120, 100, 1300);
-  c2.rotation.y = -0.2;
-  scene.add(c2);
-
-  /* Secondary distant ridge */
-  var a3 = new THREE.Mesh(
-    new THREE.ConeGeometry(150, 90, 6),
-    new THREE.MeshBasicMaterial({ color: 0xc0cad8, fog: false })
-  );
-  a3.position.set(-250, 20, 1380);
-  scene.add(a3);
-})();
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 5 — LIGHTS (no shadows)
-   ═══════════════════════════════════════════════════════════════════ */
-scene.add(new THREE.HemisphereLight(0xd0e4f8, 0x8a7a5a, 0.95));
-
-var sun = new THREE.DirectionalLight(0xfff0d0, 1.1);
-sun.position.set(-100, 200, 120);
-scene.add(sun);
-
-var fillLight = new THREE.DirectionalLight(0xc8d8ff, 0.25);
-fillLight.position.set(150, 60, -120);
-scene.add(fillLight);
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 6 — TERRAIN MESH
-   ═══════════════════════════════════════════════════════════════════ */
-function makeGrassTexture(){
-  var cv = document.createElement('canvas');
-  cv.width = 256; cv.height = 256;
-  var x = cv.getContext('2d');
-  x.fillStyle = '#7a9a55';
-  x.fillRect(0, 0, 256, 256);
-  for(var i = 0; i < 6000; i++){
-    var r = Math.random();
-    x.fillStyle = r > 0.66 ? '#8aaa60' : (r > 0.33 ? '#6a8a48' : '#5a7a3a');
-    x.fillRect(Math.random() * 256, Math.random() * 256, 2, 3);
-  }
-  for(var j = 0; j < 40; j++){
-    x.fillStyle = 'rgba(90,120,60,0.15)';
-    x.beginPath();
-    x.arc(Math.random() * 256, Math.random() * 256, 10 + Math.random() * 30, 0, Math.PI * 2);
-    x.fill();
-  }
-  var t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(80, 80);
-  t.encoding = THREE.sRGBEncoding;
-  t.anisotropy = 1;
-  return t;
 }
-
-var terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_RES, TERRAIN_RES);
-terrainGeo.rotateX(-Math.PI / 2);
-(function(){
-  var pos = terrainGeo.attributes.position;
-  for(var i = 0; i < pos.count; i++){
-    pos.setY(i, terrainHeight(pos.getX(i), pos.getZ(i)));
-  }
-  pos.needsUpdate = true;
-  terrainGeo.computeVertexNormals();
-})();
-
-var terrainMesh = new THREE.Mesh(
-  terrainGeo,
-  new THREE.MeshStandardMaterial({
-    map: makeGrassTexture(),
-    roughness: 1,
-    metalness: 0
-  })
-);
-scene.add(terrainMesh);
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 7 — ROADS (3 TYPES + RING + SERPENTINE)
-   ────────────────────────────────────────────────────────────────
-   3 road types with different textures/colors:
-     · Highway (մայրուղի)  — 22px, dark asphalt, yellow center
-     · Avenue  (պողոտա)    — 16px, medium asphalt, yellow center
-     · Street  (փողոց)     — 12px, light asphalt, white center
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* ── Road textures — 3 variants ── */
-function makeRoadTexture(type){
-  var cv = document.createElement('canvas');
-  cv.width = 128;
-  cv.height = 256;
-  var x = cv.getContext('2d');
-
-  var base, lineCol, speckleCol;
-  if(type === 'highway'){
-    base = '#2e3238';
-    lineCol = '#f0c040';
-    speckleCol = 'rgba(255,255,255,0.04)';
-  } else if(type === 'avenue'){
-    base = '#3a3d42';
-    lineCol = '#e0b030';
-    speckleCol = 'rgba(255,255,255,0.03)';
-  } else {
-    base = '#4a4d52';
-    lineCol = '#e8e8e8';
-    speckleCol = 'rgba(255,255,255,0.02)';
-  }
-  x.fillStyle = base;
-  x.fillRect(0, 0, 128, 256);
-  for(var i = 0; i < 1500; i++){
-    x.fillStyle = Math.random() > 0.5 ? speckleCol : 'rgba(0,0,0,0.07)';
-    x.fillRect(Math.random() * 128, Math.random() * 256, 1.5, 1.5);
-  }
-  /* Dashed center line */
-  x.fillStyle = lineCol;
-  for(var yy = 0; yy < 256; yy += 40){
-    x.fillRect(62, yy + 4, 2, 16);
-    x.fillRect(65, yy + 4, 2, 16);
-  }
-  /* Highway gets solid side lines */
-  if(type === 'highway'){
-    x.fillStyle = '#e8e8e8';
-    x.fillRect(6, 0, 1.5, 256);
-    x.fillRect(120, 0, 1.5, 256);
-  }
-  var t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.encoding = THREE.sRGBEncoding;
-  return t;
+const FAC={};
+function mkFac(key,base,trim,glass,kind,cw,ch,W,H){
+  FAC[key]={mat:new THREE.MeshLambertMaterial({map:facTex(base,trim,glass,kind,W,H)}),cw,ch};
 }
+const GL=['#35506e','#142235'];
+mkFac('pink','#d3946f','#ead6bd',GL,'arch',8,6.6);
+mkFac('orange','#df9f60','#f0dcc0',GL,'sq',8,6.2);
+mkFac('tan','#d9c39b','#f3ead7',['#4a6683','#1b2c40'],'sq',8,6.4);
+mkFac('gray','#b4aea4','#dcd8cf',['#3b5670','#17283a'],'sq',8,6.0);
+mkFac('basalt','#6c6864','#8c8781',['#222','#0a0a0a'],'slit',7,8);
+mkFac('cream','#e6d9bd','#faf3e2',GL,'arch',8,7);
+mkFac('hotel','#cdbf9f','#f0e8d4',['#3e607f','#16273a'],'hotel',20,2.27,256,40);
+const FILLERS=['pink','orange','tan','gray'];
 
-var ROAD_MAT_HIGHWAY = new THREE.MeshLambertMaterial({ map: makeRoadTexture('highway') });
-var ROAD_MAT_AVENUE  = new THREE.MeshLambertMaterial({ map: makeRoadTexture('avenue') });
-var ROAD_MAT_STREET  = new THREE.MeshLambertMaterial({ map: makeRoadTexture('street') });
-
-/* ── Road geometry accumulators (per type) ── */
-var ROAD_DATA = {
-  highway: { verts: [], uvs: [], idx: [] },
-  avenue:  { verts: [], uvs: [], idx: [] },
-  street:  { verts: [], uvs: [], idx: [] }
+const lam=(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o));
+const OVL=n=>({polygonOffset:true,polygonOffsetFactor:-n,polygonOffsetUnits:-n});
+const M={
+  stone:lam(0xe9dfc8),stoneDk:lam(0xa79c88),limestone:lam(0xe7dcc2),white:lam(0xf4f1ea),dark:lam(0x232831),
+  roofRed:lam(0xb4502f),copper:lam(0x5fa38b),gold:lam(0xe8b94a,{emissive:0x4a3300}),glass:lam(0x2a4766),
+  hedge:lam(0x2f7a38),lawn:lam(0x6fae4c,OVL(1)),water:lam(0x3fa7d6,{transparent:true,opacity:.88,emissive:0x0a3550}),
+  basalt:lam(0x6c6864),steel:lam(0xb9c0c8),
+  sidewalk:lam(0xbdb7ab,OVL(1)),asphalt:lam(0x383b41,OVL(2)),lineW:lam(0xf2f2f2,OVL(3)),
+  pave:new THREE.MeshLambertMaterial({map:mkTex(64,64,(g,W,H)=>{g.fillStyle='#d8c8a6';g.fillRect(0,0,W,H);g.strokeStyle='#b7a584';g.lineWidth=2;for(let i=0;i<=W;i+=32){g.beginPath();g.moveTo(i,0);g.lineTo(i,H);g.stroke();g.beginPath();g.moveTo(0,i);g.lineTo(W,i);g.stroke();}g.fillStyle='rgba(170,110,90,.35)';g.fillRect(34,34,28,28);g.fillRect(2,2,28,28);}),polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),
+  path:new THREE.MeshLambertMaterial({map:mkTex(32,32,(g,W,H)=>{g.fillStyle='#b98a73';g.fillRect(0,0,W,H);g.strokeStyle='#8f6652';g.lineWidth=2;g.strokeRect(1,1,W-2,H-2);g.beginPath();g.moveTo(W/2,0);g.lineTo(W/2,H);g.stroke();}),polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),
+  dash:new THREE.MeshLambertMaterial({map:mkTex(16,64,(g,W,H)=>{g.clearRect(0,0,W,H);g.fillStyle='#f2c200';g.fillRect(0,0,W,28);}),alphaTest:.5,...OVL(3)}),
+  zebra:new THREE.MeshLambertMaterial({map:mkTex(64,16,(g,W,H)=>{g.clearRect(0,0,W,H);g.fillStyle='#f4f4f4';for(let i=0;i<7;i++)g.fillRect(i*9.14+1,0,5,H);}),alphaTest:.5,...OVL(3)}),
+  tail:lam(0x7a0d0d,{emissive:0x550000}),head:lam(0xfff3c4,{emissive:0xb9a36a}),
 };
+M.dash.map.repeat.set(1,1);
 
-/* ── Add a road path — Catmull-Rom through waypoints ── */
-function addRoad(path, width, type){
-  var D = ROAD_DATA[type];
-  var pts = [];
-  for(var i = 0; i < path.length; i++){
-    pts.push(new THREE.Vector3(path[i].x, 0, path[i].z));
+/* ════════════════════════════════════════════════════════════
+   5. ՍՏԱՏԻԿ ԳԵՈՄԵՏՐԻԱՅԻ BATCH (draw-call-ները նվազեցնելու համար)
+   ════════════════════════════════════════════════════════════ */
+const batch=new Map();
+function addGeoM(geo,mat,m,own=false){
+  const g=own?geo:geo.clone();
+  if(m) g.applyMatrix4(m);
+  for(const k of Object.keys(g.attributes)) if(k!=='position'&&k!=='normal'&&k!=='uv') g.deleteAttribute(k);
+  if(!g.attributes.uv) g.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));
+  if(!g.attributes.normal) g.computeVertexNormals();
+  g.clearGroups();
+  let l=batch.get(mat); if(!l){l=[];batch.set(mat,l);} l.push(g);
+}
+function flushBatch(){
+  for(const [mat,list] of batch){
+    const allIdx=list.every(g=>g.index);
+    const L=allIdx?list:list.map(g=>g.index?g.toNonIndexed():g);
+    const g=mergeGeometries(L,false);
+    const mesh=new THREE.Mesh(g,mat);mesh.matrixAutoUpdate=false;mesh.updateMatrix();scene.add(mesh);
   }
-  var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
-  var len = curve.getLength();
-  var N = Math.max(8, Math.ceil(len / 6));
-  var sampled = curve.getSpacedPoints(N);
-  var startIdx = D.verts.length / 3;
-
-  for(var i = 0; i <= N; i++){
-    var p = sampled[i];
-    var iPrev = Math.max(0, i - 1);
-    var iNext = Math.min(N, i + 1);
-    var pPrev = sampled[iPrev];
-    var pNext = sampled[iNext];
-    var tdx = pNext.x - pPrev.x;
-    var tdz = pNext.z - pPrev.z;
-    var tl = Math.sqrt(tdx * tdx + tdz * tdz) || 1;
-    var px = -tdz / tl;
-    var pz = tdx / tl;
-
-    var lx = p.x + px * width / 2;
-    var lz = p.z + pz * width / 2;
-    var rx = p.x - px * width / 2;
-    var rz = p.z - pz * width / 2;
-
-    D.verts.push(lx, terrainHeight(lx, lz) + 0.25, lz);
-    D.verts.push(rx, terrainHeight(rx, rz) + 0.25, rz);
-    var v = i * (len / N) * 0.08;
-    D.uvs.push(0, v, 1, v);
+  batch.clear();
+}
+const _A=new THREE.Matrix4(),_B=new THREE.Matrix4(),_P=new THREE.Vector3(),_Q=new THREE.Quaternion(),_S=new THREE.Vector3(),_E=new THREE.Euler();
+const UB=new THREE.BoxGeometry(1,1,1);
+const _uc={};
+const ucyl=seg=>_uc[seg]||(_uc[seg]=new THREE.CylinderGeometry(1,1,1,seg));
+const UHALF=(()=>{const g=new THREE.SphereGeometry(1,24,10,0,TAU,0,Math.PI/2);return g;})();
+const UHIP=(()=>{const g=new THREE.ConeGeometry(0.70711,1,4);g.rotateY(Math.PI/4);g.translate(0,0.5,0);return g;})();
+const UCONE=(()=>{const g=new THREE.ConeGeometry(1,1,10);g.translate(0,0.5,0);return g;})();
+const USPH=new THREE.SphereGeometry(1,12,8);
+const _pg={};
+function pedGeo(w,h,d){
+  const k=w+'_'+h+'_'+d;if(_pg[k])return _pg[k];
+  const s=new THREE.Shape();s.moveTo(-w/2,0);s.lineTo(w/2,0);s.lineTo(0,h);s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth:d,bevelEnabled:false});g.translate(0,0,-d/2);return _pg[k]=g;
+}
+function gableGeo(w,h,d){          // ridge along x
+  const k='g'+w+'_'+h+'_'+d;if(_pg[k])return _pg[k];
+  const s=new THREE.Shape();s.moveTo(-d/2,0);s.lineTo(d/2,0);s.lineTo(0,h);s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth:w,bevelEnabled:false});g.translate(0,0,-w/2);g.rotateY(Math.PI/2);return _pg[k]=g;
+}
+function facadeGeo(w,h,d,cw,ch){
+  const g=new THREE.BoxGeometry(w,h,d),uv=g.attributes.uv;
+  const nu=a=>Math.max(1,Math.round(a/cw)),nv=Math.max(1,Math.round(h/ch));
+  for(let f=0;f<6;f++){
+    const su=f<2?nu(d):nu(w), sv=(f===2||f===3)?Math.max(1,Math.round(d/ch)):nv;
+    for(let i=0;i<4;i++){const k=f*4+i;uv.setXY(k,uv.getX(k)*su,uv.getY(k)*sv);}
   }
-  for(var j = 0; j < N; j++){
-    var a = startIdx + j * 2;
-    D.idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
-  }
+  return g;
 }
 
-/* ── Build road network ── */
-
-/* ── 1. RING ROAD around Republic Square (avenue, radius 78) ── */
-(function(){
-  var ringPts = [];
-  for(var i = 0; i <= 48; i++){
-    var a = (i / 48) * Math.PI * 2;
-    ringPts.push({ x: Math.cos(a) * 78, z: Math.sin(a) * 78 });
+/* ════════════════════════════════════════════════════════════
+   6. COLLISION — OBB + շրջան, spatial hash
+   ════════════════════════════════════════════════════════════ */
+const CELL=32,grid=new Map(),colliders=[];let stampN=0;
+const cellKey=(gx,gz)=>(gx+512)*1024+(gz+512);
+function reg(c){
+  colliders.push(c);
+  let x0,x1,z0,z1;
+  if(c.t===1){x0=c.x-c.r;x1=c.x+c.r;z0=c.z-c.r;z1=c.z+c.r;}
+  else{const ex=c.hx*Math.abs(c.c)+c.hz*Math.abs(c.s),ez=c.hx*Math.abs(c.s)+c.hz*Math.abs(c.c);x0=c.x-ex;x1=c.x+ex;z0=c.z-ez;z1=c.z+ez;}
+  for(let gx=Math.floor(x0/CELL);gx<=Math.floor(x1/CELL);gx++)for(let gz=Math.floor(z0/CELL);gz<=Math.floor(z1/CELL);gz++){
+    const k=cellKey(gx,gz);let l=grid.get(k);if(!l){l=[];grid.set(k,l);}l.push(c);
   }
-  addRoad(ringPts, 18, 'avenue');
-})();
+  return c;
+}
+const addOBB=(x,z,hx,hz,yaw=0,b=false,tag='')=>reg({t:0,x,z,hx,hz,c:Math.cos(yaw),s:Math.sin(yaw),b,tag});
+const addCirc=(x,z,r)=>reg({t:1,x,z,r});
+function hitCircle(c,x,z,r){
+  const dx=x-c.x,dz=z-c.z;
+  if(c.t===1){const d=Math.hypot(dx,dz),p=c.r+r-d;if(p<=0)return null;return d<1e-6?{nx:1,nz:0,pen:p}:{nx:dx/d,nz:dz/d,pen:p};}
+  const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;
+  let nlx,nlz,pen;
+  if(Math.abs(lx)<c.hx&&Math.abs(lz)<c.hz){
+    const px=c.hx-Math.abs(lx),pz=c.hz-Math.abs(lz);
+    if(px<pz){nlx=Math.sign(lx)||1;nlz=0;pen=px+r;}else{nlx=0;nlz=Math.sign(lz)||1;pen=pz+r;}
+  }else{
+    const qx=clamp(lx,-c.hx,c.hx),qz=clamp(lz,-c.hz,c.hz),ex=lx-qx,ez=lz-qz,d=Math.hypot(ex,ez);
+    if(d>=r)return null;
+    if(d<1e-6){nlx=1;nlz=0;}else{nlx=ex/d;nlz=ez/d;}
+    pen=r-d;
+  }
+  return {nx:nlx*c.c+nlz*c.s,nz:-nlx*c.s+nlz*c.c,pen};
+}
+function nearColliders(x,z,r,cb){
+  const st=++stampN;
+  for(let gx=Math.floor((x-r)/CELL);gx<=Math.floor((x+r)/CELL);gx++)for(let gz=Math.floor((z-r)/CELL);gz<=Math.floor((z+r)/CELL);gz++){
+    const l=grid.get(cellKey(gx,gz));if(!l)continue;
+    for(const c of l){if(c.st===st)continue;c.st=st;cb(c);}
+  }
+}
+const softZones=[];       // ճանապարհներ/շավիղներ՝ ծառ չտնկելու համար
+function blockedAt(x,z,r){
+  let hit=false;
+  nearColliders(x,z,r+2,c=>{if(!hit&&hitCircle(c,x,z,r))hit=true;});
+  if(hit)return true;
+  for(const s of softZones)if(hitCircle(s,x,z,r))return true;
+  return false;
+}
+function obbOverlap(a,b){
+  const ax=[[a.c,-a.s],[a.s,a.c],[b.c,-b.s],[b.s,b.c]];
+  for(const [nx,nz] of ax){
+    const ra=a.hx*Math.abs(nx*a.c-nz*a.s)+a.hz*Math.abs(nx*a.s+nz*a.c);
+    const rb=b.hx*Math.abs(nx*b.c-nz*b.s)+b.hz*Math.abs(nx*b.s+nz*b.c);
+    if(Math.abs((b.x-a.x)*nx+(b.z-a.z)*nz)>ra+rb)return false;
+  }
+  return true;
+}
 
-/* ── 2. MASHTOTS AVE — Highway, Square → Marriott (south) ── */
-addRoad([
-  { x: 0,  z: -78 },
-  { x: 2,  z: -160 },
-  { x: 4,  z: -240 },
-  { x: 2,  z: -340 },
-  { x: 0,  z: -420 }
-], 22, 'highway');
+/* ════════════════════════════════════════════════════════════
+   7. ՔԱՂԱՔԻ ՏՈՊՈԼՈԳԻԱ — փողոցների գրաֆ (հանգույցներ + կողեր)
+   Սկզբունք՝ ամեն կող ավարտվում է հանգույցում (խաչմերուկ / օղակ / շրջադարձի
+   շրջան). Ոչ մի «կախված» փողոց չկա։
+   ════════════════════════════════════════════════════════════ */
+const RW=16,SW=4,HW=RW/2+SW;           // ասֆալտ 16, մայթ 4+4 → կես-լայնք 12
+const RING={r:105};                     // Հանրապետության հրապարակի օղակ
+const SQR={buildR:132};
+const edges=[];
+function edge(a,b,name,fill=true){const len=Math.hypot(b[0]-a[0],b[1]-a[1]);edges.push({a,b,name,fill,len,dx:(b[0]-a[0])/len,dz:(b[1]-a[1])/len});}
+// Սայաթ-Նովա (E-W առանցք)
+edge([-105,0],[-440,0],'Սայաթ-Նովա');edge([-440,0],[-640,0],'Սայաթ-Նովա');
+edge([105,0],[150,0],'Սայաթ-Նովա');edge([150,0],[215,0],'Սայաթ-Նովա');edge([215,0],[640,0],'Սայաթ-Նովա');
+// Աբովյան (N-S առանցք)
+edge([0,105],[0,228],'Աբովյան');edge([0,228],[0,242],'Աբովյան',false);
+edge([0,-105],[0,-260],'Աբովյան');
+// Տումանյան (Օպերա → Մատենադարան)
+edge([-640,228],[-440,228],'Տումանյան');edge([-440,228],[0,228],'Տումանյան');
+// Մաշտոց (ուղղահայաց, արևմուտք)
+edge([-440,-260],[-440,0],'Մաշտոց');edge([-440,0],[-440,228],'Մաշտոց');
+// արևմտյան եզր
+edge([-640,-260],[-640,0],'Արևմտյան');edge([-640,0],[-640,228],'Արևմտյան');
+// Հարավային գիծ (E-W)
+edge([-640,-260],[-440,-260],'Հարավային');edge([-440,-260],[0,-260],'Հարավային');edge([0,-260],[215,-260],'Հարավային');
+edge([215,-260],[400,-260],'Հարավային');edge([400,-260],[640,-260],'Հարավային');
+// Կոմիտաս (ուղղահայաց, արևելք)
+edge([215,-260],[215,-62],'Կոմիտաս');edge([215,-62],[215,0],'Կոմիտաս');
+// Նալբանդյան (Հրապարակ → Համալսարան)
+edge([99.3,-34.2],[180,-62],'Նալբանդյան',false);edge([180,-62],[215,-62],'Նալբանդյան');
+edge([215,-62],[400,-62],'Նալբանդյան');edge([400,-62],[400,-260],'Նալբանդյան');
+// արևելյան եզր
+edge([640,-260],[640,0],'Արևելյան');
+// Հյուսիսային պողոտայի մուտքի փողոց (ավարտվում է շրջադարձի շրջանում)
+edge([150,0],[150,40],'Հյուսիսային պողոտա',false);
+const DISCS=[{x:0,z:242,r:14},{x:150,z:40,r:14}];   // շրջադարձի շրջաններ
 
-/* ── 3. NORTH AVE — Avenue, Square → Cascade base ── */
-addRoad([
-  { x: 0,   z: 78 },
-  { x: 8,   z: 150 },
-  { x: 14,  z: 220 },
-  { x: 6,   z: 290 },
-  { x: 0,   z: 330 }
-], 18, 'avenue');
+function segDist(px,pz,a,b){
+  const dx=b[0]-a[0],dz=b[1]-a[1],l2=dx*dx+dz*dz;
+  const t=l2?clamp(((px-a[0])*dx+(pz-a[1])*dz)/l2,0,1):0;
+  return Math.hypot(px-(a[0]+dx*t),pz-(a[1]+dz*t));
+}
+function roadDist(x,z){        // հեռավորություն մոտակա ճանապարհի առանցքից (կամ համարժեք)
+  let d=Math.abs(Math.hypot(x,z)-RING.r);
+  for(const e of edges)d=Math.min(d,segDist(x,z,e.a,e.b));
+  for(const c of DISCS)d=Math.min(d,Math.max(0,Math.hypot(x-c.x,z-c.z)-c.r)+RW/2);
+  return d;
+}
+function nearestRoadPoint(x,z){
+  let best=null,bd=1e9;
+  const consider=(qx,qz)=>{const d=Math.hypot(qx-x,qz-z);if(d<bd){bd=d;best=[qx,qz];}};
+  for(const e of edges){
+    const dx=e.b[0]-e.a[0],dz=e.b[1]-e.a[1],t=clamp(((x-e.a[0])*dx+(z-e.a[1])*dz)/(dx*dx+dz*dz),0,1);
+    consider(e.a[0]+dx*t,e.a[1]+dz*t);
+  }
+  return best;
+}
+const yards=[];          // բակերի ռեգիստր (ստուգման համար)
+const reserved=[];       // ռեզերվացված տարածքներ (OBB)՝ ֆոնային շենքերի համար
+const landmarkBuildings=[];
 
-/* ── 4. SAYAT-NOVA — Street, Square → Opera park ── */
-addRoad([
-  { x: -78, z: 0 },
-  { x: -140, z: -10 },
-  { x: -190, z: 20 },
-  { x: -220, z: 80 }
-], 14, 'street');
-
-/* ── 5. TUMANYAN — Street, Opera park → Matenadaran ── */
-addRoad([
-  { x: -220, z: 80 },
-  { x: -260, z: 150 },
-  { x: -300, z: 200 },
-  { x: -330, z: 240 }
-], 12, 'street');
-
-/* ── 6. NORTHERN AVE — Avenue, Square → East ── */
-addRoad([
-  { x: 78, z: 0 },
-  { x: 140, z: 10 },
-  { x: 200, z: 50 },
-  { x: 260, z: 70 }
-], 16, 'avenue');
-
-/* ── 7. UNIVERSITY LOOP — Street, east side ── */
-addRoad([
-  { x: 260, z: 70 },
-  { x: 320, z: 0 },
-  { x: 340, z: -100 },
-  { x: 330, z: -200 },
-  { x: 300, z: -280 }
-], 14, 'street');
-
-/* ── 8. WEST LOOP — Street, Opera → Gallery → Square ── */
-addRoad([
-  { x: -220, z: 80 },
-  { x: -260, z: 0 },
-  { x: -230, z: -100 },
-  { x: -150, z: -130 },
-  { x: -78, z: -60 }
-], 14, 'street');
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 8 — SERPENTINE ROAD UP TO CASCADE PEAK
-   ────────────────────────────────────────────────────────────────
-   Fix #22, #23, #24, #25. A REAL mountain road with 6 switchbacks
-   that starts at the base of Cascade (z=330) and winds its way
-   up to the peak (z=560, y≈130). This is the high point of the map.
-   ═══════════════════════════════════════════════════════════════════ */
-var SERPENTINE_PATH = [
-  /* Start at base of Cascade */
-  { x: 0,    z: 330 },
-  /* Curve east */
-  { x: 55,   z: 340 },
-  { x: 95,   z: 365 },
-  /* Switchback 1 — turn west */
-  { x: 110,  z: 405 },
-  { x: 75,   z: 425 },
-  { x: 30,   z: 430 },
-  /* Switchback 2 — turn east */
-  { x: -25,  z: 440 },
-  { x: -75,  z: 460 },
-  { x: -95,  z: 490 },
-  /* Switchback 3 — turn west */
-  { x: -70,  z: 515 },
-  { x: -25,  z: 530 },
-  /* Switchback 4 — short turn */
-  { x: 20,   z: 540 },
-  { x: 55,   z: 555 },
-  { x: 35,   z: 575 },
-  /* Final approach to peak */
-  { x: -10,  z: 590 },
-  { x: -30,  z: 605 },
-  { x: -15,  z: 620 },
-  /* Arrive at peak — actual monument at (0, 620) */
-  { x: 0,    z: 625 }
-];
-addRoad(SERPENTINE_PATH, 11, 'street');
-
-/* ── Build the 3 road meshes ── */
-function buildRoadMesh(data, mat){
-  var g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(data.verts, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(data.uvs, 2));
-  g.setIndex(data.idx);
+/* ════════════════════════════════════════════════════════════
+   8. ԳԵՈՄԵՏՐԻԱՅԻ ՕԳՆԱԿԱՆՆԵՐ՝ ռելիեֆին հարմարեցված հարթություններ
+   ════════════════════════════════════════════════════════════ */
+function conform(g,yOff,tile){
+  const p=g.attributes.position,uv=g.attributes.uv;
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i),z=p.getZ(i);p.setY(i,terrainH(x,z)+yOff);
+    if(tile)uv.setXY(i,x/tile,z/tile);
+  }
   g.computeVertexNormals();
-  g.computeBoundingSphere();
-  return new THREE.Mesh(g, mat);
 }
-scene.add(buildRoadMesh(ROAD_DATA.highway, ROAD_MAT_HIGHWAY));
-scene.add(buildRoadMesh(ROAD_DATA.avenue,  ROAD_MAT_AVENUE));
-scene.add(buildRoadMesh(ROAD_DATA.street,  ROAD_MAT_STREET));
+function plane(mat,cx,cz,w,d,rot,yOff,tile){
+  const g=new THREE.PlaneGeometry(w,d,Math.max(1,Math.ceil(w/10)),Math.max(1,Math.ceil(d/10)));
+  g.rotateX(-Math.PI/2);g.rotateY(rot);g.translate(cx,0,cz);
+  const p=g.attributes.position,uv=g.attributes.uv;
+  for(let i=0;i<p.count;i++)p.setY(i,terrainH(p.getX(i),p.getZ(i))+yOff);
+  if(tile){const u0=uv.array.slice();for(let i=0;i<uv.count;i++)uv.setXY(i,u0[i*2]*w/tile,u0[i*2+1]*d/tile);}
+  g.computeVertexNormals();addGeoM(g,mat,null,true);
+}
+function disc(mat,cx,cz,rIn,rOut,yOff,tile){
+  const g=new THREE.RingGeometry(rIn,rOut,72,Math.max(1,Math.ceil((rOut-rIn)/8)));
+  g.rotateX(-Math.PI/2);g.translate(cx,0,cz);conform(g,yOff,tile);addGeoM(g,mat,null,true);
+}
+function ribbon(pts,width,yOff,mat,tile,ext=0,step=8){
+  const P=[];
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i],b=pts[i+1],len=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.ceil(len/step));
+    for(let k=0;k<n;k++)P.push([lerp(a[0],b[0],k/n),lerp(a[1],b[1],k/n)]);
+  }
+  P.push(pts[pts.length-1].slice());
+  if(ext){
+    const f=P[0],s=P[1],e=P[P.length-1],t=P[P.length-2];
+    let l=Math.hypot(s[0]-f[0],s[1]-f[1]);f[0]-=(s[0]-f[0])/l*ext;f[1]-=(s[1]-f[1])/l*ext;
+    l=Math.hypot(e[0]-t[0],e[1]-t[1]);e[0]+=(e[0]-t[0])/l*ext;e[1]+=(e[1]-t[1])/l*ext;
+  }
+  const pos=[],uvs=[],idx=[];let acc=0;
+  for(let i=0;i<P.length;i++){
+    const a=P[Math.max(0,i-1)],b=P[Math.min(P.length-1,i+1)];
+    let dx=b[0]-a[0],dz=b[1]-a[1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
+    if(i>0)acc+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);
+    const nx=dz*width/2,nz=-dx*width/2;
+    const x1=P[i][0]+nx,z1=P[i][1]+nz,x2=P[i][0]-nx,z2=P[i][1]-nz;
+    pos.push(x1,terrainH(x1,z1)+yOff,z1,x2,terrainH(x2,z2)+yOff,z2);
+    uvs.push(0,acc/tile,1,acc/tile);
+    if(i<P.length-1){const k=i*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  g.setIndex(idx);g.computeVertexNormals();addGeoM(g,mat,null,true);
+}
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 9 — ROAD GRID (for collision / building avoidance)
-   ═══════════════════════════════════════════════════════════════════ */
-var ROAD_GRID = [
-  { x: 0,     z: -78,  w: 16 },
-  { x: 2,     z: -160, w: 22 },
-  { x: 4,     z: -240, w: 22 },
-  { x: 2,     z: -340, w: 22 },
-  { x: 0,     z: -420, w: 22 },
-  { x: 0,     z: 78,   w: 16 },
-  { x: 8,     z: 150,  w: 18 },
-  { x: 14,    z: 220,  w: 18 },
-  { x: 6,     z: 290,  w: 18 },
-  { x: 0,     z: 330,  w: 18 },
-  { x: -78,   z: 0,    w: 14 },
-  { x: -140,  z: -10,  w: 14 },
-  { x: -190,  z: 20,   w: 14 },
-  { x: -220,  z: 80,   w: 14 },
-  { x: -220,  z: 80,   w: 12 },
-  { x: -260,  z: 150,  w: 12 },
-  { x: -300,  z: 200,  w: 12 },
-  { x: -330,  z: 240,  w: 12 },
-  { x: 78,    z: 0,    w: 16 },
-  { x: 140,   z: 10,   w: 16 },
-  { x: 200,   z: 50,   w: 16 },
-  { x: 260,   z: 70,   w: 16 },
-  { x: 260,   z: 70,   w: 14 },
-  { x: 320,   z: 0,    w: 14 },
-  { x: 340,   z: -100, w: 14 },
-  { x: 330,   z: -200, w: 14 },
-  { x: 300,   z: -280, w: 14 },
-  { x: -220,  z: 80,   w: 14 },
-  { x: -260,  z: 0,    w: 14 },
-  { x: -230,  z: -100, w: 14 },
-  { x: -150,  z: -130, w: 14 },
-  { x: -78,   z: -60,  w: 14 }
+/* Լոկալ կոորդինատային համակարգ շենքերի համար (local +z = ճակատ) */
+class Loc{
+  constructor(x,z,yaw=0,y){
+    this.x=x;this.z=z;this.yaw=yaw;this.y=y===undefined?terrainH(x,z):y;
+    this.c=Math.cos(yaw);this.s=Math.sin(yaw);
+    this.base=new THREE.Matrix4().makeRotationY(yaw).setPosition(x,this.y,z);
+  }
+  w(lx,lz){return[this.x+lx*this.c+lz*this.s,this.z-lx*this.s+lz*this.c];}
+  put(geo,mat,lx,ly,lz,rx=0,ry=0,rz=0,sx=1,sy=1,sz=1,own=false){
+    _E.set(rx,ry,rz,'YXZ');_Q.setFromEuler(_E);_A.compose(_P.set(lx,ly,lz),_Q,_S.set(sx,sy,sz));
+    _B.multiplyMatrices(this.base,_A);addGeoM(geo,mat,_B,own);
+  }
+  box(lx,y0,lz,w,h,d,mat){this.put(UB,mat,lx,y0+h/2,lz,0,0,0,w,h,d);}
+  fbox(lx,y0,lz,w,h,d,fac){this.put(facadeGeo(w,h,d,fac.cw,fac.ch),fac.mat,lx,y0+h/2,lz,0,0,0,1,1,1,true);}
+  cyl(lx,y0,lz,r,h,mat,seg=14){this.put(ucyl(seg),mat,lx,y0+h/2,lz,0,0,0,r,h,r);}
+  col(lx,y0,lz,r,h,mat){
+    this.cyl(lx,y0+0.4,lz,r,h-0.9,mat,10);
+    this.box(lx,y0,lz,r*2.5,0.4,r*2.5,mat);this.box(lx,y0+h-0.5,lz,r*2.7,0.5,r*2.7,mat);
+  }
+  ped(lx,y0,lz,w,h,d,mat){this.put(pedGeo(w,h,d),mat,lx,y0,lz);}
+  gable(lx,y0,lz,w,h,d,mat){this.put(gableGeo(w,h,d),mat,lx,y0,lz);}
+  hip(lx,y0,lz,w,h,d,mat){this.put(UHIP,mat,lx,y0,lz,0,0,0,w,h,d);}
+  dome(lx,y0,lz,rx,ry,rz,mat){this.put(UHALF,mat,lx,y0,lz,0,0,0,rx,ry,rz);}
+  cone(lx,y0,lz,r,h,mat){this.put(UCONE,mat,lx,y0,lz,0,0,0,r,h,r);}
+  sph(lx,ly,lz,r,mat){this.put(USPH,mat,lx,ly,lz,0,0,0,r,r,r);}
+  oval(lx,y0,lz,a,b,h,mat,fac){          // էլիպսաձև մարմին (ցիլինդր՝ սկեյլով)
+    if(fac){
+      const g=new THREE.CylinderGeometry(1,1,1,56,1,false);const uv=g.attributes.uv;
+      const per=TAU*Math.sqrt((a*a+b*b)/2),nu=Math.max(8,Math.round(per/fac.cw)),nv=Math.max(1,Math.round(h/fac.ch));
+      for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*nu,uv.getY(i)*nv);
+      this.put(g,fac.mat,lx,y0+h/2,lz,0,0,0,a,h,b,true);
+    }else this.put(ucyl(56),mat,lx,y0+h/2,lz,0,0,0,a,h,b);
+  }
+  obb(lx,lz,w,d,tag=''){const [x,z]=this.w(lx,lz);const o=addOBB(x,z,w/2,d/2,0,true,tag);o.c=this.c;o.s=this.s;return o;}
+  circ(lx,lz,r){const [x,z]=this.w(lx,lz);return addCirc(x,z,r);}
+}
+
+/* ════════════════════════════════════════════════════════════
+   9. ԾԱՌԵՐ (InstancedMesh)
+   ════════════════════════════════════════════════════════════ */
+const TREES=[];
+function addTree(x,z,s=1,type,collide=true){
+  if(type===undefined)type=rng()<0.3?1:0;
+  if(collide){if(blockedAt(x,z,1.2))return false;addCirc(x,z,0.6*s);}
+  TREES.push({x,y:terrainH(x,z),z,s,type,r:rng()});return true;
+}
+function finalizeTrees(){
+  const trunkG=new THREE.CylinderGeometry(0.18,0.28,1,5);trunkG.translate(0,0.5,0);
+  const icoG=new THREE.IcosahedronGeometry(1,1),coneG=new THREE.ConeGeometry(1,1,7);coneG.translate(0,0.5,0);
+  const t0=TREES.filter(t=>t.type===0),t1=TREES.filter(t=>t.type===1);
+  const white=lam(0xffffff),brown=lam(0x5a4130);
+  const mk=(g,m,n)=>{const im=new THREE.InstancedMesh(g,m,Math.max(1,n));im.frustumCulled=false;scene.add(im);return im;};
+  const trunk=mk(trunkG,brown,TREES.length),c0=mk(icoG,white,t0.length),c1=mk(coneG,white,t1.length);
+  const m=new THREE.Matrix4(),q=new THREE.Quaternion(),col=new THREE.Color(),e=new THREE.Euler();
+  let i=0;
+  const tr=(t,h)=>{m.compose(_P.set(t.x,t.y-0.1,t.z),q.identity(),_S.set(t.s,h*t.s,t.s));trunk.setMatrixAt(i++,m);};
+  t0.forEach(t=>tr(t,3));t1.forEach(t=>tr(t,2));trunk.count=i;
+  t0.forEach((t,k)=>{
+    e.set(0,t.r*6,0);q.setFromEuler(e);
+    m.compose(_P.set(t.x,t.y+3.9*t.s,t.z),q,_S.set(2.3*t.s,2.0*t.s,2.3*t.s));c0.setMatrixAt(k,m);
+    col.setHSL(0.26+0.05*t.r,0.5,0.25+0.13*((t.r*7)%1));c0.setColorAt(k,col);
+  });
+  t1.forEach((t,k)=>{
+    e.set(0,t.r*6,0);q.setFromEuler(e);
+    m.compose(_P.set(t.x,t.y+1.6*t.s,t.z),q,_S.set(1.9*t.s,9*t.s,1.9*t.s));c1.setMatrixAt(k,m);
+    col.setHSL(0.33,0.42,0.16+0.08*((t.r*5)%1));c1.setColorAt(k,col);
+  });
+  c0.count=t0.length;c1.count=t1.length;
+}
+
+/* ════════════════════════════════════════════════════════════
+   10. ՌԵԼԻԵՖԻ MESH + հեռավոր լեռներ
+   ════════════════════════════════════════════════════════════ */
+function buildTerrain(){
+  const X0=-1500,X1=1500,Z0=-1200,Z1=1500,ST=10;
+  const nx=Math.round((X1-X0)/ST)+1,nz=Math.round((Z1-Z0)/ST)+1;
+  const hs=new Float32Array(nx*nz),pos=new Float32Array(nx*nz*3),col=new Float32Array(nx*nz*3);
+  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){
+    const x=X0+i*ST,z=Z0+j*ST,h=terrainH(x,z),k=j*nx+i;hs[k]=h;pos[k*3]=x;pos[k*3+1]=h;pos[k*3+2]=z;
+  }
+  const c=new THREE.Color(),grass=new THREE.Color(0x7aa357),dry=new THREE.Color(0x9bab6c),rock=new THREE.Color(0x8d8777),hi=new THREE.Color(0xb3afa3),stone=new THREE.Color(0xe6d9b9),dark=new THREE.Color(0x55734a);
+  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){
+    const k=j*nx+i,x=pos[k*3],z=pos[k*3+2],h=hs[k];
+    const hx=(hs[j*nx+Math.min(nx-1,i+1)]-hs[j*nx+Math.max(0,i-1)])/(2*ST),hz=(hs[Math.min(nz-1,j+1)*nx+i]-hs[Math.max(0,j-1)*nx+i])/(2*ST);
+    const slope=Math.hypot(hx,hz);
+    const n=vnoise(x*0.03,z*0.03);
+    c.copy(grass).lerp(dry,clamp(n*1.1-0.2+(1-sstep(0,25,h))*0.25,0,1));
+    if(h>30)c.lerp(dark,sstep(30,70,h)*0.5);
+    if(h>60)c.lerp(rock,sstep(60,110,h));
+    if(h>110)c.lerp(hi,sstep(110,170,h));
+    if(slope>0.55)c.lerp(rock,clamp((slope-0.55)*1.6,0,0.85));
+    if(Math.abs(x)<CAS.half+1&&z>CAS.z0-2&&z<CAS.z1+8)c.copy(stone);
+    else if(z>CAS.z0&&z<CAS.z1+10&&Math.abs(x)<190&&slope>0.7)c.lerp(stone,0.55);
+    col[k*3]=c.r;col[k*3+1]=c.g;col[k*3+2]=c.b;
+  }
+  const idx=new Uint32Array((nx-1)*(nz-1)*6);let p=0;
+  for(let j=0;j<nz-1;j++)for(let i=0;i<nx-1;i++){
+    const a=j*nx+i,b=a+1,d=a+nx,e=d+1;
+    idx[p++]=a;idx[p++]=d;idx[p++]=b;idx[p++]=b;idx[p++]=d;idx[p++]=e;
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  g.setIndex(new THREE.BufferAttribute(idx,1));g.computeVertexNormals();
+  scene.add(new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true})));
+}
+function buildFarPeaks(){
+  const rock=lam(0x7d8aa0),snow=lam(0xf4f7fb);
+  const L=new Loc(0,0,0,0);
+  const peak=(x,z,r,h,y0=-200,sn=0.3)=>{
+    L.put(UCONE,rock,x,y0,z,0,rng()*6,0,r,h-y0,r*rr(.8,1.1));
+    if(sn>0){const sh=(h-y0)*sn;L.put(UCONE,snow,x,h-sh+0.5,z,0,0,0,r*sn*1.02,sh,r*sn*1.02);}
+  };
+  for(let i=0;i<46;i++){
+    const a=i/46*TAU+rr(-.05,.05),d=rr(2700,4300);
+    const x=Math.cos(a)*d,z=Math.sin(a)*d;
+    // Արարատ հարավ-արևելքում՝ առանձին
+    peak(x,z,rr(380,700),rr(450,1050),-200,rr(.15,.35));
+  }
+  peak(1250,-4300,1300,1700,-250,0.28);   // Մեծ Արարատ
+  peak(2650,-4000,800,1050,-250,0.2);     // Փոքր Արարատ
+  peak(-1800,3100,900,1250,-200,0.3);     // Արագած
+}
+
+/* ════════════════════════════════════════════════════════════
+   11. ՓՈՂՈՑՆԵՐ — մայթ, ասֆալտ, գծանշում, զեբրա
+   ════════════════════════════════════════════════════════════ */
+function buildRoads(){
+  const R=RING.r;
+  // 1) մայթեր
+  for(const e of edges)ribbon([e.a,e.b],RW+2*SW,0.10,M.sidewalk,6,8,12);
+  disc(M.sidewalk,0,0,R-RW/2-SW,R+RW/2+SW,0.10);
+  for(const d of DISCS)disc(M.sidewalk,d.x,d.z,0.01,d.r+SW,0.10);
+  // 2) ասֆալտ
+  for(const e of edges)ribbon([e.a,e.b],RW,0.16,M.asphalt,8,8,8);
+  disc(M.asphalt,0,0,R-RW/2,R+RW/2,0.16);
+  for(const d of DISCS)disc(M.asphalt,d.x,d.z,0.01,d.r,0.16);
+  // 3) գծանշում
+  for(const e of edges){
+    if(e.len>34)ribbon([[e.a[0]+e.dx*14,e.a[1]+e.dz*14],[e.b[0]-e.dx*14,e.b[1]-e.dz*14]],0.35,0.20,M.dash,12,0,6);
+    if(e.len>26){
+      for(const sgn of[1,-1]){
+        const ox=e.dz*7.3*sgn,oz=-e.dx*7.3*sgn;
+        ribbon([[e.a[0]+ox+e.dx*10,e.a[1]+oz+e.dz*10],[e.b[0]+ox-e.dx*10,e.b[1]+oz-e.dz*10]],0.2,0.20,M.lineW,6,0,8);
+      }
+    }
+  }
+  disc(M.lineW,0,0,R-RW/2+0.4,R-RW/2+0.62,0.20);disc(M.lineW,0,0,R+RW/2-0.62,R+RW/2-0.4,0.20);
+  // 4) զեբրա անցումներ
+  const nodes=new Map();
+  const addArm=(x,z,dx,dz,len)=>{const k=Math.round(x)+','+Math.round(z);let n=nodes.get(k);if(!n){n={x,z,arms:[]};nodes.set(k,n);}n.arms.push([dx,dz,len]);};
+  for(const e of edges){addArm(e.a[0],e.a[1],e.dx,e.dz,e.len);addArm(e.b[0],e.b[1],-e.dx,-e.dz,e.len);}
+  const zebra=(x,z,dx,dz)=>plane(M.zebra,x,z,14,3.4,Math.atan2(-dx,-dz),0.22,0);
+  for(const n of nodes.values()){
+    const onRing=Math.abs(Math.hypot(n.x,n.z)-R)<1;
+    if(onRing){for(const [dx,dz,len] of n.arms)if(len>30)zebra(n.x+dx*17,n.z+dz*17,dx,dz);}
+    else if(n.arms.length>=3){for(const [dx,dz,len] of n.arms)if(len>32)zebra(n.x+dx*12.5,n.z+dz*12.5,dx,dz);}
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   12. ԲԱԿԵՐ — սալիկ, hedge, GATE, շավիղ դեպի գլխավոր փողոց
+   ════════════════════════════════════════════════════════════ */
+function hedgeSeg(xa,za,xb,zb,th=1.4,h=1.3){
+  const cx=(xa+xb)/2,cz=(za+zb)/2,lx=Math.abs(xb-xa)+th,lz=Math.abs(zb-za)+th;
+  const L=new Loc(cx,cz,0);L.box(0,-0.6,0,lx,h+0.6,lz,M.hedge);
+  addOBB(cx,cz,lx/2,lz/2,0,false,'hedge');
+}
+function pathTo(gx,gz,ex,ez,w){      // շավիղ (gx,gz)→(ex,ez)
+  const dx=ex-gx,dz=ez-gz,l=Math.hypot(dx,dz);if(l<1)return;
+  const cx=(gx+ex)/2,cz=(gz+ez)/2,rot=Math.atan2(-dz,dx);
+  plane(M.path,cx,cz,l,w,rot,0.14,3);
+  softZones.push({t:0,x:cx,z:cz,hx:l/2,hz:w/2+1.5,c:Math.cos(rot),s:Math.sin(rot)});
+}
+function lamp(x,z){
+  const L=new Loc(x,z,0);L.cyl(0,0,0,0.12,4.2,M.dark,6);L.sph(0,4.4,0,0.4,M.head);
+}
+function makeYard(o){
+  const cx=(o.x0+o.x1)/2,cz=(o.z0+o.z1)/2,w=o.x1-o.x0,d=o.z1-o.z0;
+  const G=7;                                           // gate-ի կես-լայնք
+  let gx,gz,nx=0,nz=0;
+  if(o.gate==='N'){gx=o.gpos;gz=o.z1;nz=1;}
+  else if(o.gate==='S'){gx=o.gpos;gz=o.z0;nz=-1;}
+  else if(o.gate==='E'){gx=o.x1;gz=o.gpos;nx=1;}
+  else{gx=o.x0;gz=o.gpos;nx=-1;}
+  const Y={...o,cx,cz,w,d,gx,gz,nx,nz};yards.push(Y);
+  plane(M.pave,cx,cz,w,d,0,0.12,6);
+  for(const l of (o.lawns||[]))plane(M.lawn,l[0],l[1],l[2],l[3],0,0.16,0);
+  // 4 կողմի hedge-եր, gate-ի կողմում բացվածքով
+  const side=(xa,za,xb,zb,isGate)=>{
+    if(!isGate){hedgeSeg(xa,za,xb,zb);return;}
+    if(xa===xb){hedgeSeg(xa,za,xa,gz-G);hedgeSeg(xa,gz+G,xa,zb);}
+    else{hedgeSeg(xa,za,gx-G,za);hedgeSeg(gx+G,za,xb,zb);}
+  };
+  side(o.x0,o.z1,o.x1,o.z1,o.gate==='N');side(o.x0,o.z0,o.x1,o.z0,o.gate==='S');
+  side(o.x1,o.z0,o.x1,o.z1,o.gate==='E');side(o.x0,o.z0,o.x0,o.z1,o.gate==='W');
+  // gate-ի սյուներ
+  for(const sg of[-1,1]){
+    const px=gx+(nz?sg*G:0),pz=gz+(nx?sg*G:0),L=new Loc(px,pz,0);
+    L.box(0,-0.6,0,1.6,4.4,1.6,M.stone);L.sph(0,4.8,0,0.7,M.gold);addOBB(px,pz,0.8,0.8,0,false,'gate');
+  }
+  // շավիղ դեպի ճանապարհ
+  const q=nearestRoadPoint(gx,gz);
+  const dd=Math.hypot(q[0]-gx,q[1]-gz),ux=(q[0]-gx)/dd,uz=(q[1]-gz)/dd;
+  Y.roadPt=q;Y.pathLen=dd-HW;
+  pathTo(gx,gz,q[0]-ux*(HW-0.5),q[1]-uz*(HW-0.5),6);
+  lamp(gx+(nz?-G-2:0)+ux*3,gz+(nx?-G-2:0)+uz*3);lamp(gx+(nz?G+2:0)+ux*3,gz+(nx?G+2:0)+uz*3);
+  Y.plant=(opt={})=>{
+    if(o.entry)pathTo(gx,gz,o.entry[0],o.entry[1],8);
+    // պարագծով ծառեր
+    const step=opt.step||15;
+    for(let x=o.x0+4;x<=o.x1-4;x+=step){for(const z of[o.z0+3.5,o.z1-3.5])if(Math.hypot(x-gx,z-gz)>14)addTree(x,z,rr(.9,1.3));}
+    for(let z=o.z0+4+step;z<=o.z1-4-step;z+=step){for(const x of[o.x0+3.5,o.x1-3.5])if(Math.hypot(x-gx,z-gz)>14)addTree(x,z,rr(.9,1.3));}
+    const n=opt.scatter||0;
+    for(let i=0,t=0;i<n&&t<n*8;t++){
+      let x,z;
+      if(o.lawns&&o.lawns.length){const l=o.lawns[Math.floor(rng()*o.lawns.length)];x=l[0]+rr(-l[2]/2+2,l[2]/2-2);z=l[1]+rr(-l[3]/2+2,l[3]/2-2);}
+      else{x=rr(o.x0+6,o.x1-6);z=rr(o.z0+6,o.z1-6);}
+      if(addTree(x,z,rr(.9,1.5)))i++;
+    }
+  };
+  return Y;
+}
+function pond(x,z,r){
+  const L=new Loc(x,z,0);
+  L.cyl(0,-0.6,0,r+1.2,1.3,M.stone,28);L.cyl(0,-0.6,0,r,1.55,M.water,28);
+  addCirc(x,z,r+1.3);
+  for(let i=0;i<4;i++){const a=rr(0,TAU),d=rr(0,r*.6);L.put(USPH,M.white,Math.cos(a)*d,1.05,Math.sin(a)*d,0,a,0,0.9,0.55,1.5);}
+}
+
+/* ════════════════════════════════════════════════════════════
+   13. 8 LANDMARK
+   ════════════════════════════════════════════════════════════ */
+const LM=[
+  {id:'square',name:'Հանրապետության հրապարակ',t:[-74.2,-74.2]},
+  {id:'cascade',name:'Կասկադ',t:[0,236]},
+  {id:'opera',name:'Օպերայի շենք',t:[-440,130]},
+  {id:'mat',name:'Մատենադարան',t:[-500,228]},
+  {id:'gallery',name:'Ազգային պատկերասրահ',t:[-300,0]},
+  {id:'marriott',name:'Marriott Hotel',t:[-100,-260]},
+  {id:'uni',name:'Երևանի պետական համալսարան',t:[400,-260]},
+  {id:'north',name:'Հյուսիսային պողոտա',t:[150,34]},
 ];
+const jets=[];
 
-function isNearRoad(x, z, margin){
-  /* Ring road */
-  var d = Math.sqrt(x * x + z * z);
-  if(Math.abs(d - 78) < 12 + (margin || 0)) return true;
-
-  /* Grid */
-  for(var i = 0; i < ROAD_GRID.length; i++){
-    var e = ROAD_GRID[i];
-    var dd = Math.sqrt((x - e.x) * (x - e.x) + (z - e.z) * (z - e.z));
-    if(dd < e.w / 2 + (margin || 0)) return true;
+/* — 13.1 Հանրապետության հրապարակ — */
+function clockTex(){
+  return mkTex(128,128,(g)=>{
+    g.fillStyle='#f6f1e4';g.fillRect(0,0,128,128);g.strokeStyle='#2a2a2a';g.lineWidth=5;g.beginPath();g.arc(64,64,58,0,TAU);g.stroke();
+    g.lineWidth=3;for(let i=0;i<12;i++){const a=i/12*TAU;g.beginPath();g.moveTo(64+Math.sin(a)*48,64-Math.cos(a)*48);g.lineTo(64+Math.sin(a)*56,64-Math.cos(a)*56);g.stroke();}
+    g.lineWidth=5;g.beginPath();g.moveTo(64,64);g.lineTo(64+Math.sin(1)*32,64-Math.cos(1)*32);g.stroke();
+    g.lineWidth=3;g.beginPath();g.moveTo(64,64);g.lineTo(64+Math.sin(3.6)*46,64-Math.cos(3.6)*46);g.stroke();
+  });
+}
+function squareBuilding(angDeg,kind){
+  const a=angDeg*Math.PI/180,px=SQR.buildR*Math.cos(a),pz=SQR.buildR*Math.sin(a);
+  const yaw=Math.atan2(-Math.cos(a),-Math.sin(a));
+  const L=new Loc(px,pz,yaw),W=70,D=26,H=24,F=FAC.pink;
+  const pad=L.w(0,1);plane(M.pave,pad[0],pad[1],W+10,D+12,yaw,0.12,6);
+  L.box(0,-3,0,W+4,3.6,D+4,M.stoneDk);
+  L.fbox(0,0.6,0,W,H,D,F);
+  L.box(0,0.6,0,W+1,1.2,D+1,M.stone);
+  L.box(0,H+0.6,0,W+1.8,1.4,D+1.8,M.stone);
+  for(let i=-6;i<=6;i++)L.box(i*5.5,0.6,D/2+0.3,1.3,H,0.8,M.stone);
+  for(let x=-30;x<=30;x+=6){L.box(x,1.8,D/2+0.1,3.2,4.6,0.3,M.dark);L.put(ucyl(14),M.dark,x,6.4,D/2+0.1,Math.PI/2,0,0,1.6,0.3,1.6);}
+  L.gable(0,H+2,0,W-24,5,D+1,M.roofRed);
+  for(const sx of[-1,1]){
+    L.fbox(sx*(W/2-6),0.6,0,12,H+4,D+2,F);L.box(sx*(W/2-6),H+4.6,0,13.4,1.2,D+3.4,M.stone);
+    L.hip(sx*(W/2-6),H+5.8,0,13.4,7,D+3.4,M.roofRed);
   }
-
-  /* Serpentine path */
-  for(var s = 0; s < SERPENTINE_PATH.length - 1; s++){
-    var A = SERPENTINE_PATH[s];
-    var B = SERPENTINE_PATH[s + 1];
-    var dx = B.x - A.x;
-    var dz = B.z - A.z;
-    var l2 = dx * dx + dz * dz;
-    var t = ((x - A.x) * dx + (z - A.z) * dz) / l2;
-    t = Math.max(0, Math.min(1, t));
-    var cx = A.x + dx * t;
-    var cz = A.z + dz * t;
-    var dd2 = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
-    if(dd2 < 8 + (margin || 0)) return true;
+  if(kind==='tower'){
+    const tz=D/2-6;
+    L.fbox(0,0.6,tz,12,52,12,FAC.cream);L.box(0,36,tz,13.4,1.2,13.4,M.stone);L.box(0,52.6,tz,14,1.4,14,M.stone);
+    const ct=new THREE.MeshLambertMaterial({map:clockTex()});ct.map.wrapS=ct.map.wrapT=THREE.ClampToEdgeWrapping;
+    const cg=new THREE.CircleGeometry(3.4,28);
+    L.put(cg,ct,0,44,tz+6.08);L.put(cg,ct,0,44,tz-6.08,0,Math.PI,0);L.put(cg,ct,6.08,44,tz,0,Math.PI/2,0);L.put(cg,ct,-6.08,44,tz,0,-Math.PI/2,0);
+    L.dome(0,54,tz,6.2,7.5,6.2,M.copper);L.cyl(0,61,tz,0.4,5,M.gold,6);L.cone(0,64,tz,1.2,5,M.gold);
+    for(const[ix,iz]of[[-5.5,-5.5],[5.5,-5.5],[-5.5,5.5],[5.5,5.5]])L.cone(ix,54,tz+iz,0.9,5,M.stone);
+  }else{
+    const tz=D/2-3;
+    L.fbox(0,0.6,tz,18,H+3,8,FAC.cream);L.ped(0,H+3.6,tz+3.5,20,5.5,3,M.stone);
+    for(let i=-2;i<=2;i++)L.col(i*3.4,0.6,tz+4.6,0.55,H-3,M.stone);
   }
-  return false;
+  L.obb(0,0,W+3,D+3,'square-'+angDeg);
+  landmarkBuildings.push({name:'square-'+angDeg,x:px,z:pz,hx:(W+3)/2,hz:(D+3)/2,c:L.c,s:L.s});
+  // ծառեր հրապարակի կողմում
+  for(let i=-3;i<=3;i++){const [x,z]=L.w(i*9,D/2+7);addTree(x,z,rr(.9,1.1),0);}
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 10 — COLLISION SYSTEM (rotation-aware + spatial hash)
-   ═══════════════════════════════════════════════════════════════════ */
-var COL_HASH = {};
-
-function addCollision(x, z, w, d, h, rot){
-  rot = rot || 0;
-  var c = Math.abs(Math.cos(rot));
-  var s = Math.abs(Math.sin(rot));
-  var effW = c * w + s * d;
-  var effD = s * w + c * d;
-
-  var b = { x: x, z: z, w: effW, d: effD, h: h };
-  var x1 = Math.floor((x - effW / 2) / HASH_SIZE);
-  var x2 = Math.floor((x + effW / 2) / HASH_SIZE);
-  var z1 = Math.floor((z - effD / 2) / HASH_SIZE);
-  var z2 = Math.floor((z + effD / 2) / HASH_SIZE);
-
-  for(var i = x1; i <= x2; i++){
-    for(var j = z1; j <= z2; j++){
-      var k = i + ',' + j;
-      if(!COL_HASH[k]) COL_HASH[k] = [];
-      COL_HASH[k].push(b);
-    }
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 11 — LANDMARKS REGISTRY
-   ═══════════════════════════════════════════════════════════════════ */
-var LM = {
-  square:      { x: 0,    z: 0,    name: 'Հանրապետության հրապարակ', r: 90  },
-  cascades:    { x: 0,    z: 380,  name: 'Կասկադ',                    r: 100 },
-  opera:       { x: -220, z: 80,   name: 'Օպերայի շենք',               r: 100 },
-  matenadaran: { x: -330, z: 240,  name: 'Մատենադարան',                r: 80  },
-  gallery:     { x: -230, z: -100, name: 'Ազգային պատկերասրահ',       r: 70  },
-  northAve:    { x: 200,  z: 50,   name: 'Հյուսիսային պողոտա',         r: 80  },
-  marriott:    { x: 0,    z: -240, name: 'Marriott Hotel',             r: 70  },
-  university:  { x: 310,  z: -280, name: 'Երևանի պետական համալսարան', r: 90  }
-};
-
-function isNearLandmark(x, z, extra){
-  for(var k in LM){
-    var L = LM[k];
-    var r = (L.r || 50) + (extra || 0);
-    var dx = x - L.x;
-    var dz = z - L.z;
-    if(dx * dx + dz * dz < r * r) return true;
-  }
-  return false;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 12 — SHARED GEOMETRY + BUILDING MATERIALS
-   ═══════════════════════════════════════════════════════════════════ */
-var BOX_GEO  = new THREE.BoxGeometry(1, 1, 1);
-var CONE4    = new THREE.ConeGeometry(1, 1, 4);
-var CONE6    = new THREE.ConeGeometry(1, 1, 6);
-
-function makeTuffTexture(baseHex, style){
-  var cv = document.createElement('canvas');
-  cv.width = 128; cv.height = 256;
-  var x = cv.getContext('2d');
-  x.fillStyle = baseHex;
-  x.fillRect(0, 0, 128, 256);
-  for(var i = 0; i < 800; i++){
-    x.fillStyle = 'rgba(120,100,80,' + (Math.random() * 0.09) + ')';
-    x.fillRect(Math.random() * 128, Math.random() * 256, 3, 2);
-  }
-  var cols, rows;
-  if(style === 'modern'){ cols = 5; rows = 12; }
-  else if(style === 'dense'){ cols = 4; rows = 14; }
-  else { cols = 3; rows = 8; }
-  var cw = 128 / cols;
-  var ch = 256 / rows;
-  for(var r = 1; r < rows - 0.5; r++){
-    for(var c = 0; c < cols; c++){
-      var wx = c * cw + cw * 0.15;
-      var wy = r * ch + ch * 0.12;
-      var ww = cw * 0.7;
-      var wh = ch * 0.66;
-      x.fillStyle = '#2a3a4a';
-      x.fillRect(wx, wy, ww, wh);
-      var hue = Math.random();
-      var wc = hue > 0.7 ? '#8ac8e8' : (hue > 0.4 ? '#6a8aa8' : '#4a6a88');
-      x.fillStyle = wc;
-      x.fillRect(wx + 1, wy + 1, ww - 2, wh - 2);
-      x.fillStyle = 'rgba(255,255,255,0.35)';
-      x.fillRect(wx + 2, wy + 2, ww * 0.35, wh * 0.4);
-    }
-  }
-  var t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.encoding = THREE.sRGBEncoding;
-  return t;
-}
-
-var BLD_MATS = [
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#e8d8c0', 'normal') }),  // 0
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#d8b090', 'normal') }),  // 1
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#e0c8a8', 'dense')  }),  // 2
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#c8b8a8', 'normal') }),  // 3
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#b8a088', 'normal') }),  // 4
-  new THREE.MeshLambertMaterial({ color: 0x88a8c8, transparent: true, opacity: 0.85 }), // 5
-  new THREE.MeshLambertMaterial({ map: makeTuffTexture('#d8c8b0', 'modern') }),  // 6
-  new THREE.MeshLambertMaterial({ color: 0xd8c0a8 })                             // 7
-];
-
-/* ── Instanced building accumulator ── */
-var BUILDING_DATA = { boxes: {}, roofs: {}, cones: [] };
-
-function ensureArray(map, key){
-  if(!map[key]) map[key] = [];
-  return map[key];
-}
-function collectBox(x, z, w, h, d, rot, matIdx){
-  var y = terrainHeight(x, z);
-  ensureArray(BUILDING_DATA.boxes, matIdx).push({ x: x, y: y, z: z, w: w, h: h, d: d, rot: rot });
-  addCollision(x, z, w, d, h, rot);
-  return y;
-}
-function collectRoof(x, y, z, w, h, d, rot){
-  ensureArray(BUILDING_DATA.roofs, 'r').push({ x: x, y: y, z: z, w: w, h: h, d: d, rot: rot });
-}
-function collectCone(x, y, z, r, h, rotY){
-  BUILDING_DATA.cones.push({ x: x, y: y, z: z, r: r, h: h, rotY: rotY || 0 });
-}
-function rotateOffset(lx, lz, rot){
-  var c = Math.cos(rot);
-  var s = Math.sin(rot);
-  return { x: c * lx + s * lz, z: -s * lx + c * lz };
-}
-
-/* ── Building shapes ── */
-function addBuildingBox(cx, cz, w, h, d, rot, matIdx, detail){
-  var y = collectBox(cx, cz, w, h, d, rot, matIdx);
-  if(detail !== false && h > 10){
-    collectRoof(cx, y + h + 0.4, cz, w * 0.94, 0.9, d * 0.94, rot);
-    if(h < 20 && Math.random() < 0.35){
-      collectCone(cx, y + h + 3, cz, Math.max(w, d) * 0.55, 3 + Math.random() * 3, rot + Math.PI / 4);
-    }
-  }
-}
-function addBuildingL(cx, cz, bw, bh, bd, rot, matIdx){
-  addBuildingBox(cx, cz, bw, bh, bd, rot, matIdx, false);
-  var ww = bw * 0.55;
-  var wd = bd * 0.55;
-  var wh = bh * 0.85;
-  var off = rotateOffset(bw * 0.5 + ww * 0.5 - bw * 0.1, -bd * 0.5 + wd * 0.5, rot);
-  addBuildingBox(cx + off.x, cz + off.z, ww, wh, wd, rot, matIdx, false);
-}
-function addBuildingT(cx, cz, bw, bh, bd, rot, matIdx){
-  addBuildingBox(cx, cz, bw, bh, bd, rot, matIdx, false);
-  var cw = bw * 0.9;
-  var cd = bd * 0.5;
-  var ch = bh * 0.92;
-  addBuildingBox(cx, cz, cw, ch, cd, rot + Math.PI / 2, matIdx, false);
-}
-function addBuildingU(cx, cz, bw, bh, bd, rot, matIdx){
-  addBuildingBox(cx, cz, bw, bh, bd, rot, matIdx, false);
-  var ww = bw * 0.4;
-  var wd = bd * 0.55;
-  var wh = bh * 0.9;
-  var offL = rotateOffset(-bw * 0.5 - ww * 0.5 + bw * 0.1, 0, rot);
-  addBuildingBox(cx + offL.x, cz + offL.z, ww, wh, wd, rot, matIdx, false);
-  var offR = rotateOffset(bw * 0.5 + ww * 0.5 - bw * 0.1, 0, rot);
-  addBuildingBox(cx + offR.x, cz + offR.z, ww, wh, wd, rot, matIdx, false);
-}
-
-/* ── Flush instanced groups into scene ── */
-function flushInstanced(){
-  var dummy = new THREE.Object3D();
-  for(var matIdx in BUILDING_DATA.boxes){
-    var arr = BUILDING_DATA.boxes[matIdx];
-    if(!arr || arr.length === 0) continue;
-    var mat = BLD_MATS[parseInt(matIdx, 10)];
-    var im = new THREE.InstancedMesh(BOX_GEO, mat, arr.length);
-    im.frustumCulled = false;
-    for(var i = 0; i < arr.length; i++){
-      var b = arr[i];
-      dummy.position.set(b.x, b.y + b.h / 2, b.z);
-      dummy.rotation.set(0, b.rot, 0);
-      dummy.scale.set(b.w, b.h, b.d);
-      dummy.updateMatrix();
-      im.setMatrixAt(i, dummy.matrix);
-    }
-    im.instanceMatrix.needsUpdate = true;
-    scene.add(im);
-  }
-  for(var rk in BUILDING_DATA.roofs){
-    var rArr = BUILDING_DATA.roofs[rk];
-    if(!rArr || rArr.length === 0) continue;
-    var rMat = new THREE.MeshLambertMaterial({ color: 0x8a5030 });
-    var rIm = new THREE.InstancedMesh(BOX_GEO, rMat, rArr.length);
-    rIm.frustumCulled = false;
-    for(var j = 0; j < rArr.length; j++){
-      var rb = rArr[j];
-      dummy.position.set(rb.x, rb.y, rb.z);
-      dummy.rotation.set(0, rb.rot, 0);
-      dummy.scale.set(rb.w, rb.h, rb.d);
-      dummy.updateMatrix();
-      rIm.setMatrixAt(j, dummy.matrix);
-    }
-    rIm.instanceMatrix.needsUpdate = true;
-    scene.add(rIm);
-  }
-  if(BUILDING_DATA.cones.length > 0){
-    var cArr = BUILDING_DATA.cones;
-    var cMat = new THREE.MeshLambertMaterial({ color: 0xa85030 });
-    var cIm = new THREE.InstancedMesh(CONE4, cMat, cArr.length);
-    cIm.frustumCulled = false;
-    for(var k = 0; k < cArr.length; k++){
-      var cr = cArr[k];
-      dummy.position.set(cr.x, cr.y, cr.z);
-      dummy.rotation.set(0, cr.rotY, 0);
-      dummy.scale.set(cr.r, cr.h, cr.r);
-      dummy.updateMatrix();
-      cIm.setMatrixAt(k, dummy.matrix);
-    }
-    cIm.instanceMatrix.needsUpdate = true;
-    scene.add(cIm);
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 13 — LANDMARK MATERIALS + HELPERS
-   ═══════════════════════════════════════════════════════════════════ */
-var MAT_TUFF        = new THREE.MeshLambertMaterial({ color: 0xe8d6b0 });
-var MAT_TUFF_DARK   = new THREE.MeshLambertMaterial({ color: 0xc8a878 });
-var MAT_STONE       = new THREE.MeshLambertMaterial({ color: 0x9a8870 });
-var MAT_STONE_LIGHT = new THREE.MeshLambertMaterial({ color: 0xd8ceb8 });
-var MAT_GOLD        = new THREE.MeshLambertMaterial({ color: 0xd8b050 });
-var MAT_WATER       = new THREE.MeshLambertMaterial({ color: 0x3a7ac8 });
-var MAT_GLASS       = new THREE.MeshLambertMaterial({ color: 0x7ac0e0, transparent: true, opacity: 0.75 });
-var MAT_TREE        = new THREE.MeshLambertMaterial({ color: 0x2a5a20 });
-var MAT_TREE_DARK   = new THREE.MeshLambertMaterial({ color: 0x1a4a15 });
-var MAT_TRUNK       = new THREE.MeshLambertMaterial({ color: 0x4a2a14 });
-var MAT_LAWN        = new THREE.MeshLambertMaterial({ color: 0x5a8a3a });
-var MAT_PLAZA       = new THREE.MeshLambertMaterial({ color: 0xc8b090 });
-var MAT_FOUNTAIN    = new THREE.MeshLambertMaterial({ color: 0xb8a888 });
-var MAT_CASCADE     = new THREE.MeshLambertMaterial({ color: 0xd8c8a8 });
-var MAT_RED_TUFF    = new THREE.MeshLambertMaterial({ color: 0xa86050 });
-
-function addBox(parent, x, y, z, w, h, d, mat, rot){
-  var m = new THREE.Mesh(BOX_GEO, mat);
-  m.scale.set(w, h, d);
-  m.position.set(x, y, z);
-  if(rot) m.rotation.y = rot;
-  parent.add(m);
-  return m;
-}
-function addCyl(parent, x, y, z, r1, r2, h, mat, seg){
-  var g = new THREE.CylinderGeometry(r1, r2, h, seg || 12);
-  var m = new THREE.Mesh(g, mat);
-  m.position.set(x, y, z);
-  parent.add(m);
-  return m;
-}
-function addCone(parent, x, y, z, r, h, mat, seg, rotY){
-  var g = new THREE.ConeGeometry(r, h, seg || 4);
-  var m = new THREE.Mesh(g, mat);
-  m.position.set(x, y, z);
-  if(rotY) m.rotation.y = rotY;
-  parent.add(m);
-  return m;
-}
-function addSphere(parent, x, y, z, r, mat){
-  var m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), mat);
-  m.position.set(x, y, z);
-  parent.add(m);
-  return m;
-}
-function addTree(parent, x, y, z, scale){
-  scale = scale || 1;
-  addCyl(parent, x, y + 1.4 * scale, z, 0.3 * scale, 0.4 * scale, 2.8 * scale, MAT_TRUNK, 6);
-  addCone(parent, x, y + 4.8 * scale, z, 1.9 * scale, 4.4 * scale, MAT_TREE, 7);
-}
-function addSmallTree(parent, x, y, z, scale){
-  scale = scale || 0.7;
-  addCyl(parent, x, y + 1.0 * scale, z, 0.2 * scale, 0.3 * scale, 2.0 * scale, MAT_TRUNK, 6);
-  addCone(parent, x, y + 3.6 * scale, z, 1.4 * scale, 3.2 * scale, MAT_TREE_DARK, 6);
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 14 — REPUBLIC SQUARE
-   ────────────────────────────────────────────────────────────────
-   The grand plaza — 62 radius paved circle, monumental fountain in
-   center, 4 large government buildings on the four sides, surrounded
-   by a ring road (built in Section 7).  Trees + lamp posts all around.
-   ═══════════════════════════════════════════════════════════════════ */
 function buildSquare(){
-  var g = new THREE.Group();
-  var cx = LM.square.x, cz = LM.square.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* ── Grand paved plaza ── */
-  var plaza = new THREE.Mesh(new THREE.CircleGeometry(62, 48), MAT_PLAZA);
-  plaza.rotation.x = -Math.PI / 2;
-  plaza.position.set(0, y0 + 0.25, 0);
-  g.add(plaza);
-
-  /* ── Inner ornamental ring ── */
-  var inner = new THREE.Mesh(
-    new THREE.RingGeometry(20, 28, 32),
-    new THREE.MeshLambertMaterial({ color: 0xb8a080 })
-  );
-  inner.rotation.x = -Math.PI / 2;
-  inner.position.set(0, y0 + 0.3, 0);
-  g.add(inner);
-
-  /* ── Monumental fountain ── */
-  addCyl(g, 0, y0 + 0.6, 0, 8.5, 9.5, 1.4, MAT_FOUNTAIN, 24);
-  addCyl(g, 0, y0 + 1.5, 0, 7.5, 7.5, 0.6, MAT_WATER, 24);
-  addCyl(g, 0, y0 + 4, 0, 0.5, 0.5, 5, MAT_WATER, 10);
-  addCyl(g, 0, y0 + 5.5, 0, 2, 2, 0.4, MAT_WATER, 16);
-
-  /* ═══ NORTH — History Museum (L-shape with columns) ═══ */
-  addBox(g, 0, y0 + 15, -62, 50, 30, 18, MAT_TUFF);
-  addBox(g, 25, y0 + 13, -58, 18, 26, 22, MAT_TUFF);
-  addCone(g, 0, y0 + 34, -62, 20, 6, MAT_TUFF_DARK, 4, Math.PI / 4);
-  for(var i = -7; i <= 7; i++){
-    addCyl(g, i * 3.2, y0 + 8, -50, 1, 1, 16, MAT_TUFF, 10);
+  const R=RING.r;
+  disc(M.pave,0,0,0.01,R-RW/2-SW,0.12,6);                    // հրապարակի սալիկապատ հատակ
+  // կենտրոնական շատրվան
+  const F=new Loc(0,0,0);
+  F.cyl(0,-0.6,0,24,1.8,M.stone,40);F.cyl(0,-0.6,0,22.6,2.05,M.water,40);
+  F.cyl(0,0,0,4.5,6,M.stone,16);F.cyl(0,5,0,9,0.9,M.stone,24);F.cyl(0,5.5,0,8.1,0.5,M.water,24);
+  F.cyl(0,6,0,1.5,3,M.stone,10);
+  addCirc(0,0,25.2);
+  const jm=new THREE.MeshBasicMaterial({color:0xeaf6ff,transparent:true,opacity:.55,depthWrite:false});
+  const jg=new THREE.ConeGeometry(0.6,1,6);jg.translate(0,0.5,0);
+  for(let i=0;i<17;i++){
+    const a=i<16?i/16*TAU:0,rad=i<16?15:0;
+    const m=new THREE.Mesh(jg,jm);m.position.set(Math.cos(a)*rad,terrainH(0,0)+1.4,Math.sin(a)*rad);
+    m.userData={ph:rng()*6,h:i<16?5+rng()*3:15};scene.add(m);jets.push(m);
   }
-  addBox(g, 0, y0 + 17, -50, 48, 2, 3, MAT_TUFF_DARK);
-  /* Clock tower */
-  addBox(g, 0, y0 + 26, -72, 14, 46, 14, MAT_TUFF);
-  addBox(g, 0, y0 + 51, -72, 16, 3, 16, MAT_TUFF_DARK);
-  var clock = new THREE.Mesh(
-    new THREE.CylinderGeometry(3.2, 3.2, 0.4, 20),
-    new THREE.MeshLambertMaterial({ color: 0xf8f0d8 })
-  );
-  clock.rotation.x = Math.PI / 2;
-  clock.position.set(0, y0 + 42, -64);
-  g.add(clock);
-  addCyl(g, 0, y0 + 55, -72, 3, 2, 7, MAT_RED_TUFF, 6);
-  addCone(g, 0, y0 + 60, -72, 3, 4, MAT_GOLD, 4, Math.PI / 4);
-
-  addCollision(cx, cz - 62, 50, 18, 30, 0);
-  addCollision(cx, cz - 72, 14, 14, 46, 0);
-  addCollision(cx + 25, cz - 58, 18, 22, 26, 0);
-
-  /* ═══ SOUTH — Grand Hotel ═══ */
-  addBox(g, 0, y0 + 18, 62, 55, 36, 20, MAT_TUFF);
-  addBox(g, 0, y0 + 37, 62, 58, 3, 23, MAT_TUFF_DARK);
-  for(var r = 0; r < 5; r++){
-    for(var c = -8; c <= 8; c++){
-      var w = new THREE.Mesh(BOX_GEO, MAT_GLASS);
-      w.scale.set(1.6, 2.6, 0.3);
-      w.position.set(c * 2.8, y0 + 6 + r * 5.5, 72);
-      g.add(w);
-    }
-  }
-  for(var ii = -8; ii <= 8; ii++){
-    addCyl(g, ii * 3.2, y0 + 5, 52, 1, 1, 10, MAT_TUFF, 10);
-  }
-  addBox(g, 0, y0 + 11, 52, 56, 2, 3, MAT_TUFF_DARK);
-  addCollision(cx, cz + 62, 55, 20, 36, 0);
-
-  /* ═══ WEST — Government building ═══ */
-  addBox(g, -62, y0 + 14, 0, 20, 28, 48, MAT_TUFF);
-  addBox(g, -62, y0 + 29, 0, 22, 2.5, 50, MAT_TUFF_DARK);
-  for(var jj = -6; jj <= 6; jj++){
-    addCyl(g, -52, y0 + 7, jj * 3.2, 0.9, 0.9, 14, MAT_TUFF, 10);
-  }
-  addCollision(cx - 62, cz, 20, 48, 28, 0);
-
-  /* ═══ EAST — Ministry building ═══ */
-  addBox(g, 62, y0 + 15, 0, 20, 30, 52, MAT_TUFF);
-  addBox(g, 62, y0 + 31, 0, 22, 2.5, 54, MAT_TUFF_DARK);
-  for(var kk = -7; kk <= 7; kk++){
-    addCyl(g, 52, y0 + 7, kk * 3.2, 0.9, 0.9, 14, MAT_TUFF, 10);
-  }
-  addCollision(cx + 62, cz, 20, 52, 30, 0);
-
-  /* ── Trees ring around plaza ── */
-  for(var t = 0; t < 16; t++){
-    var a = (t / 16) * Math.PI * 2;
-    var tx = Math.sin(a) * 56;
-    var tz = Math.cos(a) * 56;
-    addTree(g, tx, y0, tz, 1.3);
-  }
-
-  /* ── Lamp posts ── */
-  for(var L = 0; L < 12; L++){
-    var la = (L / 12) * Math.PI * 2 + 0.26;
-    var lx = Math.sin(la) * 44;
-    var lz = Math.cos(la) * 44;
-    addCyl(g, lx, y0 + 3, lz, 0.2, 0.2, 6, new THREE.MeshLambertMaterial({ color: 0x303030 }), 6);
-    var lamp = new THREE.Mesh(
-      new THREE.SphereGeometry(0.6, 8, 6),
-      new THREE.MeshBasicMaterial({ color: 0xfff4c0 })
-    );
-    lamp.position.set(lx, y0 + 6.2, lz);
-    g.add(lamp);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
+  // Երկու նստարանային շերտ / լապտերներ հրապարակի եզրին
+  for(let i=0;i<16;i++){const a=i/16*TAU+0.2;lamp(Math.cos(a)*88,Math.sin(a)*88);}
+  squareBuilding(135,'tower');squareBuilding(45,'arch');squareBuilding(225,'arch');squareBuilding(315,'arch');
+  reserved.push({t:2,x:0,z:0,r:150});
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 15 — OPERA HOUSE
-   ────────────────────────────────────────────────────────────────
-   Big oval building with columned arcade, twin domes, entrance
-   portico.  Surrounded by 85-radius green park with swan lake in
-   front and 30 trees around the perimeter.
-   ═══════════════════════════════════════════════════════════════════ */
-function buildOpera(){
-  var g = new THREE.Group();
-  var cx = LM.opera.x, cz = LM.opera.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* ── Big green park ── */
-  var park = new THREE.Mesh(new THREE.CircleGeometry(85, 40), MAT_LAWN);
-  park.rotation.x = -Math.PI / 2;
-  park.position.set(0, y0 + 0.28, 0);
-  g.add(park);
-
-  /* ── Swan lake in front ── */
-  var pond = new THREE.Mesh(
-    new THREE.CircleGeometry(14, 24),
-    new THREE.MeshLambertMaterial({ color: 0x4a8ac0 })
-  );
-  pond.rotation.x = -Math.PI / 2;
-  pond.position.set(0, y0 + 0.35, 35);
-  g.add(pond);
-
-  /* ── Main oval body ── */
-  var main = new THREE.Mesh(new THREE.CylinderGeometry(26, 28, 20, 32), MAT_TUFF);
-  main.position.set(0, y0 + 10, 0);
-  main.scale.set(1, 1, 0.72);
-  g.add(main);
-
-  /* ── Upper drum ── */
-  var cap = new THREE.Mesh(new THREE.CylinderGeometry(26.5, 26.5, 2.8, 32), MAT_TUFF_DARK);
-  cap.position.set(0, y0 + 21, 0);
-  cap.scale.set(1, 1, 0.72);
-  g.add(cap);
-
-  /* ── Dome ── */
-  var dome1 = new THREE.Mesh(
-    new THREE.SphereGeometry(15, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2),
-    MAT_RED_TUFF
-  );
-  dome1.position.set(0, y0 + 22, 0);
-  dome1.scale.set(1, 0.55, 0.72);
-  g.add(dome1);
-
-  /* ── Columned arcade (28 columns) ── */
-  for(var i = 0; i < 28; i++){
-    var a = (i / 28) * Math.PI * 2;
-    addCyl(g, Math.cos(a) * 28, y0 + 6, Math.sin(a) * 20, 0.9, 0.9, 14, MAT_TUFF, 8);
-  }
-
-  /* ── Entrance portico (south) ── */
-  for(var j = -4; j <= 4; j++){
-    addCyl(g, j * 2.8, y0 + 6, 24, 0.95, 0.95, 12, MAT_TUFF, 10);
-  }
-  addBox(g, 0, y0 + 13, 24, 25, 2.5, 5, MAT_TUFF_DARK);
-  addCone(g, 0, y0 + 16, 24, 8, 4, MAT_RED_TUFF, 4, Math.PI / 4);
-
-  /* ── Colonnade steps ── */
-  addBox(g, 0, y0 + 1, 32, 30, 2, 10, MAT_STONE_LIGHT);
-
-  /* ── Trees ring around park ── */
-  for(var t = 0; t < 30; t++){
-    var ta = (t / 30) * Math.PI * 2 + 0.3;
-    var tr = 60 + Math.random() * 18;
-    addTree(g, Math.cos(ta) * tr, y0, Math.sin(ta) * tr, 1.2 + Math.random() * 0.6);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 55, 45, 26, 0);
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 16 — CASCADE
-   ────────────────────────────────────────────────────────────────
-   The staircase is SMALLER (human-scale). Base plaza at z=340 (top
-   of North Ave). 6 tuff terraces going up the slope, each 12 units
-   north, with side pools, small statues, front stair treads.
-   At the top: the Victory column and golden star.  The SERPENTINE
-   ROAD (built in Section 8) reaches the peak from the side.
-   ═══════════════════════════════════════════════════════════════════ */
+/* — 13.2 Կասկադ — */
 function buildCascade(){
-  var g = new THREE.Group();
-  var baseZ = 340;
-  var baseY = terrainHeight(0, baseZ);
-
-  /* ── Base plaza at foot of stairs ── */
-  var plaza = new THREE.Mesh(new THREE.CircleGeometry(42, 32), MAT_PLAZA);
-  plaza.rotation.x = -Math.PI / 2;
-  plaza.position.set(0, baseY + 0.4, baseZ - 15);
-  g.add(plaza);
-
-  /* ── Plaza fountain ── */
-  addCyl(g, 0, baseY + 0.7, baseZ - 15, 3.5, 4.2, 1.0, MAT_FOUNTAIN, 16);
-  addCyl(g, 0, baseY + 1.4, baseZ - 15, 3, 3, 0.4, MAT_WATER, 16);
-
-  /* ── Trees at plaza edge ── */
-  for(var tp = 0; tp < 12; tp++){
-    var ta = (tp / 12) * Math.PI * 2;
-    addTree(g, Math.cos(ta) * 38, baseY, baseZ - 15 + Math.sin(ta) * 38, 0.9);
-  }
-
-  /* ── The staircase — 6 terraces ── */
-  var terraces = 6;
-  var stepDepth = 12;
-  var baseWidth = 44;
-
-  for(var s = 0; s < terraces; s++){
-    var tw = baseWidth - s * 3.5;
-    var tz = baseZ + 6 + s * stepDepth;
-    var ty = terrainHeight(0, tz);
-
-    /* Terrace platform */
-    addBox(g, 0, ty + 2, tz, tw, 4, stepDepth - 2, MAT_CASCADE);
-
-    /* Front stair treads (3 small steps) */
-    for(var st = 0; st < 3; st++){
-      addBox(g, 0, ty + 0.4 + st * 0.9, tz - stepDepth / 2 + st * 1.1, tw - 3, 0.5, 1.3, MAT_STONE_LIGHT);
+  const half=CAS.half,SL=STEPLEN;
+  // ստորոտի հրապարակ
+  plane(M.pave,0,244,150,24,0,0.12,6);
+  for(let k=0;k<CAS.n;k++){
+    const z0=CAS.z0+k*SL,top=(k+1)*CAS.rise,prev=k*CAS.rise;
+    const L=new Loc(0,z0+SL/2,0,0);
+    L.box(0,-3,0,half*2,top+3.3,SL,M.limestone);                 // տեռասի մարմին
+    L.box(0,top+0.3,0,half*2+1.6,0.5,1.0,M.stone);               // քիվ առջևում
+    // ջրանցք + կողային եզրեր
+    L.box(0,top+0.2,0,9,0.2,SL-10,M.water);
+    for(const s of[-1,1])L.box(s*5.5,top+0.3,0,1,0.9,SL-10,M.stone);
+    // ջրվեժ ռիզերի վրա
+    L.box(0,prev+0.2,-SL/2-0.12,9,top-prev,0.25,M.water);
+    // աստիճաններ (6) ռիզերի առջև
+    for(let j=0;j<6;j++){
+      const h=(j+1)*(CAS.rise/6)+0.3;
+      L.box(0,prev-0.3,-SL/2-(6-j)*1.2+0.6,24,h,1.2,M.limestone);
     }
-
-    /* Side water channels */
-    for(var side = -1; side <= 1; side += 2){
-      var poolX = side * (tw / 2 - 3);
-      var pool = new THREE.Mesh(BOX_GEO, MAT_WATER);
-      pool.scale.set(2, 0.5, stepDepth - 5);
-      pool.position.set(poolX, ty + 4.2, tz);
-      g.add(pool);
-    }
-
-    /* Small statues on terrace edges */
-    for(var sd = -1; sd <= 1; sd += 2){
-      addCyl(g, sd * (tw / 2 + 1.5), ty + 5.5, tz, 0.8, 0.8, 2.5, MAT_STONE, 6);
-      addSphere(g, sd * (tw / 2 + 1.5), ty + 7.3, tz, 0.7, MAT_STONE_LIGHT);
+    // կողային ջրավազաններ և արձաններ
+    for(const s of[-1,1]){
+      L.cyl(s*28,top+0.3,0,7.6,0.7,M.stone,20);L.cyl(s*28,top+0.7,0,6.8,0.3,M.water,20);
+      L.cyl(s*28,top+1,0,0.8,3,M.stone,8);
+      const sz=-SL/2+7;
+      L.box(s*40,top+0.3,sz,1.8,2.6,1.8,M.stone);L.cyl(s*40,top+2.9,sz,0.6,2.2,M.white,8);L.sph(s*40,top+5.4,sz,0.55,M.white);
+      L.box(s*18,top+0.3,0,7,0.7,SL-18,M.lawn);                  // ծաղկային մահճակալ
     }
   }
-
-  /* ── Monument at the peak ── */
-  var topZ = baseZ + 6 + terraces * stepDepth + 8;
-  var topY = terrainHeight(0, topZ);
-
-  addBox(g, 0, topY + 1.5, topZ, 26, 3, 18, MAT_CASCADE);
-  addBox(g, 0, topY + 6, topZ, 9, 7, 9, MAT_STONE);
-  addCyl(g, 0, topY + 18, topZ, 1.5, 2.2, 22, MAT_STONE, 10);
-  addSphere(g, 0, topY + 31, topZ, 1.9, MAT_GOLD);
-  addCone(g, 0, topY + 33.5, topZ, 1.4, 2.4, MAT_GOLD, 4, 0);
-
-  /* ── Green hillside (both sides of Cascade) ── */
-  for(var side2 = -1; side2 <= 1; side2 += 2){
-    for(var i = 0; i < 30; i++){
-      var tx = side2 * (38 + Math.random() * 50);
-      var tz2 = baseZ - 20 + Math.random() * 140;
-      var ty2 = terrainHeight(tx, tz2);
-      if(ty2 > 0){
-        addTree(g, tx, ty2, tz2, 0.8 + Math.random() * 0.9);
-      }
-    }
-  }
-
-  g.position.set(0, 0, 0);
-  scene.add(g);
-
-  /* ── Collisions on each terrace ── */
-  for(var s2 = 0; s2 < terraces; s2++){
-    var tz2 = baseZ + 6 + s2 * stepDepth;
-    var tw2 = baseWidth - s2 * 3.5;
-    addCollision(0, tz2, tw2, stepDepth - 2, 4, 0);
+  // գագաթի հուշարձան՝ սյուն + ոսկե գունդ
+  const T=new Loc(0,CAS.z1-26,0,0),y=CAS.n*CAS.rise+0.8;
+  T.box(0,y,0,16,1.2,16,M.stone);T.box(0,y+1.2,0,11,5,11,M.limestone);
+  T.cyl(0,y+6,0,2.8,32,M.stone,14);T.cyl(0,y+38,0,3.6,1.4,M.stone,14);T.sph(0,y+44,0,5.8,M.gold);
+  for(let i=0;i<8;i++){const a=i/8*TAU;T.col(Math.cos(a)*10,y+1.2,Math.sin(a)*10,0.5,5,M.stone);}
+  // բախման արգելք՝ Կասկադի ստորոտ
+  addOBB(0,300,half+1,40,0,false,'cascade-foot');addOBB(0,256.4,12,3.4,0,false,'cascade-stairs');
+  reserved.push({t:0,x:0,z:520,hx:340,hz:290,c:1,s:0});
+  // լանջերի ծառեր
+  for(let i=0;i<340;i++){
+    const x=rr(-300,300),z=rr(262,790);if(Math.abs(x)<56)continue;
+    const h=terrainH(x,z);if(h<3||h>152)continue;
+    addTree(x,z,rr(1.5,2.6),rng()<.55?1:0,false);
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 17 — MATENADARAN
-   ────────────────────────────────────────────────────────────────
-   On its own hill (NW). Massive base with grand staircase in front,
-   central block with 11 huge columns, twin statues flanking the
-   pediment, side wing behind, and 20 trees around the hill.
-   ═══════════════════════════════════════════════════════════════════ */
+/* — 13.3 Օպերայի շենք (էլիպս 140×105, 28 սյուն, գմբեթ) — */
+function buildOpera(){
+  const Y=makeYard({name:'opera',x0:-405,x1:-155,z0:30,z1:205,gate:'W',gpos:130,entry:[-352,130],
+    lawns:[[-185,117,60,150],[-290,196,200,16],[-290,40,200,16],[-382,60,38,56]]});
+  const L=new Loc(-280,130,-Math.PI/2);
+  const a=70,b=52.5;
+  L.oval(0,-3,0,a+6,b+6,3.5,M.stoneDk);
+  L.oval(0,0.5,0,a-6,b-6,16,null,FAC.pink);
+  for(let i=0;i<28;i++){const t=i/28*TAU;L.col(Math.cos(t)*(a-2),0.5,Math.sin(t)*(b-2),1.1,15,M.stone);}
+  L.oval(0,15.6,0,a,b,2.4,M.stone);
+  L.oval(0,18,0,a-14,b-12,9,null,FAC.cream);
+  L.oval(0,27,0,a-12,b-10,1.2,M.stone);
+  L.dome(0,28,0,a-16,22,b-14,M.copper);
+  L.cyl(0,48,0,4,5,M.stone,12);L.cone(0,53,0,3.4,7,M.gold);
+  // ճակատային պորտիկ
+  const pz=b+8;
+  for(let i=0;i<8;i++)L.col(-17.5+i*5,0.5,pz,1.05,14.5,M.stone);
+  L.box(0,15,pz,42,2,9,M.stone);L.ped(0,17,pz,42,6.5,9,M.stone);L.box(0,0.5,pz-1,43,0.8,10,M.stoneDk);
+  for(let j=0;j<6;j++)L.box(0,-0.2,pz+5.4+j*1.4,48,0.5+(5-j)*0.28,1.4,M.stone);
+  // բախումներ՝ էլիպսի մոտարկում շրջաններով + պորտիկ
+  for(const[x,r]of[[0,54],[-26,52],[26,52],[-46,40],[46,40],[-60,28],[60,28],[-68,14],[68,14]])L.circ(x,0,r);
+  L.obb(0,pz+2,46,18,'opera-portico');
+  const wp=L.w(0,0);landmarkBuildings.push({name:'opera',x:wp[0],z:wp[1],hx:a,hz:b,c:L.c,s:L.s,ell:true});
+  pond(-188,100,14);
+  Y.plant({scatter:34,step:14});
+}
+
+/* — 13.4 Մատենադարան — */
 function buildMatenadaran(){
-  var g = new THREE.Group();
-  var cx = LM.matenadaran.x, cz = LM.matenadaran.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* ── Wide base terrace ── */
-  addBox(g, 0, y0 + 3, 0, 70, 6, 50, MAT_STONE);
-
-  /* ── Grand staircase (south side, 12 steps) ── */
-  for(var s = 0; s < 12; s++){
-    addBox(g, 0, y0 + 6 + s * 0.9, 22 - s * 1.2, 28, 0.9, 1.8, MAT_STONE_LIGHT);
-  }
-
-  /* ── Central block ── */
-  addBox(g, 0, y0 + 20, -3, 44, 24, 28, MAT_TUFF);
-
-  /* ── 11 huge columns ── */
-  for(var i = -5; i <= 5; i++){
-    addCyl(g, i * 3.6, y0 + 18, 16, 1.2, 1.2, 18, MAT_TUFF, 14);
-  }
-
-  /* ── Pediment ── */
-  addBox(g, 0, y0 + 32, 16, 46, 2, 7, MAT_TUFF_DARK);
-  addCone(g, 0, y0 + 38, 16, 17, 5, MAT_TUFF, 4, Math.PI / 4);
-
-  /* ── Twin statues flanking pediment ── */
-  addBox(g, -15, y0 + 30, 15, 3, 7, 3, MAT_TUFF_DARK);
-  addBox(g,  15, y0 + 30, 15, 3, 7, 3, MAT_TUFF_DARK);
-
-  /* ── Side wing behind ── */
-  addBox(g, 0, y0 + 16, -30, 30, 16, 20, MAT_TUFF);
-
-  /* ── Trees around the hill ── */
-  for(var t = 0; t < 20; t++){
-    var a = (t / 20) * Math.PI * 2 + 0.5;
-    var tx = Math.cos(a) * 55;
-    var tz = Math.sin(a) * 48;
-    var ty = terrainHeight(cx + tx, cz + tz);
-    addTree(g, tx, ty, tz, 1.1);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 70, 50, 32, 0);
+  const Y=makeYard({name:'mat',x0:-600,x1:-400,z0:250,z1:420,gate:'S',gpos:-500,entry:[-500,287],
+    lawns:[[-545,360,70,100],[-455,360,70,100],[-500,405,150,22]]});
+  const L=new Loc(-500,330,Math.PI);          // ճակատը դեպի հարավ
+  const B=FAC.basalt;
+  L.box(0,-3,0,112,3.8,52,M.stoneDk);
+  L.fbox(0,0.8,0,96,26,40,B);
+  L.box(0,26.8,0,98,1.6,42,M.stoneDk);
+  L.fbox(-52,0.8,-4,18,30,30,B);L.fbox(52,0.8,-4,18,30,30,B);
+  L.box(-52,30.8,-4,19,1.2,31,M.stoneDk);L.box(52,30.8,-4,19,1.2,31,M.stoneDk);
+  L.box(0,28.4,0,70,6,34,M.stone);L.gable(0,34.4,0,70,5,36,M.roofRed);
+  // 11 հսկա սյուն
+  for(let i=0;i<11;i++)L.col(-35+i*7,0.8,26,1.6,22,M.stone);
+  L.box(0,22.8,26,78,3,7,M.stone);L.ped(0,25.8,26,78,9,7,M.stone);
+  L.box(0,0.8,22,80,0.9,10,M.stoneDk);
+  // 12 աստիճան
+  for(let j=0;j<12;j++)L.box(0,-0.2,32+j*1.5,72,0.5+(11-j)*0.3,1.5,M.stone);
+  // 2 կողային կոթող
+  for(const s of[-1,1]){L.box(s*46,-0.2,40,3.4,18,3.4,M.stone);L.cone(s*46,17.8,40,2.4,5,M.stone);}
+  L.obb(0,0,114,54,'mat-body');L.obb(0,31,80,22,'mat-portico');
+  const wp=L.w(0,0);landmarkBuildings.push({name:'mat',x:wp[0],z:wp[1],hx:57,hz:27,c:L.c,s:L.s});
+  Y.plant({scatter:30,step:15});
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 18 — NATIONAL GALLERY
-   ═══════════════════════════════════════════════════════════════════ */
+/* — 13.5 Ազգային պատկերասրահ — */
 function buildGallery(){
-  var g = new THREE.Group();
-  var cx = LM.gallery.x, cz = LM.gallery.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* ── Lawn ── */
-  var lawn = new THREE.Mesh(new THREE.CircleGeometry(48, 28), MAT_LAWN);
-  lawn.rotation.x = -Math.PI / 2;
-  lawn.position.set(0, y0 + 0.28, 0);
-  g.add(lawn);
-
-  /* ── Main block ── */
-  addBox(g, 0, y0 + 11, 0, 40, 22, 28, MAT_TUFF);
-
-  /* ── Front colonnade ── */
-  for(var i = -6; i <= 6; i++){
-    addCyl(g, i * 3, y0 + 7, 15, 0.9, 0.9, 14, MAT_TUFF, 10);
-  }
-  addBox(g, 0, y0 + 22, 15, 38, 2, 4, MAT_TUFF_DARK);
-  addCone(g, 0, y0 + 26, 15, 14, 3.5, MAT_TUFF, 4, Math.PI / 4);
-
-  /* ── Side wings ── */
-  addBox(g, -17, y0 + 14, 0, 7, 10, 26, MAT_TUFF);
-  addBox(g,  17, y0 + 14, 0, 7, 10, 26, MAT_TUFF);
-
-  /* ── Trees ── */
-  for(var t = 0; t < 10; t++){
-    var a = (t / 10) * Math.PI * 2 + 0.4;
-    addTree(g, Math.cos(a) * 38, y0, Math.sin(a) * 38, 1);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 40, 28, 24, 0);
+  const Y=makeYard({name:'gallery',x0:-415,x1:-185,z0:-190,z1:-20,gate:'N',gpos:-300,entry:[-300,-57],
+    lawns:[[-380,-110,50,100],[-220,-110,50,100],[-300,-175,160,22]]});
+  const L=new Loc(-300,-100,0);
+  const F=FAC.cream;
+  L.box(0,-3,0,134,3.8,78,M.stoneDk);
+  L.fbox(0,0.8,-7.5,94,20,60,F);L.box(0,20.8,-7.5,96,1.6,62,M.stone);
+  L.hip(0,22.4,-7.5,94,7,60,M.roofRed);
+  for(const s of[-1,1]){L.fbox(s*56,0.8,-18.7,18,15,37.5,F);L.box(s*56,15.8,-18.7,19,1.2,38.5,M.stone);L.hip(s*56,17,-18.7,19,5,38.5,M.roofRed);}
+  for(let i=0;i<13;i++)L.col(-39+i*6.5,0.8,30,1.0,15.5,M.stone);
+  L.box(0,16.3,30,84,1.8,12,M.stone);L.ped(0,18.1,30,84,6,12,M.stone);
+  L.box(0,0.8,26,86,0.7,14,M.stoneDk);
+  for(let j=0;j<6;j++)L.box(0,-0.2,37.4+j*1.4,50,0.5+(5-j)*0.3,1.4,M.stone);
+  L.obb(0,0,96,76,'gallery-body');L.obb(-56,-18.7,19,38,'gallery-wL');L.obb(56,-18.7,19,38,'gallery-wR');
+  landmarkBuildings.push({name:'gallery',x:-300,z:-100,hx:48,hz:38,c:1,s:0});
+  landmarkBuildings.push({name:'gallery-wL',x:-356,z:-118.7,hx:9.5,hz:19,c:1,s:0});
+  landmarkBuildings.push({name:'gallery-wR',x:-244,z:-118.7,hx:9.5,hz:19,c:1,s:0});
+  Y.plant({scatter:26,step:15});
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 19 — MARRIOTT HOTEL
-   ═══════════════════════════════════════════════════════════════════ */
+/* — 13.6 Marriott Hotel — */
 function buildMarriott(){
-  var g = new THREE.Group();
-  var cx = LM.marriott.x, cz = LM.marriott.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* ── Plaza ── */
-  var plaza = new THREE.Mesh(new THREE.CircleGeometry(45, 28), MAT_PLAZA);
-  plaza.rotation.x = -Math.PI / 2;
-  plaza.position.set(0, y0 + 0.28, 0);
-  g.add(plaza);
-
-  /* ── Main building ── */
-  addBox(g, 0, y0 + 16, 0, 36, 32, 30, MAT_TUFF);
-  addBox(g, 0, y0 + 33, 0, 38, 3, 32, MAT_TUFF_DARK);
-
-  /* ── Front window grid ── */
-  for(var r = 0; r < 7; r++){
-    for(var c = -5; c <= 5; c++){
-      var w = new THREE.Mesh(BOX_GEO, MAT_GLASS);
-      w.scale.set(1.8, 2.8, 0.3);
-      w.position.set(c * 2.8, y0 + 5 + r * 4, 15.2);
-      g.add(w);
-    }
-  }
-  /* ── Ground floor columns ── */
-  for(var i = -5; i <= 5; i++){
-    addCyl(g, i * 3.2, y0 + 4, 15, 0.9, 0.9, 8, MAT_TUFF, 8);
-  }
-  /* ── Entrance canopy ── */
-  addBox(g, 0, y0 + 9, 16, 20, 1, 4, MAT_TUFF_DARK);
-
-  /* ── Trees ── */
-  for(var t = 0; t < 12; t++){
-    var a = (t / 12) * Math.PI * 2 + 0.2;
-    addTree(g, Math.cos(a) * 36, y0, Math.sin(a) * 36, 1);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 36, 30, 32, 0);
+  const Y=makeYard({name:'marriott',x0:-230,x1:30,z0:-500,z1:-300,gate:'N',gpos:-100,entry:[-100,-348],
+    lawns:[[-190,-340,70,70],[-10,-340,60,70],[-100,-480,220,30],[-195,-420,60,80],[-5,-420,50,80]]});
+  const L=new Loc(-100,-400,0);
+  L.box(0,-3,0,124,3.8,84,M.stoneDk);
+  L.fbox(0,0.8,0,120,34,80,FAC.hotel);
+  L.box(0,34.8,0,122,1.6,82,M.stone);
+  L.box(0,36.4,0,60,5,36,M.stoneDk);L.box(0,41.4,0,22,2,8,M.white);
+  // 11 սյուն մուտքի մոտ + կոնսոլ
+  for(let i=0;i<11;i++)L.col(-22+i*4.4,0.8,46,0.8,9.5,M.stone);
+  L.box(0,10.3,45,50,1,12,M.stone);L.box(0,0.8,41,50,0.6,10,M.stoneDk);
+  L.box(0,0.8,40.3,16,6,0.4,M.glass);
+  for(let j=0;j<4;j++)L.box(0,-0.2,52+j*1.3,52,0.5+(3-j)*0.3,1.3,M.stone);
+  L.obb(0,0,122,82,'marriott-body');L.obb(0,45,52,12,'marriott-canopy');
+  landmarkBuildings.push({name:'marriott',x:-100,z:-400,hx:61,hz:41,c:1,s:0});
+  Y.plant({scatter:30,step:15});
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 20 — YEREVAN STATE UNIVERSITY
-   ═══════════════════════════════════════════════════════════════════ */
+/* — 13.7 Երևանի պետական համալսարան — */
 function buildUniversity(){
-  var g = new THREE.Group();
-  var cx = LM.university.x, cz = LM.university.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* ── Big lawn ── */
-  var lawn = new THREE.Mesh(new THREE.CircleGeometry(60, 32), MAT_LAWN);
-  lawn.rotation.x = -Math.PI / 2;
-  lawn.position.set(0, y0 + 0.28, 0);
-  g.add(lawn);
-
-  /* ── Base ── */
-  addBox(g, 0, y0 + 4, 0, 56, 8, 40, MAT_STONE);
-
-  /* ── Main block ── */
-  addBox(g, 0, y0 + 18, 0, 50, 22, 32, MAT_TUFF);
-
-  /* ── Central tower ── */
-  addBox(g, 0, y0 + 32, 0, 16, 18, 16, MAT_TUFF);
-  addBox(g, 0, y0 + 42, 0, 18, 3, 18, MAT_TUFF_DARK);
-  addCone(g, 0, y0 + 47, 0, 6, 8, MAT_GOLD, 4, Math.PI / 4);
-
-  /* ── Big colonnade ── */
-  for(var i = -8; i <= 8; i++){
-    addCyl(g, i * 3, y0 + 18, 17, 1, 1, 18, MAT_TUFF, 10);
-  }
-  addBox(g, 0, y0 + 27, 17, 52, 2, 4, MAT_TUFF_DARK);
-
-  /* ── Front steps ── */
-  addBox(g, 0, y0 + 2, 22, 40, 3, 6, MAT_STONE_LIGHT);
-
-  /* ── Trees ── */
-  for(var t = 0; t < 18; t++){
-    var a = (t / 18) * Math.PI * 2;
-    addTree(g, Math.cos(a) * 50, y0, Math.sin(a) * 50, 1.1);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
-  addCollision(cx, cz, 56, 40, 44, 0);
+  const Y=makeYard({name:'uni',x0:250,x1:550,z0:-455,z1:-285,gate:'N',gpos:400,entry:[400,-298],
+    lawns:[[300,-350,90,110],[500,-350,90,110],[400,-435,260,30],[400,-385,120,10]]});
+  const L=new Loc(400,-350,0);
+  L.box(0,-3,0,164,3.8,84,M.stoneDk);
+  L.fbox(0,0.8,0,160,24,80,FAC.pink);L.box(0,24.8,0,162,1.6,82,M.stone);L.gable(0,26.4,0,160,7,82,M.roofRed);
+  for(const s of[-1,1]){L.fbox(s*68,0.8,0,26,28,84,FAC.pink);L.box(s*68,28.8,0,27.5,1.4,85.5,M.stone);L.hip(s*68,30,0,27.5,8,85.5,M.roofRed);}
+  // կենտրոնական աշտարակ + ոսկե գագաթ
+  L.fbox(0,0.8,18,24,50,24,FAC.cream);L.box(0,40,18,26,1.4,26,M.stone);L.box(0,50.8,18,26,1.6,26,M.stone);
+  L.dome(0,52.4,18,10,10,10,M.copper);L.cyl(0,61,18,0.5,8,M.gold,8);L.cone(0,68,18,2,10,M.gold);
+  for(let i=0;i<13;i++)L.col(-36+i*6,0.8,46,1.1,16,M.stone);
+  L.box(0,16.8,46,80,1.8,10,M.stone);L.ped(0,18.6,46,80,6.5,10,M.stone);L.box(0,0.8,42,82,0.7,12,M.stoneDk);
+  for(let j=0;j<6;j++)L.box(0,-0.2,52+j*1.3,56,0.5+(5-j)*0.3,1.3,M.stone);
+  L.obb(0,0,164,84,'uni-body');L.obb(0,47,84,12,'uni-portico');
+  landmarkBuildings.push({name:'uni',x:400,z:-350,hx:82,hz:42,c:1,s:0});
+  Y.plant({scatter:30,step:15});
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 21 — NORTHERN AVENUE (pedestrian street)
-   ═══════════════════════════════════════════════════════════════════ */
-function buildNorthAvenue(){
-  var g = new THREE.Group();
-  var cx = LM.northAve.x, cz = LM.northAve.z;
-  var y0 = terrainHeight(cx, cz);
-
-  /* ── Buildings on both sides ── */
-  for(var side = -1; side <= 1; side += 2){
-    for(var i = 0; i < 5; i++){
-      var bx = side * 20;
-      var bz = (i - 2) * 26;
-      var bh = 14 + Math.random() * 8;
-      addBuildingBox(cx + bx, cz + bz, 15, bh, 22, 0, Math.floor(Math.random() * 4), true);
+/* — 13.8 Հյուսիսային պողոտա (հետիոտն, 32 լայնք, 10 շենք, 3 ջրավազան) — */
+const AVE={a:[156,58],b:[385,262]};
+function buildAvenue(){
+  const dx=AVE.b[0]-AVE.a[0],dz=AVE.b[1]-AVE.a[1],len=Math.hypot(dx,dz),ux=dx/len,uz=dz/len,nx=-uz,nz=ux;
+  const yaw=Math.atan2(ux,uz);             // պողոտայի ուղղությունը
+  const mid=[(AVE.a[0]+AVE.b[0])/2,(AVE.a[1]+AVE.b[1])/2];
+  // սալիկապատ ճանապարհ (32 լայնք) + վերջում շրջանաձև հրապարակ
+  const rot=Math.atan2(-dz,dx);
+  plane(M.pave,mid[0],mid[1],len,32,rot,0.12,6);
+  disc(M.pave,AVE.b[0],AVE.b[1],0.01,22,0.13,6);
+  disc(M.pave,AVE.a[0],AVE.a[1],0.01,22,0.13,6);
+  reserved.push({t:0,x:mid[0]+ux*10,z:mid[1]+uz*10,hx:len/2-20,hz:46,c:Math.cos(rot),s:Math.sin(rot)});
+  // 3 ջրավազան կենտրոնում
+  for(const t of[0.3,0.5,0.7]){
+    const px=AVE.a[0]+dx*t,pz=AVE.a[1]+dz*t,P=new Loc(px,pz,yaw);
+    P.box(0,-0.5,0,7,1.5,22,M.stone);P.box(0,0.1,0,5.6,1.2,20.6,M.water);
+    const o=P.obb(0,0,7.4,22.4,'avenue-pool');
+    for(const k of[-1,1])P.put(UCONE,M.white,0,1,k*5,0,0,0,0.3,3,0.3);
+  }
+  // բոլարդներ՝ մեքենաները կանգնեցնելու համար
+  for(let k=-16;k<=16;k+=4){const bx=AVE.a[0]+ux*16+nx*k,bz=AVE.a[1]+uz*16+nz*k;new Loc(bx,bz,0).cyl(0,-0.4,0,0.35,1.5,M.stone,8);addCirc(bx,bz,0.5);}
+  // 10 շենք՝ 5+5
+  const pal=['pink','orange','tan','cream','gray'];
+  let n=0;
+  for(const side of[1,-1]){
+    for(let i=0;i<5;i++){
+      const s=62+i*46,px=AVE.a[0]+ux*s+nx*side*(16+3+9.5),pz=AVE.a[1]+uz*s+nz*side*(16+3+9.5);
+      const h=rr(15,27),F=FAC[pal[(i+n)%5]];
+      const by=Math.atan2(-nx*side,-nz*side);       // ճակատը դեպի պողոտան
+      const L=new Loc(px,pz,by);
+      L.box(0,-3,0,24+1,3.6,19+1,M.stoneDk);L.fbox(0,0.6,0,24,h,19,F);L.box(0,h+0.6,0,25,1.2,20,M.stone);
+      if(i%2)L.gable(0,h+1.8,0,24,4,19,M.roofRed);else L.box(0,h+1.8,0,22,0.8,17,M.stoneDk);
+      L.box(0,0.6,9.55,5,3.4,0.3,M.dark);L.box(-7,0.6,9.55,5,3,0.3,M.dark);L.box(7,0.6,9.55,5,3,0.3,M.dark);
+      L.box(0,3.9,10.4,8,0.4,2.2,M.stone);
+      L.obb(0,0,25,20,'avenue-bld');
+      landmarkBuildings.push({name:'avenue-bld',x:px,z:pz,hx:12.5,hz:10,c:L.c,s:L.s});
+      // ծառեր շենքի առջև
+      const tx=px-nx*side*(9.5+4.5)+0,tz=pz-nz*side*(9.5+4.5);
+      addTree(tx+ux*9,tz+uz*9,rr(.8,1),0);addTree(tx-ux*9,tz-uz*9,rr(.8,1),0);
+      n++;
     }
   }
-
-  /* ── Pedestrian paving ── */
-  var pav = new THREE.Mesh(
-    new THREE.PlaneGeometry(26, 140),
-    new THREE.MeshLambertMaterial({ color: 0xd8c8a8 })
-  );
-  pav.rotation.x = -Math.PI / 2;
-  pav.position.set(0, y0 + 0.4, 0);
-  g.add(pav);
-
-  /* ── Small fountains along center ── */
-  for(var f = -2; f <= 2; f++){
-    addCyl(g, 0, y0 + 0.7, f * 26, 1.6, 1.8, 1.2, MAT_FOUNTAIN, 14);
-    addCyl(g, 0, y0 + 1.5, f * 26, 1, 1, 0.4, MAT_WATER, 14);
-  }
-
-  g.position.set(cx, 0, cz);
-  scene.add(g);
+  // վերջնակետի հրապարակ՝ ավարտ (պատճառ, ոչ թե «կախված» փողոց)
+  const E=new Loc(AVE.b[0],AVE.b[1],0);E.cyl(0,-0.4,0,6,1.2,M.stone,24);E.cyl(0,0.2,0,5.2,1.2,M.water,24);addCirc(AVE.b[0],AVE.b[1],6.2);
+  for(let k=0;k<8;k++){const a=k/8*TAU,tx=AVE.b[0]+Math.cos(a)*14,tz=AVE.b[1]+Math.sin(a)*14;addTree(tx,tz,1,0);}
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 22 — BUILD ALL LANDMARKS
-   ═══════════════════════════════════════════════════════════════════ */
-buildSquare();
-buildOpera();
-buildCascade();
-buildMatenadaran();
-buildGallery();
-buildMarriott();
-buildUniversity();
-buildNorthAvenue();
-
-/* ── Flush all instanced building groups ── */
-flushInstanced();
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 23 — TREES (instanced, concentrated near landmarks)
-   ═══════════════════════════════════════════════════════════════════ */
-(function(){
-  var NUM = 400;
-  var trunkGeo = new THREE.CylinderGeometry(0.24, 0.34, 2.4, 5);
-  trunkGeo.translate(0, 1.2, 0);
-  var leafGeo = new THREE.ConeGeometry(1.7, 3.8, 6);
-  leafGeo.translate(0, 4, 0);
-
-  var trunks = new THREE.InstancedMesh(trunkGeo, MAT_TRUNK, NUM);
-  var leaves = new THREE.InstancedMesh(leafGeo, MAT_TREE, NUM);
-  trunks.frustumCulled = false;
-  leaves.frustumCulled = false;
-
-  var dummy = new THREE.Object3D();
-  var placed = 0, tries = 0;
-  while(placed < NUM && tries < 8000){
-    tries++;
-    var x = (Math.random() - 0.5) * 900;
-    var z = (Math.random() - 0.5) * 900;
-
-    /* Density near landmarks, sparse elsewhere */
-    var nearLM = isNearLandmark(x, z, 45);
-    var onCascadeSlope = (z > 280 && Math.abs(x) > 60 && Math.abs(x) < 200);
-    var onMatenadaranHill = (z > 200 && z < 320 && x < -260 && x > -420);
-
-    if(!nearLM && !onCascadeSlope && !onMatenadaranHill){
-      if(Math.random() < 0.85) continue;
-    }
-    if(isNearRoad(x, z, 6)) continue;
-    if(isNearLandmark(x, z, 0) && Math.random() < 0.4) continue;
-
-    var y = terrainHeight(x, z);
-    var s = 0.8 + Math.random() * 1.1;
-    var rot = Math.random() * Math.PI * 2;
-
-    dummy.position.set(x, y, z);
-    dummy.rotation.set(0, rot, 0);
-    dummy.scale.set(s, s, s);
-    dummy.updateMatrix();
-    trunks.setMatrixAt(placed, dummy.matrix);
-    leaves.setMatrixAt(placed, dummy.matrix);
-    placed++;
-  }
-  trunks.count = placed;
-  leaves.count = placed;
-  trunks.instanceMatrix.needsUpdate = true;
-  leaves.instanceMatrix.needsUpdate = true;
-  scene.add(trunks);
-  scene.add(leaves);
-})();
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 24 — CAR MODEL
-   ═══════════════════════════════════════════════════════════════════ */
-function buildCar(colorHex){
-  var g = new THREE.Group();
-  g.rotation.order = 'YXZ';
-
-  var bodyMat   = new THREE.MeshLambertMaterial({ color: colorHex });
-  var darkMat   = new THREE.MeshLambertMaterial({ color: 0x0a0d14 });
-  var chromeMat = new THREE.MeshLambertMaterial({ color: 0xd8dce0 });
-  var glassMat  = new THREE.MeshLambertMaterial({ color: 0x14263a, transparent: true, opacity: 0.75 });
-  var tireMat   = new THREE.MeshLambertMaterial({ color: 0x0e0e12 });
-  var rimMat    = new THREE.MeshLambertMaterial({ color: 0xc0c8d0 });
-  var headMat   = new THREE.MeshBasicMaterial({ color: 0xfff4d0 });
-  var tailMat   = new THREE.MeshBasicMaterial({ color: 0xff2222 });
-
-  var chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.2, 4.7), darkMat);
-  chassis.position.y = 0.36;
-  g.add(chassis);
-
-  var body = new THREE.Mesh(new THREE.BoxGeometry(1.96, 0.6, 4.6), bodyMat);
-  body.position.y = 0.75;
-  g.add(body);
-
-  var shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.22, 4.45), bodyMat);
-  shoulder.position.y = 1.14;
-  g.add(shoulder);
-
-  var nose = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.52, 1.25), bodyMat);
-  nose.position.set(0, 0.82, 2.55);
-  g.add(nose);
-
-  var hood = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.15, 1.75), bodyMat);
-  hood.position.set(0, 1.22, 1.6);
-  g.add(hood);
-
-  var cabin = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.66, 2.35), glassMat);
-  cabin.position.set(0, 1.55, -0.35);
-  g.add(cabin);
-
-  var roof = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.11, 2.15), bodyMat);
-  roof.position.set(0, 1.92, -0.35);
-  g.add(roof);
-
-  [-0.87, 0.87].forEach(function(px){
-    var pA = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.22), darkMat);
-    pA.position.set(px, 1.55, 0.78);
-    pA.rotation.x = -0.3;
-    g.add(pA);
-    var pB = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.14), darkMat);
-    pB.position.set(px, 1.55, -0.35);
-    g.add(pB);
-    var pC = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.68, 0.2), darkMat);
-    pC.position.set(px, 1.55, -1.42);
-    pC.rotation.x = 0.28;
-    g.add(pC);
-  });
-
-  var fB = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.34, 0.44), darkMat);
-  fB.position.set(0, 0.62, 2.98);
-  g.add(fB);
-
-  var rB = new THREE.Mesh(new THREE.BoxGeometry(2.02, 0.32, 0.42), darkMat);
-  rB.position.set(0, 0.62, -2.4);
-  g.add(rB);
-
-  var grille = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.36, 0.06), chromeMat);
-  grille.position.set(0, 0.74, 3.2);
-  g.add(grille);
-
-  var trunk = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.15, 1.25), bodyMat);
-  trunk.position.set(0, 1.18, -1.95);
-  g.add(trunk);
-
-  var spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.09, 0.55), darkMat);
-  spoiler.position.set(0, 1.36, -2.2);
-  g.add(spoiler);
-
-  [-1.02, 1.02].forEach(function(x){
-    var arm = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.05, 0.09), darkMat);
-    arm.position.set(x * 0.95, 1.48, 0.78);
-    g.add(arm);
-    var mir = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.1, 0.15), bodyMat);
-    mir.position.set(x * 1.15, 1.45, 0.78);
-    g.add(mir);
-  });
-
-  [-0.62, 0.62].forEach(function(x){
-    var h = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.24, 0.08), headMat);
-    h.position.set(x, 0.88, 3.12);
-    g.add(h);
-  });
-  [-0.62, 0.62].forEach(function(x){
-    var t = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.2, 0.08), tailMat);
-    t.position.set(x, 0.88, -2.5);
-    g.add(t);
-  });
-
-  function makeWheel(){
-    var steer = new THREE.Group();
-    var roll = new THREE.Group();
-    steer.add(roll);
-
-    var tireGeo = new THREE.TorusGeometry(0.44, 0.17, 8, 16);
-    tireGeo.rotateY(Math.PI / 2);
-    roll.add(new THREE.Mesh(tireGeo, tireMat));
-
-    var discGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.26, 16);
-    discGeo.rotateZ(Math.PI / 2);
-    roll.add(new THREE.Mesh(discGeo, rimMat));
-
-    for(var sp = 0; sp < 5; sp++){
-      var a = (sp / 5) * Math.PI * 2;
-      var spoke = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.5), rimMat);
-      spoke.rotation.x = a;
-      spoke.position.y = Math.sin(a) * 0.2;
-      spoke.position.z = Math.cos(a) * 0.2;
-      roll.add(spoke);
-    }
-    return { steer: steer, roll: roll };
-  }
-
-  var wheels = [];
-  var wpos = [
-    { x: -1.02, z:  1.5, tag: 'fl' },
-    { x:  1.02, z:  1.5, tag: 'fr' },
-    { x: -1.02, z: -1.5, tag: 'rl' },
-    { x:  1.02, z: -1.5, tag: 'rr' }
-  ];
-  for(var wi = 0; wi < wpos.length; wi++){
-    var w = makeWheel();
-    w.steer.position.set(wpos[wi].x, 0.61, wpos[wi].z);
-    g.add(w.steer);
-    wheels.push({ steer: w.steer, roll: w.roll, tag: wpos[wi].tag });
-  }
-
-  /* Fake shadow */
-  var shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(1.6, 16),
-    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28 })
-  );
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = 0.02;
-  g.add(shadow);
-
-  return { group: g, wheels: wheels, tailMat: tailMat, bodyMat: bodyMat };
+/* ════════════════════════════════════════════════════════════
+   14. ՖՈՆԱՅԻՆ ՇԵՆՔԵՐ — ամեն մեկն իր բակով ու շավիղով
+   ════════════════════════════════════════════════════════════ */
+function clearOfRoads(x,z,hx,hz,margin){
+  const pts=[[0,0],[hx,hz],[-hx,hz],[hx,-hz],[-hx,-hz],[hx,0],[-hx,0],[0,hz],[0,-hz]];
+  for(const[p,q]of pts)if(roadDist(x+p,z+q)<margin)return false;
+  return true;
 }
-
-var player = buildCar(0xe03030);
-scene.add(player.group);
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 25 — GAME STATE + INPUT
-   ═══════════════════════════════════════════════════════════════════ */
-var S = {
-  phase: 'loading',
-  x: 0, z: -320,
-  heading: 0,
-  speed: 0,
-  steer: 0,
-  camX: 0, camY: 0, camZ: 0,
-  camLX: 0, camLY: 0, camLZ: 0,
-  camYaw: 0,
-  camPitch: 0.42,
-  camDist: 10.5,
-  loc: 'Երևան',
-  suspensionY: 0, suspensionV: 0,
-  bodyRoll: 0, bodyRollV: 0,
-  bodyPitch: 0, bodyPitchV: 0,
-  lastCamDrag: 0,
-  wheelSpin: 0
-};
-
-var IN = { gas: false, rev: false, left: false, right: false };
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 26 — PHYSICS
-   ═══════════════════════════════════════════════════════════════════ */
-function updatePhysics(dt){
-  /* Steering input */
-  var target = 0;
-  if(IN.left) target = -1;
-  if(IN.right) target = 1;
-
-  S.steer += (target - S.steer) * Math.min(1, 6 * dt);
-  if(!IN.left && !IN.right){
-    S.steer += (0 - S.steer) * Math.min(1, 5 * dt);
-    if(Math.abs(S.steer) < 0.003) S.steer = 0;
-  }
-
-  /* Throttle */
-  if(IN.gas) S.speed += (S.speed < 40 ? 38 : 22) * dt;
-  if(IN.rev){
-    if(S.speed > 0.5) S.speed -= 65 * dt;
-    else S.speed -= 28 * dt;
-  }
-  if(!IN.gas && !IN.rev){
-    if(S.speed > 0.05) S.speed -= 10 * dt;
-    else if(S.speed < -0.05) S.speed += 10 * dt;
-    else S.speed = 0;
-  }
-
-  /* Slope resistance */
-  var fx = Math.sin(S.heading), fz = Math.cos(S.heading);
-  var aheadH = terrainHeight(S.x + fx * 5, S.z + fz * 5);
-  var behindH = terrainHeight(S.x - fx * 5, S.z - fz * 5);
-  var slope = (aheadH - behindH) / 10;
-  S.speed -= slope * 22 * dt;
-  S.speed = Math.max(-MAX_REV_KMH, Math.min(MAX_KMH, S.speed));
-
-  /* Steering — reverses when backward */
-  var v = S.speed / 3.6;
-  var spdFac = Math.max(-1, Math.min(1, v / 8));
-  S.heading -= S.steer * 1.9 * spdFac * dt;
-
-  /* Position */
-  var nfx = Math.sin(S.heading), nfz = Math.cos(S.heading);
-  S.x += nfx * v * dt;
-  S.z += nfz * v * dt;
-
-  /* World clamp */
-  S.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, S.x));
-  S.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, S.z));
-
-  /* Collision (spatial hash) */
-  var hk = Math.floor(S.x / HASH_SIZE) + ',' + Math.floor(S.z / HASH_SIZE);
-  var nearby = COL_HASH[hk];
-  if(nearby){
-    for(var ci = 0; ci < nearby.length; ci++){
-      var b = nearby[ci];
-      var hw = b.w / 2 + 1.4;
-      var hd = b.d / 2 + 1.4;
-      var ddx = S.x - b.x;
-      var ddz = S.z - b.z;
-      if(Math.abs(ddx) < hw && Math.abs(ddz) < hd){
-        var ox = hw - Math.abs(ddx);
-        var oz = hd - Math.abs(ddz);
-        if(ox < oz) S.x = b.x + Math.sign(ddx || 1) * hw;
-        else S.z = b.z + Math.sign(ddz || 1) * hd;
-        S.speed *= 0.35;
-      }
-    }
-  }
-
-  /* Ground height */
-  var groundY = terrainHeight(S.x, S.z);
-
-  /* Suspension */
-  var targetSusp = -slope * 0.04;
-  S.suspensionV += (targetSusp - S.suspensionY) * 55 * dt - S.suspensionV * 9 * dt;
-  S.suspensionY += S.suspensionV * dt;
-
-  /* Terrain-following pitch/roll */
-  var rx = Math.cos(S.heading), rz = -Math.sin(S.heading);
-  var hF = terrainHeight(S.x + fx * 1.6, S.z + fz * 1.6);
-  var hB = terrainHeight(S.x - fx * 1.6, S.z - fz * 1.6);
-  var hL = terrainHeight(S.x - rx * 1.1, S.z - rz * 1.1);
-  var hR = terrainHeight(S.x + rx * 1.1, S.z + rz * 1.1);
-  var tPitch = Math.atan2(hF - hB, 3.2);
-  var tRoll  = Math.atan2(hR - hL, 2.2);
-
-  S.bodyPitchV += (tPitch - S.bodyPitch) * 14 * dt - S.bodyPitchV * 8 * dt;
-  S.bodyPitch  += S.bodyPitchV * dt;
-
-  var steerRoll = -S.steer * 0.06;
-  S.bodyRollV += (tRoll + steerRoll - S.bodyRoll) * 14 * dt - S.bodyRollV * 8 * dt;
-  S.bodyRoll  += S.bodyRollV * dt;
-
-  player.group.position.set(S.x, groundY + S.suspensionY, S.z);
-  player.group.rotation.y = S.heading;
-  player.group.rotation.x = -S.bodyPitch;
-  player.group.rotation.z = S.bodyRoll;
-
-  /* Wheels */
-  var spin = v * dt * 2.2;
-  S.wheelSpin += spin;
-  for(var wk = 0; wk < player.wheels.length; wk++){
-    var w = player.wheels[wk];
-    w.roll.rotation.x = S.wheelSpin;
-    if(w.tag === 'fl' || w.tag === 'fr'){
-      w.steer.rotation.y = -S.steer * 0.5;
-    }
-  }
-
-  /* Brake light */
-  var braking = IN.rev || (!IN.gas && Math.abs(S.speed) > 4);
-  player.tailMat.color.setHex(braking ? 0xff1010 : 0xff2222);
-
-  updateLocationName();
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 27 — LOCATION NAME
-   ═══════════════════════════════════════════════════════════════════ */
-var lastLocName = '';
-function updateLocationName(){
-  var closest = 'Երևան', minD = Infinity;
-  for(var k in LM){
-    var L = LM[k];
-    var d = Math.hypot(S.x - L.x, S.z - L.z);
-    if(d < minD){ minD = d; closest = L.name; }
-  }
-  var newLoc = minD < 100 ? closest : 'Երևան';
-  if(newLoc !== lastLocName){
-    lastLocName = newLoc;
-    S.loc = newLoc;
-    var el = document.getElementById('locName');
-    if(el) el.textContent = newLoc;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 28 — CAMERA (follow + drag + auto-align)
-   ═══════════════════════════════════════════════════════════════════ */
-function updateCamera(dt){
-  /* Auto-align to car heading when driving */
-  var timeSinceDrag = performance.now() - S.lastCamDrag;
-  if(Math.abs(S.speed) > 6 && timeSinceDrag > 1800){
-    var diff = S.heading - S.camYaw;
-    while(diff >  Math.PI) diff -= Math.PI * 2;
-    while(diff < -Math.PI) diff += Math.PI * 2;
-    S.camYaw += diff * Math.min(1, 1.8 * dt);
-  }
-
-  var dist = S.camDist * Math.cos(S.camPitch * 0.65);
-  var high = 1.8 + S.camDist * Math.sin(S.camPitch);
-
-  var tx = S.x - Math.sin(S.camYaw) * dist;
-  var tz = S.z - Math.cos(S.camYaw) * dist;
-  var ty = terrainHeight(tx, tz) + high;
-  var minY = terrainHeight(tx, tz) + 1.7;
-  if(ty < minY) ty = minY;
-
-  var k = 1 - Math.exp(-9 * dt);
-  S.camX += (tx - S.camX) * k;
-  S.camY += (ty - S.camY) * k;
-  S.camZ += (tz - S.camZ) * k;
-
-  var lx = S.x + Math.sin(S.heading) * 6;
-  var lz = S.z + Math.cos(S.heading) * 6;
-  var ly = terrainHeight(S.x, S.z) + 1.3;
-  var lk = 1 - Math.exp(-11 * dt);
-  S.camLX += (lx - S.camLX) * lk;
-  S.camLY += (ly - S.camLY) * lk;
-  S.camLZ += (lz - S.camLZ) * lk;
-
-  camera.position.set(S.camX, S.camY, S.camZ);
-  camera.lookAt(S.camLX, S.camLY, S.camLZ);
-
-  var tFov = 62 + Math.abs(S.speed / MAX_KMH) * 6;
-  if(Math.abs(camera.fov - tFov) > 0.2){
-    camera.fov += (tFov - camera.fov) * Math.min(1, 3 * dt);
-    camera.updateProjectionMatrix();
-  }
-
-  /* Sun follows camera */
-  sun.position.set(S.x - 100, 200, S.z + 120);
-  sun.target.position.set(S.x, 0, S.z);
-  sun.target.updateMatrixWorld();
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 29 — HUD + MINIMAP
-   ═══════════════════════════════════════════════════════════════════ */
-var spdEl = document.getElementById('spdVal');
-var compassEl = document.getElementById('compassArrow');
-var perfEl = document.getElementById('perfInfo');
-var lastSpd = -1;
-
-var minimapCanvas = document.getElementById('minimap');
-var mmCtx = minimapCanvas.getContext('2d');
-var MM_SIZE = 264;
-var MM_RANGE = 350;
-
-var fps = 0, frameCount = 0, fpsTimer = 0;
-
-function updateHUD(dt){
-  var spd = Math.round(Math.abs(S.speed));
-  if(spd !== lastSpd){
-    spdEl.textContent = spd;
-    lastSpd = spd;
-  }
-  var deg = S.heading * 180 / Math.PI;
-  compassEl.style.transform = 'rotate(' + (-deg) + 'deg)';
-
-  /* Perf overlay */
-  frameCount++;
-  fpsTimer += dt;
-  if(fpsTimer >= 0.5){
-    fps = Math.round(frameCount / fpsTimer);
-    frameCount = 0;
-    fpsTimer = 0;
-    if(perfEl){
-      perfEl.textContent =
-        fps + ' FPS · ' +
-        renderer.info.render.calls + ' calls · ' +
-        renderer.info.render.triangles + ' tris';
-    }
-  }
-
-  drawMinimap();
-}
-
-function drawMinimap(){
-  var ctx = mmCtx;
-  var S2 = MM_SIZE / 2;
-  var scale = (MM_SIZE / 2) / MM_RANGE;
-  ctx.clearRect(0, 0, MM_SIZE, MM_SIZE);
-
-  /* Background */
-  ctx.fillStyle = '#1a2a3a';
-  ctx.fillRect(0, 0, MM_SIZE, MM_SIZE);
-  ctx.fillStyle = '#2a4a2a';
-  ctx.beginPath();
-  ctx.arc(S2, S2, S2 - 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.save();
-  ctx.translate(S2, S2);
-  ctx.rotate(-S.heading);
-
-  /* Ring road */
-  ctx.strokeStyle = '#ffcc44';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc((0 - S.x) * scale, (0 - S.z) * scale, 78 * scale, 0, Math.PI * 2);
-  ctx.stroke();
-
-  /* Main roads */
-  ctx.lineWidth = 2.5;
-  for(var i = 0; i < ROAD_GRID.length - 1; i++){
-    var A = ROAD_GRID[i];
-    var B = ROAD_GRID[i + 1];
-    ctx.beginPath();
-    ctx.moveTo((A.x - S.x) * scale, (A.z - S.z) * scale);
-    ctx.lineTo((B.x - S.x) * scale, (B.z - S.z) * scale);
-    ctx.stroke();
-  }
-
-  /* Serpentine */
-  ctx.strokeStyle = '#aa8830';
-  ctx.lineWidth = 1.8;
-  ctx.beginPath();
-  for(var si = 0; si < SERPENTINE_PATH.length; si++){
-    var W = SERPENTINE_PATH[si];
-    var wx = (W.x - S.x) * scale;
-    var wy = (W.z - S.z) * scale;
-    if(si === 0) ctx.moveTo(wx, wy);
-    else ctx.lineTo(wx, wy);
-  }
-  ctx.stroke();
-
-  /* Landmarks */
-  for(var k in LM){
-    var L = LM[k];
-    var lx = (L.x - S.x) * scale;
-    var ly = (L.z - S.z) * scale;
-    if(Math.hypot(lx, ly) > S2 - 8) continue;
-    ctx.fillStyle = '#ff5577';
-    ctx.beginPath();
-    ctx.arc(lx, ly, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  }
-
-  /* North */
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('N', 0, -S2 + 16);
-
-  ctx.restore();
-
-  /* Car arrow */
-  ctx.save();
-  ctx.translate(S2, S2);
-  ctx.fillStyle = '#ff3b3b';
-  ctx.beginPath();
-  ctx.moveTo(0, -9);
-  ctx.lineTo(-6, 6);
-  ctx.lineTo(0, 3);
-  ctx.lineTo(6, 6);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.restore();
-
-  /* Border */
-  ctx.strokeStyle = 'rgba(255,255,255,.5)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(S2, S2, S2 - 3, 0, Math.PI * 2);
-  ctx.stroke();
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 30 — INPUT (Buttons + Keyboard + Camera Drag + Edge Swipe)
-   ═══════════════════════════════════════════════════════════════════ */
-function bindHold(el, key){
-  if(!el) return;
-  var on = function(e){
-    e.preventDefault();
-    IN[key] = true;
-    el.classList.add('on');
-  };
-  var off = function(e){
-    e.preventDefault();
-    IN[key] = false;
-    el.classList.remove('on');
-  };
-  el.addEventListener('touchstart', on, {passive: false});
-  el.addEventListener('touchend', off);
-  el.addEventListener('touchcancel', off);
-  el.addEventListener('mousedown', on);
-  el.addEventListener('mouseup', off);
-  el.addEventListener('mouseleave', off);
-}
-
-bindHold(document.getElementById('btnGas'), 'gas');
-bindHold(document.getElementById('btnRev'), 'rev');
-bindHold(document.getElementById('btnL'), 'left');
-bindHold(document.getElementById('btnR'), 'right');
-
-window.addEventListener('keydown', function(e){
-  var k = e.key.toLowerCase();
-  if(e.repeat) return;
-  if(k === 'arrowup' || k === 'w') IN.gas = true;
-  if(k === 'arrowdown' || k === 's') IN.rev = true;
-  if(k === 'arrowleft' || k === 'a') IN.left = true;
-  if(k === 'arrowright' || k === 'd') IN.right = true;
-});
-window.addEventListener('keyup', function(e){
-  var k = e.key.toLowerCase();
-  if(k === 'arrowup' || k === 'w') IN.gas = false;
-  if(k === 'arrowdown' || k === 's') IN.rev = false;
-  if(k === 'arrowleft' || k === 'a') IN.left = false;
-  if(k === 'arrowright' || k === 'd') IN.right = false;
-});
-
-/* ── Camera drag zone ── */
-(function(){
-  var z = document.getElementById('camZone');
-  if(!z) return;
-  var drag = false, sx = 0, sy = 0, sYaw = 0, sPitch = 0;
-
-  var dn = function(e){
-    e.preventDefault();
-    drag = true;
-    var t = e.touches ? e.touches[0] : e;
-    sx = t.clientX;
-    sy = t.clientY;
-    sYaw = S.camYaw;
-    sPitch = S.camPitch;
-    S.lastCamDrag = performance.now();
-  };
-  var mv = function(e){
-    if(!drag) return;
-    e.preventDefault();
-    var t = e.touches ? e.touches[0] : e;
-    S.lastCamDrag = performance.now();
-    S.camYaw = sYaw - (t.clientX - sx) / 200;
-    S.camPitch = Math.max(0.05, Math.min(1.2, sPitch + (sy - t.clientY) / 280));
-  };
-  var up = function(){ drag = false; };
-
-  z.addEventListener('touchstart', dn, {passive: false});
-  z.addEventListener('touchmove', mv, {passive: false});
-  z.addEventListener('touchend', up);
-  z.addEventListener('touchcancel', up);
-  z.addEventListener('mousedown', dn);
-  window.addEventListener('mousemove', mv);
-  window.addEventListener('mouseup', up);
-})();
-
-/* ── Edge swipe detection — hint browser controls ── */
-(function(){
-  var edgeStartX = null;
-  var edgeStartY = null;
-  var edgeHintL = document.getElementById('edgeHintL');
-  var edgeHintR = document.getElementById('edgeHintR');
-  var hintTimerL = null;
-  var hintTimerR = null;
-
-  function showHint(which){
-    var hint = which === 'left' ? edgeHintL : edgeHintR;
-    if(!hint) return;
-    hint.classList.add('show');
-    if(which === 'left'){
-      clearTimeout(hintTimerL);
-      hintTimerL = setTimeout(function(){ hint.classList.remove('show'); }, 1200);
-    } else {
-      clearTimeout(hintTimerR);
-      hintTimerR = setTimeout(function(){ hint.classList.remove('show'); }, 1200);
-    }
-  }
-
-  document.addEventListener('touchstart', function(e){
-    if(e.touches.length !== 1) return;
-    var t = e.touches[0];
-    if(t.clientX < 20) edgeStartX = t.clientX, edgeStartY = t.clientY;
-    else if(t.clientX > window.innerWidth - 20) edgeStartX = t.clientX, edgeStartY = t.clientY;
-    else edgeStartX = null;
-  }, {passive: true});
-
-  document.addEventListener('touchmove', function(e){
-    if(edgeStartX === null) return;
-    if(e.touches.length !== 1) return;
-    var t = e.touches[0];
-    var dx = t.clientX - edgeStartX;
-    if(Math.abs(dx) > 12){
-      var which = (edgeStartX < 20) ? 'left' : 'right';
-      showHint(which);
-      /* Try to exit fullscreen when swiping toward edge */
-      if(which === 'left' && dx > 15){
-        if(document.fullscreenElement){
-          try { document.exitFullscreen(); } catch(e){}
+function placeFillers(){
+  const placed=[];let count=0;
+  for(const e of edges){
+    if(!e.fill)continue;
+    if(!(e.a[0]===e.b[0]||e.a[1]===e.b[1]))continue;
+    const vert=e.a[0]===e.b[0];
+    for(let s=26;s<e.len-26;s+=rr(32,42)){
+      for(const side of[1,-1]){
+        const w=rr(20,30),d=rr(16,22),h=rr(11,26),YD=12;
+        const p=vert?[e.a[0],lerp(e.a[1],e.b[1],s/e.len)]:[lerp(e.a[0],e.b[0],s/e.len),e.a[1]];
+        const off=HW+YD+d/2+1.5;
+        const cx=vert?p[0]+side*off:p[0],cz=vert?p[1]:p[1]+side*off;
+        const fx=vert?-side:0,fz=vert?0:-side;
+        const yaw=Math.atan2(fx,fz);
+        // ընդհանուր հետք (շենք + բակ)՝ առանցքներին զուգահեռ ուղղանկյուն
+        const tot=d+YD+2,hxT=(vert?tot:w+8)/2,hzT=(vert?w+8:tot)/2;
+        const fcx=cx+fx*(YD/2),fcz=cz+fz*(YD/2);
+        const fp={x:fcx,z:fcz,hx:hxT,hz:hzT,c:1,s:0};
+        if(Math.abs(fcx)>625||fcz<-525||fcz>545)continue;
+        if(terrainH(cx,cz)>4)continue;
+        if(!clearOfRoads(fcx,fcz,hxT,hzT,HW+1.2))continue;
+        let bad=false;
+        for(const r of reserved){
+          if(r.t===2){if(Math.hypot(fcx-r.x,fcz-r.z)<r.r+Math.max(hxT,hzT)*0.7)bad=true;}
+          else if(obbOverlap(fp,{x:r.x,z:r.z,hx:r.hx+4,hz:r.hz+4,c:r.c,s:r.s}))bad=true;
+          if(bad)break;
         }
+        if(bad)continue;
+        for(const q of placed)if(obbOverlap(fp,{...q,hx:q.hx+2,hz:q.hz+2})){bad=true;break;}
+        if(bad)continue;
+        placed.push(fp);count++;
+        const F=FAC[FILLERS[Math.floor(rng()*FILLERS.length)]];
+        const L=new Loc(cx,cz,yaw);
+        L.box(0,-3,0,w+1,3.6,d+1,M.stoneDk);L.fbox(0,0.6,0,w,h,d,F);L.box(0,h+0.6,0,w+1.2,1.1,d+1.2,M.stone);
+        if(rng()<.6)L.gable(0,h+1.7,0,w,4,d,M.roofRed);else L.box(0,h+1.7,0,w-2,0.8,d-2,M.stoneDk);
+        L.box(0,0.6,d/2+0.05,3.2,3.2,0.3,M.dark);
+        L.obb(0,0,w+1,d+1,'filler');
+        landmarkBuildings.push({name:'filler',x:cx,z:cz,hx:(w+1)/2,hz:(d+1)/2,c:L.c,s:L.s});
+        // բակ՝ սիզամարգ + hedge + gate + շավիղ
+        const yw=w+6;
+        const lc=L.w(0,d/2+YD/2+0.5);plane(M.lawn,lc[0],lc[1],yw,YD-1,yaw,0.16,0);
+        const gz0=d/2+YD-0.7;
+        const A=L.w(-yw/2,d/2),B=L.w(yw/2,d/2),C=L.w(-yw/2,gz0),D2=L.w(yw/2,gz0),G1=L.w(-4,gz0),G2=L.w(4,gz0);
+        hedgeSeg(A[0],A[1],C[0],C[1]);hedgeSeg(B[0],B[1],D2[0],D2[1]);
+        hedgeSeg(C[0],C[1],G1[0],G1[1]);hedgeSeg(G2[0],G2[1],D2[0],D2[1]);
+        const P0=L.w(0,d/2+0.2),P1=L.w(0,d/2+YD+HW-HW+1.2);
+        pathTo(P0[0],P0[1],P1[0],P1[1],3.4);
+        const t1=L.w(-yw/2+2.5,d/2+3.5),t2=L.w(yw/2-2.5,d/2+3.5);
+        addTree(t1[0],t1[1],rr(.7,1),0);addTree(t2[0],t2[1],rr(.7,1),0);
       }
-      edgeStartX = null;
     }
-  }, {passive: true});
-
-  document.addEventListener('touchend', function(){
-    edgeStartX = null;
-  }, {passive: true});
-})();
-
-/* ── Global gesture prevention ── */
-document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
-document.addEventListener('gesturechange', function(e){ e.preventDefault(); });
-document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-document.addEventListener('dblclick', function(e){ e.preventDefault(); });
-document.addEventListener('touchmove', function(e){
-  if(e.touches.length > 1) e.preventDefault();
-}, {passive: false});
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 31 — GAME START + RESIZE
-   ═══════════════════════════════════════════════════════════════════ */
-function startGame(){
-  /* Spawn south of Square, facing north toward Cascade */
-  S.x = 0;
-  S.z = -320;
-  S.heading = 0;
-  S.speed = 0;
-  S.steer = 0;
-  S.camYaw = 0;
-  S.camPitch = 0.42;
-  S.suspensionY = 0;
-  S.suspensionV = 0;
-  S.bodyRoll = 0;
-  S.bodyRollV = 0;
-  S.bodyPitch = 0;
-  S.bodyPitchV = 0;
-  S.wheelSpin = 0;
-  S.lastCamDrag = 0;
-
-  var dist = S.camDist;
-  S.camX = S.x - Math.sin(S.camYaw) * dist;
-  S.camY = terrainHeight(S.camX, S.z - dist) + 3.2;
-  S.camZ = S.z - Math.cos(S.camYaw) * dist;
-  S.camLX = S.x;
-  S.camLY = terrainHeight(S.x, S.z) + 1.3;
-  S.camLZ = S.z + 6;
-
-  player.group.position.set(S.x, terrainHeight(S.x, S.z), S.z);
-  player.group.rotation.y = S.heading;
-  player.group.rotation.x = 0;
-  player.group.rotation.z = 0;
-
-  S.phase = 'play';
-  lastLocName = '';
-  updateLocationName();
-
-  var perf = document.getElementById('perfInfo');
-  if(perf) perf.style.display = 'block';
+  }
+  return count;
+}
+function streetTrees(){
+  for(const e of edges){
+    if(!e.fill)continue;
+    for(let s=22;s<e.len-22;s+=26){
+      for(const sg of[1,-1]){
+        const x=e.a[0]+e.dx*s+e.dz*10.2*sg,z=e.a[1]+e.dz*s-e.dx*10.2*sg;
+        if(roadDist(x,z)<9.4)continue;
+        addTree(x,z,rr(.85,1.15),0);
+      }
+    }
+  }
+  // պուրակ՝ ազատ տարածքներ
+  for(let i=0;i<900;i++){
+    const x=rr(-640,640),z=rr(-540,560);
+    if(roadDist(x,z)<16)continue;if(Math.hypot(x,z)<150)continue;
+    if(terrainH(x,z)>8)continue;
+    addTree(x,z,rr(.9,1.5));
+  }
+  // լեռնային ծառեր՝ ոչ բախվող
+  for(let i=0;i<260;i++){
+    const a=rr(0,TAU),d=rr(700,1250),x=Math.cos(a)*d,z=Math.sin(a)*d*0.9;
+    const h=terrainH(x,z);if(h<6||h>90)continue;addTree(x,z,rr(2,3.5),rng()<.6?1:0,false);
+  }
 }
 
-function resize(){
-  var w = window.innerWidth;
-  var h = window.innerHeight;
-  renderer.setSize(w, h, false);
-  cvs.style.width = '100%';
-  cvs.style.height = '100%';
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+/* ════════════════════════════════════════════════════════════
+   15. ՄԵՔԵՆԱ — բազմաթիվ մասերից
+   ════════════════════════════════════════════════════════════ */
+const carRoot=new THREE.Group(),chassis=new THREE.Group();carRoot.add(chassis);carRoot.rotation.order='YXZ';
+const wheels=[];
+let paint,glassM;
+function buildCar(){
+  paint=new THREE.MeshLambertMaterial({color:0xd62a2a});
+  glassM=new THREE.MeshLambertMaterial({color:0x1d2f45,emissive:0x0a1626});
+  const dark=lam(0x22252b),chrome=lam(0xcfd6dd,{emissive:0x333a40}),black=lam(0x111214);
+  const part=(w,h,d,m,x,y,z,rx=0,ry=0,rz=0)=>{const mm=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mm.position.set(x,y,z);mm.rotation.set(rx,ry,rz);chassis.add(mm);return mm;};
+  part(1.7,0.25,4.0,dark,0,0.45,0);                                     // chassis
+  part(1.84,0.5,4.3,paint,0,0.78,0);                                    // body
+  part(1.72,0.12,1.3,paint,0,1.07,1.4,-0.07);                           // hood
+  part(1.72,0.14,0.9,paint,0,1.07,-1.72,0.06);                          // trunk
+  part(1.56,0.5,1.7,glassM,0,1.34,-0.12);                               // cabin
+  part(1.46,0.07,1.4,paint,0,1.6,-0.12);                                // roof
+  for(const sx of[-1,1]){                                               // 4 A-pillars + 4 B-pillars
+    for(const ix of[0.78,0.70]){
+      part(0.06,0.5,0.07,paint,sx*ix,1.34,0.72,-0.55);                  // A
+      part(0.06,0.5,0.07,paint,sx*ix,1.34,-0.14);                       // B
+    }
+  }
+  part(1.84,0.22,0.26,dark,0,0.52,2.15);part(1.84,0.22,0.26,dark,0,0.52,-2.15);   // bumpers
+  part(0.9,0.17,0.05,chrome,0,0.66,2.29);                               // grille (chrome)
+  for(let i=-1;i<=1;i++)part(0.04,0.15,0.06,dark,i*0.25,0.66,2.31);
+  part(1.6,0.06,0.32,paint,0,1.28,-2.0);part(0.06,0.2,0.06,dark,-0.6,1.18,-2.0);part(0.06,0.2,0.06,dark,0.6,1.18,-2.0);  // spoiler
+  for(const sx of[-1,1])part(0.2,0.13,0.1,paint,sx*1.0,1.2,0.62);       // mirrors
+  for(const sx of[-1,1]){part(0.4,0.15,0.06,M.head,sx*0.62,0.8,2.17);part(0.42,0.12,0.06,M.tail,sx*0.62,0.82,-2.19);}
+  // անիվներ՝ shin + rim + 5 spoke
+  const tireG=new THREE.CylinderGeometry(0.36,0.36,0.26,20);tireG.rotateZ(Math.PI/2);
+  const rimG=new THREE.CylinderGeometry(0.24,0.24,0.28,16);rimG.rotateZ(Math.PI/2);
+  const spG=new THREE.BoxGeometry(0.29,0.05,0.2);
+  for(const[sx,sz,front]of[[1,1.45,1],[-1,1.45,1],[1,-1.45,0],[-1,-1.45,0]]){
+    const steer=new THREE.Group(),spin=new THREE.Group();steer.position.set(sx*0.93,0.36,sz);steer.add(spin);
+    spin.add(new THREE.Mesh(tireG,black),new THREE.Mesh(rimG,chrome));
+    for(let i=0;i<5;i++){const pv=new THREE.Group();pv.rotation.x=i/5*TAU;const sp=new THREE.Mesh(spG,dark);sp.position.y=0.13;pv.add(sp);spin.add(pv);}
+    carRoot.add(steer);wheels.push({steer,spin,front});
+  }
+  scene.add(carRoot);
+  // «ստվեր»՝ blob
+  const t=mkTex(64,64,(g)=>{const r=g.createRadialGradient(32,32,2,32,32,30);r.addColorStop(0,'rgba(0,0,0,.55)');r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,64,64);});
+  const sm=new THREE.Mesh(new THREE.PlaneGeometry(3.2,5.6),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}));
+  sm.rotation.x=-Math.PI/2;sm.rotation.order='YXZ';sm.renderOrder=2;scene.add(sm);carRoot.userData.shadow=sm;
 }
-window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', function(){
-  setTimeout(resize, 200);
-  setTimeout(resize, 600);
+
+/* ════════════════════════════════════════════════════════════
+   16. ՖԻԶԻԿԱ
+   ════════════════════════════════════════════════════════════ */
+const car={x:0,z:-170,yaw:0,v:0,steer:0,y:0,vy:0,yawRate:0,ax:0,bodyRoll:0,bodyPitch:0,braking:false};
+const WL=2.9,WT=1.86,CAR_R=1.12,CIRCLES=[-1.3,0,1.3];
+const MAXF=36,MAXR=9,ACC=15;
+const input={l:false,r:false,g:false,b:false,hb:false};
+const keys={};
+const OUTX=690,OUTZ0=-565,OUTZ1=575;
+function blockedTerrain(x,z){return x<-OUTX||x>OUTX||z<OUTZ0||z>OUTZ1||terrainH(x,z)>6.5;}
+function physics(dt){
+  const throttle=(input.g||keys.KeyW||keys.ArrowUp)?1:0;
+  const back=(input.b||keys.KeyS||keys.ArrowDown)?1:0;
+  const hb=(input.hb||keys.Space)?1:0;
+  const left=(input.l||keys.KeyA||keys.ArrowLeft)?1:0,right=(input.r||keys.KeyD||keys.ArrowRight)?1:0;
+  const sIn=right-left;
+  // առաջ/հետ/արգելակ
+  const v0=car.v;let v=car.v;car.braking=false;
+  if(throttle&&!back){v+=ACC*(1-Math.max(0,v)/MAXF)*dt*(v<0?2.2:1);}
+  else if(back&&!throttle){
+    if(v>0.6){v-=34*dt;car.braking=true;}
+    else v-=11*(1+Math.max(0,v+MAXR)/MAXR*0)*dt*(1-Math.max(0,-v)/MAXR);
+  }
+  if(hb){v-=Math.sign(v)*Math.min(Math.abs(v),26*dt);car.braking=true;}
+  const drag=0.22+Math.abs(v)*0.012;
+  if(!throttle&&!back)v-=Math.sign(v)*Math.min(Math.abs(v),(1.6+drag*Math.abs(v))*dt*2.2);
+  v=clamp(v,-MAXR,MAXF);
+  // ղեկ — արագությունից կախված սահման
+  const maxS=0.62/(1+Math.abs(v)/13);
+  const target=sIn*maxS;
+  car.steer+=clamp(target-car.steer,-3.4*dt,3.4*dt);
+  if(!sIn)car.steer*=Math.exp(-5*dt);
+  // bicycle model. աջ ղեկ => yaw նվազում է (աջ շրջադարձ). հետընթացում ինքնաբերաբար հակառակ։
+  car.yawRate=-(v/WL)*Math.tan(car.steer);
+  const dist=v*dt;
+  const sub=Math.max(1,Math.ceil(Math.abs(dist)/0.7));
+  const sd=dt/sub;
+  for(let i=0;i<sub;i++){
+    car.yaw+=car.yawRate*sd;
+    const fx=Math.sin(car.yaw),fz=Math.cos(car.yaw);
+    let nx=car.x+fx*v*sd,nz=car.z+fz*v*sd;
+    // ռելիեֆի/աշխարհի սահման
+    if(blockedTerrain(nx,nz)||blockedTerrain(nx+fx*1.8,nz+fz*1.8)*(v>0)||blockedTerrain(nx-fx*1.8,nz-fz*1.8)*(v<0)){
+      if(!blockedTerrain(nx,car.z)&&!blockedTerrain(nx+fx*1.8,car.z)){nz=car.z;}
+      else if(!blockedTerrain(car.x,nz)){nx=car.x;}
+      else{nx=car.x;nz=car.z;}
+      v*=0.55;
+    }
+    car.x=nx;car.z=nz;
+    // շրջանների բախում կառույցների հետ (3 շրջան)
+    for(let it=0;it<2;it++){
+      for(const off of CIRCLES){
+        const cx=car.x+fx*off,cz=car.z+fz*off;
+        nearColliders(cx,cz,CAR_R+1,c=>{
+          const h=hitCircle(c,cx,cz,CAR_R);
+          if(h){
+            car.x+=h.nx*h.pen;car.z+=h.nz*h.pen;
+            const into=-(fx*Math.sign(v||1)*h.nx+fz*Math.sign(v||1)*h.nz);
+            if(into>0.25&&Math.abs(v)>1){v*=1-Math.min(0.6,into*0.55);}
+          }
+        });
+      }
+    }
+  }
+  car.ax=(v-v0)/Math.max(dt,1e-4);car.v=v;
+  // վերտիկալ — անիվների բարձրություններ → pitch/roll + suspension
+  const c=Math.cos(car.yaw),s=Math.sin(car.yaw);
+  const hw=(lx,lz)=>terrainH(car.x+lx*c+lz*s,car.z-lx*s+lz*c)+0.2;
+  const hFL=hw(0.93,1.45),hFR=hw(-0.93,1.45),hRL=hw(0.93,-1.45),hRR=hw(-0.93,-1.45);
+  const gy=(hFL+hFR+hRL+hRR)/4;
+  const pitch=-Math.atan2((hFL+hFR)/2-(hRL+hRR)/2,2.9),roll=Math.atan2((hFL+hRL)/2-(hFR+hRR)/2,1.86);
+  const bump=Math.sin(car.x*1.7+car.z*1.3)*0.012*Math.min(1,Math.abs(v)/10);
+  car.vy+=(120*(gy+bump-car.y)-14*car.vy)*dt;car.y+=car.vy*dt;
+  if(Math.abs(car.y-gy)>1.2)car.y=gy;
+  carRoot.position.set(car.x,car.y,car.z);
+  carRoot.rotation.set(pitch,car.yaw,roll);
+  // թափքի թեքում արագացումից / շրջադարձից
+  const bpT=clamp(-car.ax*0.0035,-0.05,0.05),brT=clamp(v*car.yawRate*0.012,-0.07,0.07);
+  car.bodyPitch+=(bpT-car.bodyPitch)*Math.min(1,dt*6);car.bodyRoll+=(brT-car.bodyRoll)*Math.min(1,dt*6);
+  chassis.rotation.set(car.bodyPitch,0,car.bodyRoll);
+  // անիվների պտույտ՝ շարժման ուղղությամբ + ղեկ
+  for(const w of wheels){
+    w.spin.rotation.x+=v*dt/0.36;
+    if(w.front)w.steer.rotation.y=-car.steer;
+  }
+  M.tail.emissive.setHex(car.braking?0xff2a2a:0x550000);M.tail.color.setHex(car.braking?0xff4040:0x7a0d0d);
+  const sh=carRoot.userData.shadow;sh.position.set(car.x,car.y+0.06,car.z);sh.rotation.set(-Math.PI/2,car.yaw,0);
+}
+
+/* ════════════════════════════════════════════════════════════
+   17. ԿԱՄԵՐԱ — third-person chase, drag-ով պտույտ, auto-return
+   ════════════════════════════════════════════════════════════ */
+const cam={yaw:0,off:0,pitch:0.34,pos:new THREE.Vector3(0,10,-190),look:new THREE.Vector3(),drag:false,pid:null,lx:0,ly:0,last:0,init:false};
+function updateCamera(dt,now){
+  if(!cam.init){cam.yaw=car.yaw;cam.init=true;}
+  cam.yaw-=angDiff(cam.yaw,car.yaw)*(1-Math.exp(-dt*(car.v<-1?1.2:3.2)));
+  if(!cam.drag&&now-cam.last>1.1)cam.off*=Math.exp(-dt*2.6);
+  const yaw=cam.yaw+(car.v<-2?0:0)+cam.off,sp=Math.abs(car.v);
+  const dist=9.2+sp*0.05,cp=Math.cos(cam.pitch),sy=Math.sin(yaw),cy=Math.cos(yaw);
+  const tx=car.x,ty=car.y+1.4,tz=car.z;
+  const want=new THREE.Vector3(tx-sy*dist*cp,ty+Math.sin(cam.pitch)*dist+0.6,tz-cy*dist*cp);
+  cam.pos.lerp(want,1-Math.exp(-dt*11));
+  const gh=terrainH(cam.pos.x,cam.pos.z)+1.3;if(cam.pos.y<gh)cam.pos.y=gh;
+  camera.position.copy(cam.pos);
+  cam.look.set(tx+sy*3,ty+0.4,tz+cy*3);camera.lookAt(cam.look);
+  const fov=60+Math.min(14,sp*0.35);if(Math.abs(camera.fov-fov)>0.05){camera.fov+=(fov-camera.fov)*Math.min(1,dt*4);camera.updateProjectionMatrix();}
+  sky.position.copy(camera.position);
+}
+
+/* ════════════════════════════════════════════════════════════
+   18. ԱՌԱՔԵԼՈՒԹՅՈՒՆՆԵՐ
+   ════════════════════════════════════════════════════════════ */
+const marker=new THREE.Group();
+const mRing=new THREE.Mesh(new THREE.TorusGeometry(10,0.45,8,48),new THREE.MeshBasicMaterial({color:0xff4fa3,fog:false}));
+mRing.rotation.x=Math.PI/2;
+const mBeam=new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.2,90,18,1,true),new THREE.MeshBasicMaterial({color:0xff5cb0,transparent:true,opacity:.38,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false}));
+mBeam.position.y=45;
+const mOrb=new THREE.Mesh(new THREE.SphereGeometry(1.7,14,10),new THREE.MeshBasicMaterial({color:0xffb3dc,fog:false}));
+marker.add(mRing,mBeam,mOrb);scene.add(marker);
+const mis={t:null,idx:-1,dist0:1,allowed:30,el:0,score:0};
+function newMission(){
+  let i;do{i=Math.floor(Math.random()*LM.length);}while(i===mis.idx);
+  mis.idx=i;mis.t=LM[i];
+  mis.dist0=Math.hypot(mis.t.t[0]-car.x,mis.t.t[1]-car.z);
+  mis.allowed=mis.dist0/14+16;mis.el=0;
+  marker.position.set(mis.t.t[0],terrainH(mis.t.t[0],mis.t.t[1])+0.3,mis.t.t[1]);
+  $('mname').textContent='📍 '+mis.t.name;
+}
+let toastT=0;
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1800);}
+function updateMission(dt,now){
+  mis.el+=dt;
+  const dx=mis.t.t[0]-car.x,dz=mis.t.t[1]-car.z,d=Math.hypot(dx,dz);
+  if(d<10){
+    const bonus=Math.max(0,Math.round((mis.allowed-mis.el)*6));
+    const gain=100+bonus;mis.score+=gain;$('score').textContent=mis.score;
+    toast('+'+gain+(bonus?'\n⚡ արագության բոնուս +'+bonus:''));
+    newMission();return;
+  }
+  const rem=Math.max(0,mis.allowed-mis.el),mm=Math.floor(rem/60),ss=Math.floor(rem%60);
+  const T=$('time'),ts=mm+':'+String(ss).padStart(2,'0');if(T.textContent!==ts){T.textContent=ts;T.style.color=rem<8?'#ff7b7b':'#fff';}
+  $('mdist').textContent=Math.round(d)+' մ';
+  $('speed').textContent=Math.round(Math.abs(car.v)*3.6);
+  const bearing=Math.atan2(dx,dz);$('arrow').style.transform='rotate('+(angDiff(car.yaw,bearing)*57.2958)+'deg)';
+  mRing.rotation.z+=dt*1.6;mBeam.material.opacity=0.32+0.08*Math.sin(now*4);
+  mOrb.position.y=9+Math.sin(now*2.4)*2.2;
+}
+
+/* ════════════════════════════════════════════════════════════
+   19. ՎԱԼԻԴԱՑԻԱ — տոպոլոգիայի ինքնաստուգում (console)
+   ════════════════════════════════════════════════════════════ */
+function rectOBB(r){return{x:r.cx,z:r.cz,hx:r.w/2,hz:r.d/2,c:1,s:0};}
+function validate(){
+  const rep={errors:[],info:[]};
+  // 1) բակերը չեն համընկնում միմյանց և փողոցների հետ
+  for(let i=0;i<yards.length;i++)for(let j=i+1;j<yards.length;j++)
+    if(obbOverlap(rectOBB(yards[i]),rectOBB(yards[j])))rep.errors.push(`բակերը համընկնում են՝ ${yards[i].name} ↔ ${yards[j].name}`);
+  for(const y of yards){
+    let minD=1e9;
+    for(let x=y.x0;x<=y.x1;x+=4)for(const z of[y.z0,y.z1])minD=Math.min(minD,roadDist(x,z));
+    for(let z=y.z0;z<=y.z1;z+=4)for(const x of[y.x0,y.x1])minD=Math.min(minD,roadDist(x,z));
+    if(minD<HW)rep.errors.push(`բակ «${y.name}» մտնում է փողոցի մեջ (հեռ. ${minD.toFixed(1)} < ${HW})`);
+    rep.info.push(`բակ ${y.name}: gate→փողոց շավիղ ${y.pathLen.toFixed(0)} մ`);
+    if(y.pathLen>70||y.pathLen<0)rep.errors.push(`բակ ${y.name}: շավիղը անհամապատասխան է`);
+  }
+  // 2) շենքերը՝ իրենց բակի ներսում
+  for(const y of yards)for(const b of landmarkBuildings){
+    if(b.ell||b.name.startsWith('square')||b.name==='filler'||b.name==='avenue-bld')continue;
+    const inside=b.x>y.x0&&b.x<y.x1&&b.z>y.z0&&b.z<y.z1;
+    if(inside){
+      for(const[sx,sz]of[[1,1],[1,-1],[-1,1],[-1,-1]]){
+        const px=b.x+sx*b.hx*b.c+sz*b.hz*b.s*(b.s?1:0),pz=b.z+sz*b.hz*b.c-sx*b.hx*b.s*(b.s?1:0);
+        if(px<y.x0||px>y.x1||pz<y.z0||pz>y.z1)rep.errors.push(`շենք ${b.name} դուրս է գալիս բակից ${y.name}`);
+      }
+    }
+  }
+  // 3) շենք-շենք համընկնում
+  const B=landmarkBuildings.filter(b=>!b.ell);
+  for(let i=0;i<B.length;i++)for(let j=i+1;j<B.length;j++)if(obbOverlap(B[i],B[j]))rep.errors.push(`շենքերը համընկնում են՝ ${B[i].name} ↔ ${B[j].name}`);
+  // 4) շենքերը փողոցներից հեռու
+  for(const b of landmarkBuildings){
+    const pts=[[0,0],[b.hx,b.hz],[-b.hx,b.hz],[b.hx,-b.hz],[-b.hx,-b.hz]];
+    for(const[p,q]of pts){const x=b.x+p*b.c+q*b.s,z=b.z-p*b.s+q*b.c;if(roadDist(x,z)<HW-0.5){rep.errors.push(`շենք ${b.name} մտնում է փողոցի մեջ (${x.toFixed(0)},${z.toFixed(0)})`);break;}}
+  }
+  // 5) կապակցվածություն — բոլոր նշանակետերը հասանելի են
+  const key=p=>Math.round(p[0])+','+Math.round(p[1]);
+  const adj=new Map();const link=(a,b)=>{const ka=key(a),kb=key(b);(adj.get(ka)||adj.set(ka,new Set()).get(ka)).add(kb);(adj.get(kb)||adj.set(kb,new Set()).get(kb)).add(ka);};
+  const ringNodes=[];
+  for(const e of edges){link(e.a,e.b);for(const p of[e.a,e.b])if(Math.abs(Math.hypot(p[0],p[1])-RING.r)<1)ringNodes.push(p);}
+  for(let i=1;i<ringNodes.length;i++)link(ringNodes[0],ringNodes[i]);
+  const start=key([0,-105]),seen=new Set([start]),q=[start];
+  while(q.length){const k=q.pop();for(const n of adj.get(k)||[])if(!seen.has(n)){seen.add(n);q.push(n);}}
+  for(const k of adj.keys())if(!seen.has(k))rep.errors.push('անջատված հանգույց՝ '+k);
+  // 6) ամեն հանգույց (ծայր) ունի պատճառ՝ խաչմերուկ/օղակ/շրջան/կառուցված եզր
+  const deg=new Map();for(const e of edges){for(const p of[e.a,e.b]){const k=key(p);deg.set(k,(deg.get(k)||0)+1);}}
+  for(const[k,d]of deg){
+    if(d>=2)continue;const[x,z]=k.split(',').map(Number);
+    const ok=Math.abs(Math.hypot(x,z)-RING.r)<1||DISCS.some(c=>Math.hypot(x-c.x,z-c.z)<2);
+    if(!ok)rep.errors.push('«կախված» փողոցի ծայր՝ '+k);
+  }
+  // 7) նշանակետերը ճանապարհի վրա են
+  for(const l of LM)if(roadDist(l.t[0],l.t[1])>8.5)rep.errors.push(`նշանակետ «${l.name}» ճանապարհի վրա չէ (${roadDist(l.t[0],l.t[1]).toFixed(1)})`);
+  rep.info.push(`փողոցի կողեր՝ ${edges.length}, շենքեր՝ ${landmarkBuildings.length}, բակեր՝ ${yards.length}, collider՝ ${colliders.length}, ծառեր՝ ${TREES.length}`);
+  return rep;
+}
+
+/* ════════════════════════════════════════════════════════════
+   20. ՆԵՐԱՐԿՈՒՄ, UI, ԿԱՌԱՎԱՐՈՒՄ, ՑԻԿԼ
+   ════════════════════════════════════════════════════════════ */
+function bindBtn(el,prop){
+  const on=e=>{e.preventDefault();input[prop]=true;el.classList.add('on');try{el.setPointerCapture(e.pointerId);}catch(_){}};
+  const off=e=>{input[prop]=false;el.classList.remove('on');};
+  el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);el.addEventListener('pointercancel',off);el.addEventListener('lostpointercapture',off);
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+}
+bindBtn($('bL'),'l');bindBtn($('bR'),'r');bindBtn($('bGas'),'g');bindBtn($('bBrake'),'b');
+addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();$('help').style.opacity=0;});
+addEventListener('keyup',e=>{keys[e.code]=false;});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+canvas.addEventListener('pointerdown',e=>{
+  if(cam.drag)return;
+  if(e.pointerType!=='mouse'&&e.clientX<innerWidth*0.38)return;
+  cam.drag=true;cam.pid=e.pointerId;cam.lx=e.clientX;cam.ly=e.clientY;try{canvas.setPointerCapture(e.pointerId);}catch(_){}
 });
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', resize);
+canvas.addEventListener('pointermove',e=>{
+  if(!cam.drag||e.pointerId!==cam.pid)return;
+  cam.off-=(e.clientX-cam.lx)*0.0062;cam.pitch=clamp(cam.pitch+(e.clientY-cam.ly)*0.0042,0.08,1.15);
+  cam.lx=e.clientX;cam.ly=e.clientY;
+});
+const endDrag=e=>{if(e.pointerId===cam.pid){cam.drag=false;cam.last=performance.now()/1000;}};
+canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',endDrag);
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('resize',()=>{renderer.setPixelRatio(pixScale);renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
+
+function buildWorld(){
+  const msg=t=>{$('lmsg').textContent=t;};
+  buildTerrain();buildFarPeaks();
+  buildRoads();
+  buildSquare();buildCascade();buildOpera();buildMatenadaran();buildGallery();buildMarriott();buildUniversity();buildAvenue();
+  const nf=placeFillers();
+  streetTrees();
+  // ամպեր
+  const cm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.92,depthWrite:false});
+  const cl=new THREE.InstancedMesh(USPH,cm,70);const m=new THREE.Matrix4();let k=0;
+  for(let i=0;i<14;i++){
+    const a=rr(0,TAU),d=rr(900,3200),cx=Math.cos(a)*d,cz=Math.sin(a)*d,cy=rr(650,950);
+    for(let j=0;j<5&&k<70;j++){m.compose(_P.set(cx+rr(-120,120),cy+rr(-20,20),cz+rr(-90,90)),_Q.identity(),_S.set(rr(80,170),rr(28,48),rr(60,110)));cl.setMatrixAt(k++,m);}
+  }
+  cl.count=k;cl.frustumCulled=false;scene.add(cl);
+  finalizeTrees();
+  flushBatch();
+  buildCar();
+  return nf;
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 32 — MAIN LOOP
-   ═══════════════════════════════════════════════════════════════════ */
-var lastT = performance.now();
-function loop(now){
-  requestAnimationFrame(loop);
-  var dt = Math.min(0.04, (now - lastT) / 1000);
-  lastT = now;
-
-  if(S.phase === 'play') updatePhysics(dt);
-  updateCamera(dt);
-  updateHUD(dt);
-  renderer.render(scene, camera);
+let last=0,ema=16,adaptT=0;
+function frame(t){
+  requestAnimationFrame(frame);
+  const now=t/1000;let dt=Math.min(0.05,now-last||0.016);last=now;
+  physics(dt);updateMission(dt,now);updateCamera(dt,now);
+  for(const j of jets){const u=j.userData;j.scale.set(1,u.h*(0.75+0.25*Math.sin(now*3+u.ph)),1);}
+  renderer.render(scene,camera);
+  // ադապտիվ լուծաչափ՝ 60 FPS թիրախի համար
+  ema+=(dt*1000-ema)*0.05;adaptT+=dt;
+  if(adaptT>2.5){adaptT=0;if(ema>24&&pixScale>0.6){pixScale=Math.max(0.6,pixScale-0.15);renderer.setPixelRatio(pixScale);renderer.setSize(innerWidth,innerHeight,false);}}
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 33 — INIT
-   ═══════════════════════════════════════════════════════════════════ */
-resize();
-player.group.position.set(S.x, terrainHeight(S.x, S.z), S.z);
-requestAnimationFrame(loop);
-
-window.__gameReady = true;
-window.__gameStartFn = startGame;
-
-/* ═══════════════════════════════════════════════════════════════════
-   SECTION 34 — BUILD REPORT
-   ═══════════════════════════════════════════════════════════════════ */
-(function reportBuildStats(){
-  var totalCollision = 0;
-  for(var k in COL_HASH) totalCollision += COL_HASH[k].length;
-  console.log('──────────────────────────────────────────');
-  console.log('  YEREVAN 3D — BUILD COMPLETE');
-  console.log('──────────────────────────────────────────');
-  console.log('  Scene children:', scene.children.length);
-  console.log('  Collision cells:', Object.keys(COL_HASH).length);
-  console.log('  Collision boxes:', totalCollision);
-  console.log('  Terrain verts:', terrainGeo.attributes.position.count);
-  console.log('  Highway verts:', ROAD_DATA.highway.verts.length / 3);
-  console.log('  Avenue verts:', ROAD_DATA.avenue.verts.length / 3);
-  console.log('  Street verts:', ROAD_DATA.street.verts.length / 3);
-  console.log('  Serpentine points:', SERPENTINE_PATH.length);
-  console.log('  Landmarks:', Object.keys(LM).length);
-  console.log('  Pixel ratio: 1 (fixed)');
-  console.log('  Antialias: OFF');
-  console.log('  Shadows: OFF');
-  console.log('──────────────────────────────────────────');
-})();
-
-})();
+function start(){
+  try{
+    const nf=buildWorld();
+    const rep=validate();
+    console.log('%cԵրևան · տոպոլոգիայի ստուգում','font-weight:bold;color:#2a8',rep.info.join('\n'));
+    if(rep.errors.length)console.warn('Խնդիրներ:\n'+rep.errors.join('\n'));else console.log('✅ Տոպոլոգիան կոռեկտ է. համընկնումներ կամ կախված փողոցներ չկան.');
+    window.__yerevan={rep,car,LM,fillers:nf};
+    newMission();
+    const L=$('loading');L.style.opacity=0;setTimeout(()=>L.remove(),700);
+    setTimeout(()=>{$('help').style.opacity=0;},9000);
+    requestAnimationFrame(frame);
+  }catch(err){
+    console.error(err);$('lmsg').textContent='Սխալ՝ '+err.message+' (տես console)';
+  }
+}
+setTimeout(start,30);
 </script>
 </body>
 </html>
