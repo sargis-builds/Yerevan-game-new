@@ -107,10 +107,32 @@ function cascadeH(x,z){
   const fade=1-sstep(CAS.z1,CAS.z1+340,z);
   return c*m*fade;
 }
+const GORGE={x:-20,z:-680,a:420,b:110,depth:38};
+const gorgeM=(x,z)=>1-sstep(0.35,1,Math.hypot((x-GORGE.x)/GORGE.a,(z-GORGE.z)/GORGE.b));
+const HILL={x:540,z:-150,flat:32,out:86,h:16};
+const hillD=(x,z)=>Math.hypot(x-HILL.x,z-HILL.z);
+function catmull(P,seg){const out=[],g=i=>P[clamp(i,0,P.length-1)];
+  for(let i=0;i<P.length-1;i++){const p0=g(i-1),p1=g(i),p2=g(i+1),p3=g(i+2);
+    for(let k=0;k<seg;k++){const t=k/seg,t2=t*t,t3=t2*t;
+      out.push([0,1].map(j=>0.5*(2*p1[j]+(-p0[j]+p2[j])*t+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2+(-p0[j]+3*p1[j]-3*p2[j]+p3[j])*t3)));}}
+  out.push(P[P.length-1].slice());return out;}
+// Վերելքի ճանապարհ՝ Սայաթ-Նովայի արևելյան ծայրից, քաղաքի եզրով շրջանցելով, մինչև Կասկադի գագաթ
+const CLP=catmull([[640,0],[760,-90],[860,-260],[840,-520],[700,-720],[420,-830],[60,-870],[-300,-860],[-640,-800],[-900,-620],[-1010,-300],[-1020,60],[-960,420],[-800,700],[-540,830],[-280,840],[-110,790],[-40,768]],12);
+const CLS=[0];for(let i=1;i<CLP.length;i++)CLS.push(CLS[i-1]+Math.hypot(CLP[i][0]-CLP[i-1][0],CLP[i][1]-CLP[i-1][1]));
+const CLL=CLS[CLS.length-1],CLH=CAS.rise*CAS.n+0.4;
+function climbAt(x,z){let bd=1e9,bs=0;
+  for(let i=0;i<CLP.length-1;i++){const a=CLP[i],b=CLP[i+1],dx=b[0]-a[0],dz=b[1]-a[1],l2=dx*dx+dz*dz;
+    const t=clamp(((x-a[0])*dx+(z-a[1])*dz)/l2,0,1),d=Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t);
+    if(d<bd){bd=d;bs=CLS[i]+Math.sqrt(l2)*t;}}
+  return[bd,bs];}
+function baseH(x,z){
+  let h=Math.max(1.2+(fbm(x*0.0035+11,z*0.0035+7,3)-0.5)*2.4+mountainH(x,z),cascadeH(x,z));
+  h-=GORGE.depth*gorgeM(x,z);                                   // կիրճ (ամենախորը կետ)
+  h+=HILL.h*(1-sstep(HILL.flat,HILL.out,hillD(x,z)));           // եկեղեցու բլուր
+  return h;}
 function terrainH(x,z){
-  const base=1.2+(fbm(x*0.0035+11,z*0.0035+7,3)-0.5)*2.4;   // 0…2.4 հարթավայր
-  return Math.max(base+mountainH(x,z),cascadeH(x,z));
-}
+  const hb=baseH(x,z),c=climbAt(x,z),hr=2+(CLH-2)*c[1]/CLL,span=14+Math.max(26,Math.abs(hr-hb)*1.1);
+  return c[0]>=span?hb:lerp(hb,hr,1-sstep(14,span,c[0]));}
 
 /* ════════════════════════════════════════════════════════════
    3. RENDERER / SCENE / ԼՈՒՅՍ / ԵՐԿԻՆՔ
@@ -185,6 +207,8 @@ mkFac('gray','#b4aea4','#dcd8cf',['#3b5670','#17283a'],'sq',8,6.0);
 mkFac('basalt','#6c6864','#8c8781',['#222','#0a0a0a'],'slit',7,8);
 mkFac('cream','#e6d9bd','#faf3e2',GL,'arch',8,7);
 mkFac('hotel','#cdbf9f','#f0e8d4',['#3e607f','#16273a'],'hotel',20,2.27,256,40);
+mkFac('blue','#3d9bc2','#eaf5f7',['#16384f','#0a2133'],'arch',7,6.4);
+mkFac('tuff','#d4a96d','#efd9ae',['#3a2a1c','#1a120b'],'arch',6,7);
 const FILLERS=['pink','orange','tan','gray'];
 
 const lam=(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o));
@@ -202,6 +226,7 @@ const M={
   tail:lam(0x7a0d0d,{emissive:0x550000}),head:lam(0xfff3c4,{emissive:0xb9a36a}),
 };
 M.dash.map.repeat.set(1,1);
+Object.assign(M,{turq:lam(0x2fb4c4,{emissive:0x0b3d46}),opDome:lam(0x8f949a),tuff:lam(0xd4a96d),tuffDk:lam(0xa97f4b)});
 
 /* ════════════════════════════════════════════════════════════
    5. ՍՏԱՏԻԿ ԳԵՈՄԵՏՐԻԱՅԻ BATCH (draw-call-ները նվազեցնելու համար)
@@ -341,12 +366,12 @@ edge([215,-260],[400,-260],'Հարավային');edge([400,-260],[640,-260],'Հ�
 edge([215,-260],[215,-62],'Կոմիտաս');edge([215,-62],[215,0],'Կոմիտաս');
 // Նալբանդյան (Հրապարակ → Համալսարան)
 edge([99.3,-34.2],[180,-62],'Նալբանդյան',false);edge([180,-62],[215,-62],'Նալբանդյան');
-edge([215,-62],[400,-62],'Նալբանդյան');edge([400,-62],[400,-260],'Նալբանդյան');
+edge([215,-62],[400,-62],'Նալբանդյան');edge([400,-62],[400,-150],'Նալբանդյան');edge([400,-150],[400,-260],'Նալբանդյան');edge([400,-150],[440,-150],'Եկեղեցու փողոց',false);
 // արևելյան եզր
 edge([640,-260],[640,0],'Արևելյան');
 // Հյուսիսային պողոտայի մուտքի փողոց (ավարտվում է շրջադարձի շրջանում)
 edge([150,0],[150,40],'Հյուսիսային պողոտա',false);
-const DISCS=[{x:0,z:242,r:14},{x:150,z:40,r:14}];   // շրջադարձի շրջաններ
+const DISCS=[{x:0,z:242,r:14},{x:150,z:40,r:14},{x:440,z:-150,r:14}];  // շրջադարձի շրջաններ
 
 function segDist(px,pz,a,b){
   const dx=b[0]-a[0],dz=b[1]-a[1],l2=dx*dx+dz*dz;
@@ -465,7 +490,9 @@ class Loc{
    9. ԾԱՌԵՐ (InstancedMesh)
    ════════════════════════════════════════════════════════════ */
 const TREES=[];
+function noTree(x,z){return roadDist(x,z)<HW+3||segDist(x,z,AVE.a,AVE.b)<22||Math.hypot(x,z)<150||climbAt(x,z)[0]<20;}
 function addTree(x,z,s=1,type,collide=true){
+  if(noTree(x,z))return false;
   if(type===undefined)type=rng()<0.3?1:0;
   if(collide){if(blockedAt(x,z,1.2))return false;addCirc(x,z,0.6*s);}
   TREES.push({x,y:terrainH(x,z),z,s,type,r:rng()});return true;
@@ -515,6 +542,7 @@ function buildTerrain(){
     if(h>60)c.lerp(rock,sstep(60,110,h));
     if(h>110)c.lerp(hi,sstep(110,170,h));
     if(slope>0.55)c.lerp(rock,clamp((slope-0.55)*1.6,0,0.85));
+    
     if(Math.abs(x)<CAS.half+1&&z>CAS.z0-2&&z<CAS.z1+8)c.copy(stone);
     else if(z>CAS.z0&&z<CAS.z1+10&&Math.abs(x)<190&&slope>0.7)c.lerp(stone,0.55);
     col[k*3]=c.r;col[k*3+1]=c.g;col[k*3+2]=c.b;
@@ -665,6 +693,9 @@ const LM=[
   {id:'marriott',name:'Marriott Hotel',t:[-100,-260]},
   {id:'uni',name:'Երևանի պետական համալսարան',t:[400,-260]},
   {id:'north',name:'Հյուսիսային պողոտա',t:[150,34]},
+  {id:'mosque',name:'Կապույտ մզկիթ',t:[500,0]},
+  {id:'church',name:'Սբ. Գրիգոր Լուսավորիչ եկեղեցի',t:[440,-150]},
+  {id:'top',name:'Կասկադի գագաթ (ամենաբարձր կետ)',t:[-40,768],far:true},  
 ];
 const jets=[];
 
@@ -794,8 +825,9 @@ function buildOpera(){
   L.cyl(0,48,0,4,5,M.stone,12);L.cone(0,53,0,3.4,7,M.gold);
   // ճակատային պորտիկ
   const pz=b+8;
-  for(let i=0;i<8;i++)L.col(-17.5+i*5,0.5,pz,1.05,14.5,M.stone);
-  L.box(0,15,pz,42,2,9,M.stone);L.ped(0,17,pz,42,6.5,9,M.stone);L.box(0,0.5,pz-1,43,0.8,10,M.stoneDk);
+  for(let i=0;i<28;i++){const t=i/28*TAU;L.col(Math.cos(t)*(a-12),18,Math.sin(t)*(b-10),0.5,8,M.stone);} // վերին կոլոնադ
+L.dome(0,28,0,a-16,9,b-14,M.opDome);                  // ցածր, հարթ մոխրագույն գմբեթ
+L.cyl(0,35,0,6,3,M.stone,12);L.dome(0,38,0,6.5,3,6.5,M.opDome);
   for(let j=0;j<6;j++)L.box(0,-0.2,pz+5.4+j*1.4,48,0.5+(5-j)*0.28,1.4,M.stone);
   // բախումներ՝ էլիպսի մոտարկում շրջաններով + պորտիկ
   for(const[x,r]of[[0,54],[-26,52],[26,52],[-46,40],[46,40],[-60,28],[60,28],[-68,14],[68,14]])L.circ(x,0,r);
@@ -936,6 +968,47 @@ function buildAvenue(){
   for(let k=0;k<8;k++){const a=k/8*TAU,tx=AVE.b[0]+Math.cos(a)*14,tz=AVE.b[1]+Math.sin(a)*14;addTree(tx,tz,1,0);}
 }
 
+function buildClimb(){
+  ribbon(CLP,14,0.16,M.asphalt,8,0,10);ribbon(CLP,0.35,0.2,M.dash,12,0,10);
+  for(let i=6;i<CLP.length-1;i++){const a=CLP[i],b=CLP[i+1],dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz);
+    const L=new Loc((a[0]+b[0])/2,(a[1]+b[1])/2,Math.atan2(dx,dz));
+    for(const sg of[-1,1])L.box(sg*7.6,-0.4,0,0.7,1.5,l+0.4,M.stone);}   // պարապետներ
+}
+function buildMosque(){
+  const Y=makeYard({name:'mosque',x0:440,x1:560,z0:62,z1:200,gate:'S',gpos:500,entry:[500,125],lawns:[[470,100,20,60],[530,100,20,60],[500,186,100,14]]});
+  const L=new Loc(500,150,Math.PI);
+  L.box(0,-3,0,64,3.8,50,M.stoneDk);
+  L.fbox(0,0.8,0,46,20,32,FAC.blue);L.box(0,20.8,0,48,1.4,34,M.stone);
+  for(const s of[-1,1]){L.fbox(s*28,0.8,-4,14,12,24,FAC.blue);L.box(s*28,12.8,-4,15,1,25,M.stone);}
+  L.fbox(0,0.8,18,18,27,6,FAC.blue);L.box(0,27.8,18,19.6,1.4,7.6,M.stone);L.box(0,0.8,21.1,8,16,0.3,M.dark);
+  L.cyl(0,22.2,-2,10.5,6,M.turq,24);L.dome(0,28.2,-2,12,12,12,M.turq);L.cyl(0,39.8,-2,0.3,5,M.gold,6);L.sph(0,45,-2,0.9,M.gold);
+  for(const s of[-1,1]){const mx=s*13;
+    L.cyl(mx,0.8,24,1.8,25,M.limestone,14);L.cyl(mx,25,24,2.7,0.8,M.stone,14);L.cyl(mx,25.8,24,1.5,8,M.limestone,14);
+    L.cone(mx,33.8,24,2.0,7,M.turq);L.sph(mx,41.3,24,0.45,M.gold);L.circ(mx,24,2.2);}
+  L.obb(0,0,48,34,'mosque-body');L.obb(0,18,20,8,'mosque-iwan');L.obb(-28,-4,15,25,'mosque-wL');L.obb(28,-4,15,25,'mosque-wR');
+  const wp=L.w(0,0);landmarkBuildings.push({name:'mosque',x:wp[0],z:wp[1],hx:24,hz:17,c:L.c,s:L.s});
+  reserved.push({t:0,x:500,z:131,hx:60,hz:69,c:1,s:0});
+  Y.plant({scatter:26,step:14});
+}
+function buildChurch(){
+  const cx=HILL.x,cz=HILL.z;
+  disc(M.pave,cx,cz,0.01,HILL.flat+2,0.12,6);
+  pathTo(458,cz,cx-HILL.flat+4,cz,8);                     // թեք ճանապարհ դեպի բլուրը
+  reserved.push({t:2,x:cx,z:cz,r:95});
+  const L=new Loc(cx,cz,-Math.PI/2),F=FAC.tuff;
+  L.cyl(0,-0.2,0,29,1,M.stoneDk,32);
+  L.fbox(0,0.8,0,16,15,40,F);L.fbox(0,0.8,0,36,15,16,F);
+  L.hip(0,15.8,0,16,5,40,M.tuffDk);L.hip(0,15.8,0,36,5,16,M.tuffDk);
+  L.cyl(0,15.8,0,6.5,9,M.tuff,16);L.cone(0,24.8,0,7.2,15,M.tuffDk);L.cyl(0,39.8,0,0.2,3,M.gold,5);
+  for(const[x,z]of[[7,7],[-7,7],[7,-7],[-7,-7]]){L.cyl(x,15.8,z,2.2,4,M.tuff,10);L.cone(x,19.8,z,2.6,6,M.tuffDk);}
+  for(let j=0;j<5;j++)L.box(0,-0.2,21.5+j*1.4,14,0.6+(4-j)*0.3,1.4,M.stone);
+  L.fbox(-14,0.8,26,7,22,7,F);L.cone(-14,22.8,26,4.6,9,M.tuffDk);
+  L.obb(0,0,18,42,'church-nave');L.obb(0,0,38,18,'church-cross');L.obb(-14,26,8,8,'church-bell');
+  landmarkBuildings.push({name:'church',x:cx,z:cz,hx:9,hz:21,c:L.c,s:L.s});
+  for(const r of[44,56,68,78])for(let a=0;a<TAU;a+=14/r){const x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
+    if(Math.abs(z-cz)<7&&x<cx)continue;addTree(x+rr(-2,2),z+rr(-2,2),rr(1,1.5),0);}
+}
+
 /* ════════════════════════════════════════════════════════════
    14. ՖՈՆԱՅԻՆ ՇԵՆՔԵՐ — ամեն մեկն իր բակով ու շավիղով
    ════════════════════════════════════════════════════════════ */
@@ -999,16 +1072,6 @@ function placeFillers(){
   return count;
 }
 function streetTrees(){
-  for(const e of edges){
-    if(!e.fill)continue;
-    for(let s=22;s<e.len-22;s+=26){
-      for(const sg of[1,-1]){
-        const x=e.a[0]+e.dx*s+e.dz*10.2*sg,z=e.a[1]+e.dz*s-e.dx*10.2*sg;
-        if(roadDist(x,z)<9.4)continue;
-        addTree(x,z,rr(.85,1.15),0);
-      }
-    }
-  }
   // պուրակ՝ ազատ տարածքներ
   for(let i=0;i<900;i++){
     const x=rr(-640,640),z=rr(-540,560);
@@ -1021,6 +1084,9 @@ function streetTrees(){
     const a=rr(0,TAU),d=rr(700,1250),x=Math.cos(a)*d,z=Math.sin(a)*d*0.9;
     const h=terrainH(x,z);if(h<6||h>90)continue;addTree(x,z,rr(2,3.5),rng()<.6?1:0,false);
   }
+    for(let x=GORGE.x-GORGE.a;x<=GORGE.x+GORGE.a;x+=7)for(let z=GORGE.z-GORGE.b-30;z<=GORGE.z+GORGE.b+30;z+=7){
+    const px=x+rr(-3,3),pz=z+rr(-3,3),m=gorgeM(px,pz);if(m<0.03)continue;
+    addTree(px,pz,rr(2.6,3.6)*(0.7+0.3*m),0,false);}
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1030,9 +1096,44 @@ const carRoot=new THREE.Group(),chassis=new THREE.Group();carRoot.add(chassis);c
 const wheels=[];
 let paint,glassM;
 function buildCar(){
-  paint=new THREE.MeshLambertMaterial({color:0xd62a2a});
-  glassM=new THREE.MeshLambertMaterial({color:0x1d2f45,emissive:0x0a1626});
-  const dark=lam(0x22252b),chrome=lam(0xcfd6dd,{emissive:0x333a40}),black=lam(0x111214);
+  // ─── Իրական ներկ ───
+  paint = new THREE.MeshStandardMaterial({
+    color:0xd62a2a,
+    roughness:0.28,
+    metalness:0.55
+  });
+
+  // ─── Իրական ապակի (մուգ, արտացոլող, կիսաթափանց) ───
+  glassM = new THREE.MeshStandardMaterial({
+    color:0x0a1723,
+    roughness:0.05,
+    metalness:0.85,
+    transparent:true,
+    opacity:0.82,
+    emissive:0x081420,
+    emissiveIntensity:0.4
+  });
+
+  // ─── Մուգ պլաստիկ / ռետին (բամպեր, pillar-ներ, spoiler-ի հենարան) ───
+  const dark = new THREE.MeshStandardMaterial({
+    color:0x1a1d22,
+    roughness:0.65,
+    metalness:0.25
+  });
+
+  // ─── Քրոմ (grille, spokes-ի արտաքին մաս) ───
+  const chrome = new THREE.MeshStandardMaterial({
+    color:0xe6ecf2,
+    roughness:0.10,
+    metalness:1.0
+  });
+
+  // ─── Անվադողի ռետին ───
+  const black = new THREE.MeshStandardMaterial({
+    color:0x0e0e12,
+    roughness:0.94,
+    metalness:0.02
+  });
   const part=(w,h,d,m,x,y,z,rx=0,ry=0,rz=0)=>{const mm=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mm.position.set(x,y,z);mm.rotation.set(rx,ry,rz);chassis.add(mm);return mm;};
   part(1.7,0.25,4.0,dark,0,0.45,0);                                     // chassis
   part(1.84,0.5,4.3,paint,0,0.78,0);                                    // body
@@ -1072,112 +1173,265 @@ function buildCar(){
 /* ════════════════════════════════════════════════════════════
    16. ՖԻԶԻԿԱ
    ════════════════════════════════════════════════════════════ */
-const car={x:0,z:-170,yaw:0,v:0,steer:0,y:0,vy:0,yawRate:0,ax:0,bodyRoll:0,bodyPitch:0,braking:false};
+const car={
+  x:0,z:-170,yaw:0,v:0,steer:0,y:0,vy:0,yawRate:0,ax:0,
+  bodyRoll:0,bodyPitch:0,braking:false,
+  bodyBounce:0,bodyBounceV:0,
+  wheelY:[0,0,0,0]
+};
+const REST_Y=0.36,TRACK=1.80,WB_LEN=2.9;
+const WHEEL_POS=[
+  {sx:1, sz:1.45, front:true },
+  {sx:-1,sz:1.45, front:true },
+  {sx:1, sz:-1.45,front:false},
+  {sx:-1,sz:-1.45,front:false}
+];
 const WL=2.9,WT=1.86,CAR_R=1.12,CIRCLES=[-1.3,0,1.3];
 const MAXF=36,MAXR=9,ACC=15;
 const input={l:false,r:false,g:false,b:false,hb:false};
 const keys={};
-const OUTX=690,OUTZ0=-565,OUTZ1=575;
-function blockedTerrain(x,z){return x<-OUTX||x>OUTX||z<OUTZ0||z>OUTZ1||terrainH(x,z)>6.5;}
+const OUTX=1100,OUTZ0=-950,OUTZ1=900;
+function blockedTerrain(x,z){
+  if(x<-OUTX||x>OUTX||z<OUTZ0||z>OUTZ1)return true;
+  const h=terrainH(x,z);if(h<-2)return true;
+  if(h>6.5){
+    // Կասկադի ամբողջ տեռասները + գագաթի հրապարակը ազատ են
+    if(Math.abs(x)<CAS.half+80 && z>CAS.z0-5 && z<CAS.z1+40) return false;
+    return hillD(x,z)<92?false:climbAt(x,z)[0]>8.5;
+  }
+  return false;}
 function physics(dt){
   const throttle=(input.g||keys.KeyW||keys.ArrowUp)?1:0;
   const back=(input.b||keys.KeyS||keys.ArrowDown)?1:0;
   const hb=(input.hb||keys.Space)?1:0;
-  const left=(input.l||keys.KeyA||keys.ArrowLeft)?1:0,right=(input.r||keys.KeyD||keys.ArrowRight)?1:0;
+  const left=(input.l||keys.KeyA||keys.ArrowLeft)?1:0;
+  const right=(input.r||keys.KeyD||keys.ArrowRight)?1:0;
   const sIn=right-left;
-  // առաջ/հետ/արգելակ
-  const v0=car.v;let v=car.v;car.braking=false;
-  if(throttle&&!back){v+=ACC*(1-Math.max(0,v)/MAXF)*dt*(v<0?2.2:1);}
-  else if(back&&!throttle){
-    if(v>0.6){v-=34*dt;car.braking=true;}
-    else v-=11*(1+Math.max(0,v+MAXR)/MAXR*0)*dt*(1-Math.max(0,-v)/MAXR);
+
+  // ═══ Longitudinal ═══
+  const v0=car.v; let v=car.v; car.braking=false;
+  if(throttle&&!back){
+    const sp=Math.max(0,v)/MAXF, power=1-sp*sp*0.85;
+    v+=ACC*power*dt*(v<0?2.2:1);
+  } else if(back&&!throttle){
+    if(v>0.5){v-=32*dt;car.braking=true;}
+    else{const rs=Math.max(0,-v)/MAXR; v-=12*(1-rs*0.9)*dt;}
   }
-  if(hb){v-=Math.sign(v)*Math.min(Math.abs(v),26*dt);car.braking=true;}
-  const drag=0.22+Math.abs(v)*0.012;
-  if(!throttle&&!back)v-=Math.sign(v)*Math.min(Math.abs(v),(1.6+drag*Math.abs(v))*dt*2.2);
+  if(hb){v-=Math.sign(v)*Math.min(Math.abs(v),28*dt);car.braking=true;}
+  const drag=0.4+Math.abs(v)*0.0075+v*v*0.00018;
+  if(!throttle&&!back)v-=Math.sign(v)*Math.min(Math.abs(v),drag*dt*3);
+  else v-=Math.sign(v)*Math.min(Math.abs(v),drag*dt*0.7);
   v=clamp(v,-MAXR,MAXF);
-  // ղեկ — արագությունից կախված սահման
-  const maxS=0.62/(1+Math.abs(v)/13);
+
+  // ═══ Steering ═══
+  const maxS=0.65/(1+Math.abs(v)/15);
   const target=sIn*maxS;
-  car.steer+=clamp(target-car.steer,-3.4*dt,3.4*dt);
-  if(!sIn)car.steer*=Math.exp(-5*dt);
-  // bicycle model. աջ ղեկ => yaw նվազում է (աջ շրջադարձ). հետընթացում ինքնաբերաբար հակառակ։
+  car.steer+=clamp(target-car.steer,-5.0*dt,5.0*dt);
+  if(!sIn)car.steer*=Math.exp(-7*dt);
   car.yawRate=-(v/WL)*Math.tan(car.steer);
-  const dist=v*dt;
-  const sub=Math.max(1,Math.ceil(Math.abs(dist)/0.7));
-  const sd=dt/sub;
+
+  // ═══ Integrate + collide ═══
+  // impactDir = world-space direction of last impact (normal into car)
+  // impactMag = |velocity component into wall|
+  let impactMag=0, impactNx=0, impactNz=0;
+  let hadSoftContact=false;
+
+  const dist=v*dt, sub=Math.max(1,Math.ceil(Math.abs(dist)/0.5)), sd=dt/sub;
   for(let i=0;i<sub;i++){
     car.yaw+=car.yawRate*sd;
     const fx=Math.sin(car.yaw),fz=Math.cos(car.yaw);
     let nx=car.x+fx*v*sd,nz=car.z+fz*v*sd;
-    // ռելիեֆի/աշխարհի սահման
-    if(blockedTerrain(nx,nz)||blockedTerrain(nx+fx*1.8,nz+fz*1.8)*(v>0)||blockedTerrain(nx-fx*1.8,nz-fz*1.8)*(v<0)){
-      if(!blockedTerrain(nx,car.z)&&!blockedTerrain(nx+fx*1.8,car.z)){nz=car.z;}
-      else if(!blockedTerrain(car.x,nz)){nx=car.x;}
+    if(blockedTerrain(nx,nz)||(v>0&&blockedTerrain(nx+fx*1.8,nz+fz*1.8))||(v<0&&blockedTerrain(nx-fx*1.8,nz-fz*1.8))){
+      if(!blockedTerrain(nx,car.z))nz=car.z;
+      else if(!blockedTerrain(car.x,nz))nx=car.x;
       else{nx=car.x;nz=car.z;}
-      v*=0.55;
+      v*=0.6;
     }
     car.x=nx;car.z=nz;
-    // շրջանների բախում կառույցների հետ (3 շրջան)
+
     for(let it=0;it<2;it++){
       for(const off of CIRCLES){
         const cx=car.x+fx*off,cz=car.z+fz*off;
         nearColliders(cx,cz,CAR_R+1,c=>{
-          const h=hitCircle(c,cx,cz,CAR_R);
-          if(h){
-            car.x+=h.nx*h.pen;car.z+=h.nz*h.pen;
-            const into=-(fx*Math.sign(v||1)*h.nx+fz*Math.sign(v||1)*h.nz);
-            if(into>0.25&&Math.abs(v)>1){v*=1-Math.min(0.6,into*0.55);}
+          const h=hitCircle(c,cx,cz,CAR_R); if(!h)return;
+
+          // world velocity vector
+          const vx=fx*v, vz=fz*v;
+          // signed component of velocity along the contact normal
+          const vn = vx*h.nx + vz*h.nz;   // negative = moving INTO the wall
+
+          // ─── SOFT (hedge): slow + shake, never stop ───
+          if(c.tag==='hedge'){
+            if(vn<0){
+              const f=Math.min(1,Math.abs(vn)/12);
+              v*=1-0.15*f;
+              hadSoftContact=true;
+              if(-vn>impactMag){impactMag=-vn*0.4;impactNx=h.nx;impactNz=h.nz;}
+            }
+            car.x+=h.nx*h.pen*0.3;
+            car.z+=h.nz*h.pen*0.3;
+            return;
+          }
+
+          // ─── HARD wall ───
+          car.x+=h.nx*h.pen; car.z+=h.nz*h.pen;
+
+          if(vn < -0.05){
+            const headOn = Math.min(1, -vn / Math.max(1.5, Math.abs(v)));
+            // decompose velocity: kill normal component, keep tangent (natural slide)
+            const vtx = vx - vn*h.nx;
+            const vtz = vz - vn*h.nz;
+            const tinyBounce = vn * 0.06;              // 6% restitution, subtle
+            const nvx = vtx + tinyBounce*h.nx;
+            const nvz = vtz + tinyBounce*h.nz;
+            // project back to car's forward scalar
+            v = nvx*fx + nvz*fz;
+
+            // auto-align: rotate toward wall tangent (kicks in only if not steering hard)
+            let tx=-h.nz, tz=h.nx;
+            if(tx*fx + tz*fz < 0){tx=-tx;tz=-tz;}
+            const tanYaw = Math.atan2(tx,tz);
+            const steerFactor = 1 - Math.min(1,Math.abs(car.steer)/0.55)*0.75;
+            const align = headOn*headOn * 0.12 * steerFactor;
+            car.yaw += angDiff(tanYaw,car.yaw)*align;
+
+            // register impulse for suspension (opposite of wall normal, i.e. into car)
+            const mag = -vn;
+            if(mag>impactMag){
+              impactMag=mag;
+              impactNx=-h.nx; impactNz=-h.nz;   // opposite = pushing car back
+            }
           }
         });
       }
     }
   }
-  car.ax=(v-v0)/Math.max(dt,1e-4);car.v=v;
-  // վերտիկալ — անիվների բարձրություններ → pitch/roll + suspension
-  const c=Math.cos(car.yaw),s=Math.sin(car.yaw);
-  const hw=(lx,lz)=>terrainH(car.x+lx*c+lz*s,car.z-lx*s+lz*c)+0.2;
-  const hFL=hw(0.93,1.45),hFR=hw(-0.93,1.45),hRL=hw(0.93,-1.45),hRR=hw(-0.93,-1.45);
-  const gy=(hFL+hFR+hRL+hRR)/4;
-  const pitch=-Math.atan2((hFL+hFR)/2-(hRL+hRR)/2,2.9),roll=Math.atan2((hFL+hRL)/2-(hFR+hRR)/2,1.86);
-  const bump=Math.sin(car.x*1.7+car.z*1.3)*0.012*Math.min(1,Math.abs(v)/10);
-  car.vy+=(120*(gy+bump-car.y)-14*car.vy)*dt;car.y+=car.vy*dt;
-  if(Math.abs(car.y-gy)>1.2)car.y=gy;
-  carRoot.position.set(car.x,car.y,car.z);
-  carRoot.rotation.set(pitch,car.yaw,roll);
-  // թափքի թեքում արագացումից / շրջադարձից
-  const bpT=clamp(-car.ax*0.0035,-0.05,0.05),brT=clamp(v*car.yawRate*0.012,-0.07,0.07);
-  car.bodyPitch+=(bpT-car.bodyPitch)*Math.min(1,dt*6);car.bodyRoll+=(brT-car.bodyRoll)*Math.min(1,dt*6);
-  chassis.rotation.set(car.bodyPitch,0,car.bodyRoll);
-  // անիվների պտույտ՝ շարժման ուղղությամբ + ղեկ
-  for(const w of wheels){
-    w.spin.rotation.x+=v*dt/0.36;
-    if(w.front)w.steer.rotation.y=-car.steer;
-  }
-  M.tail.emissive.setHex(car.braking?0xff2a2a:0x550000);M.tail.color.setHex(car.braking?0xff4040:0x7a0d0d);
-  const sh=carRoot.userData.shadow;sh.position.set(car.x,car.y+0.06,car.z);sh.rotation.set(-Math.PI/2,car.yaw,0);
-}
+  car.ax=(v-v0)/Math.max(dt,1e-4); car.v=v;
 
-/* ════════════════════════════════════════════════════════════
+  // ═══ Suspension & body attitude ═══
+  const c=Math.cos(car.yaw), s=Math.sin(car.yaw);
+  const W2=(lx,lz)=>[car.x+lx*c+lz*s, car.z-lx*s+lz*c];
+  let sumH=0,frontH=0,rearH=0,leftH=0,rightH=0; const wT=[];
+  for(let i=0;i<4;i++){
+    const wp=WHEEL_POS[i]; const [wx,wz]=W2(wp.sx*TRACK/2,wp.sz);
+    const th=terrainH(wx,wz); wT.push(th); sumH+=th;
+    if(wp.front)frontH+=th; else rearH+=th;
+    if(wp.sx>0)leftH+=th; else rightH+=th;
+  }
+  frontH*=0.5; rearH*=0.5; leftH*=0.5; rightH*=0.5;
+  const avgH=sumH/4, targetY=avgH+REST_Y;
+
+  // vertical spring — gentle, critically damped (NOT turtle, NOT ostrich)
+  car.vy += (50*(targetY-car.y) - 12*car.vy) * dt;
+  car.y  += car.vy * dt;
+  if(Math.abs(car.y-targetY) > 1.0) car.y = targetY;
+
+  // ─── impact compression (only when actually hit) ───
+  // amplitude ∝ |v_into_wall|, direction is opposite the impact normal
+  if(impactMag > 1.0){
+    // compress body toward the impact (downward from the shock)
+    const kick = Math.min(impactMag * 0.012, 0.14);   // max 14cm compression
+    car.bodyBounce = Math.min(car.bodyBounce, -kick);
+    // small velocity kick so it "sinks" then recovers
+    car.bodyBounceV -= impactMag * 0.20;
+
+    // pitch response: nose up if hit from front, nose down if hit from rear
+    const fwdX = Math.sin(car.yaw), fwdZ = Math.cos(car.yaw);
+    const fwdInto = fwdX*impactNx + fwdZ*impactNz;    // negative = wall in front
+    car.bodyPitch += fwdInto * Math.min(0.03, impactMag * 0.004);
+
+    // roll response: lean away from the side of impact
+    const sideX = Math.cos(car.yaw), sideZ = -Math.sin(car.yaw); // right vector
+    const sideInto = sideX*impactNx + sideZ*impactNz;
+    car.bodyRoll += sideInto * Math.min(0.035, impactMag * 0.005);
+  }
+
+  // ─── body bounce spring, ASYMMETRIC damping ───
+  // Compression (bodyBounce moving down):  fast, low damping → sharp
+  // Recovery  (bodyBounce going back up):  twice the damping → half-rate return
+  const kSpring = 70;
+  let damp = 12;
+  if(car.bodyBounce < 0 && car.bodyBounceV > 0){
+    // we're below rest and moving upward = recovery phase
+    damp = 26;   // ≈2× → recovery at half the rate
+  }
+  car.bodyBounceV += (-kSpring*car.bodyBounce - damp*car.bodyBounceV) * dt;
+  car.bodyBounce  += car.bodyBounceV * dt;
+  // clamp so we never look like a crawling turtle
+  car.bodyBounce = clamp(car.bodyBounce, -0.16, 0.08);
+
+  // ─── attitude: terrain + dynamic weight transfer ───
+  const terrPitch = -Math.atan2(frontH-rearH, WB_LEN);
+  const terrRoll  =  Math.atan2(leftH-rightH, TRACK);
+  const dynPitch  = clamp(car.ax * 0.004, -0.03, 0.03);
+  const dynRoll   = clamp(car.v * car.yawRate * 0.010, -0.05, 0.05);
+  const tgtPitch  = terrPitch + dynPitch;
+  const tgtRoll   = terrRoll  + dynRoll;
+  car.bodyPitch += (tgtPitch - car.bodyPitch) * Math.min(1, dt*6);
+  car.bodyRoll  += (tgtRoll  - car.bodyRoll ) * Math.min(1, dt*6);
+
+  // ─── apply transforms ───
+  carRoot.position.set(car.x, car.y, car.z);
+  carRoot.rotation.set(0, car.yaw, 0);
+  chassis.rotation.set(car.bodyPitch, 0, car.bodyRoll);
+  chassis.position.y = car.bodyBounce;
+
+  // ─── wheels: per-wheel terrain contact ───
+  for(let i=0;i<4;i++){
+    const wp = WHEEL_POS[i];
+    const localY = wT[i] + REST_Y - car.y;
+    car.wheelY[i] += (localY - car.wheelY[i]) * Math.min(1, dt*28);
+    wheels[i].steer.position.y = car.wheelY[i];
+    wheels[i].steer.rotation.y = wp.front ? -car.steer : 0;
+    wheels[i].spin.rotation.x += car.v * dt / 0.36;
+  }
+
+  // ─── shadow ───
+  const sh = carRoot.userData.shadow;
+  sh.position.set(car.x, car.y - REST_Y + 0.06, car.z);
+  sh.rotation.set(-Math.PI/2, car.yaw, 0);
+
+  // ─── brake lights ───
+  M.tail.emissive.setHex(car.braking ? 0xff2a2a : 0x550000);
+  M.tail.color.setHex(car.braking ? 0xff4040 : 0x7a0d0d);
+}
+  /* ════════════════════════════════════════════════════════════
    17. ԿԱՄԵՐԱ — third-person chase, drag-ով պտույտ, auto-return
    ════════════════════════════════════════════════════════════ */
-const cam={yaw:0,off:0,pitch:0.34,pos:new THREE.Vector3(0,10,-190),look:new THREE.Vector3(),drag:false,pid:null,lx:0,ly:0,last:0,init:false};
+const cam={yaw:0,off:0,pitch:0.05,pos:new THREE.Vector3(0,10,-190),look:new THREE.Vector3(),drag:false,pid:null,lx:0,ly:0,last:0,init:false};
 function updateCamera(dt,now){
   if(!cam.init){cam.yaw=car.yaw;cam.init=true;}
   cam.yaw-=angDiff(cam.yaw,car.yaw)*(1-Math.exp(-dt*(car.v<-1?1.2:3.2)));
   if(!cam.drag&&now-cam.last>1.1)cam.off*=Math.exp(-dt*2.6);
-  const yaw=cam.yaw+(car.v<-2?0:0)+cam.off,sp=Math.abs(car.v);
-  const dist=9.2+sp*0.05,cp=Math.cos(cam.pitch),sy=Math.sin(yaw),cy=Math.cos(yaw);
-  const tx=car.x,ty=car.y+1.4,tz=car.z;
-  const want=new THREE.Vector3(tx-sy*dist*cp,ty+Math.sin(cam.pitch)*dist+0.6,tz-cy*dist*cp);
+
+  const yaw=cam.yaw+cam.off, sp=Math.abs(car.v);
+  const dist=6.5+sp*0.04;
+  const cp=Math.cos(cam.pitch), sy=Math.sin(yaw), cy=Math.cos(yaw);
+
+  const groundY = car.y - REST_Y;
+  const eyeY = groundY + 1.65 + Math.sin(cam.pitch)*dist*0.55;
+
+  const want=new THREE.Vector3(
+    car.x - sy*dist*cp,
+    eyeY,
+    car.z - cy*dist*cp
+  );
   cam.pos.lerp(want,1-Math.exp(-dt*11));
-  const gh=terrainH(cam.pos.x,cam.pos.z)+1.3;if(cam.pos.y<gh)cam.pos.y=gh;
+
+  const gh=terrainH(cam.pos.x,cam.pos.z)+1.15;
+  if(cam.pos.y<gh)cam.pos.y=gh;
+
   camera.position.copy(cam.pos);
-  cam.look.set(tx+sy*3,ty+0.4,tz+cy*3);camera.lookAt(cam.look);
-  const fov=60+Math.min(14,sp*0.35);if(Math.abs(camera.fov-fov)>0.05){camera.fov+=(fov-camera.fov)*Math.min(1,dt*4);camera.updateProjectionMatrix();}
+  cam.look.set(car.x + sy*4, car.y + 0.85, car.z + cy*4);
+  camera.lookAt(cam.look);
+
+  const fov=58+Math.min(14,sp*0.35);
+  if(Math.abs(camera.fov-fov)>0.05){
+    camera.fov+=(fov-camera.fov)*Math.min(1,dt*4);
+    camera.updateProjectionMatrix();
+  }
   sky.position.copy(camera.position);
 }
-
 /* ════════════════════════════════════════════════════════════
    18. ԱՌԱՔԵԼՈՒԹՅՈՒՆՆԵՐ
    ════════════════════════════════════════════════════════════ */
@@ -1193,7 +1447,7 @@ function newMission(){
   let i;do{i=Math.floor(Math.random()*LM.length);}while(i===mis.idx);
   mis.idx=i;mis.t=LM[i];
   mis.dist0=Math.hypot(mis.t.t[0]-car.x,mis.t.t[1]-car.z);
-  mis.allowed=mis.dist0/14+16;mis.el=0;
+  mis.allowed=mis.dist0/14+16+(mis.t.far?160:0);
   marker.position.set(mis.t.t[0],terrainH(mis.t.t[0],mis.t.t[1])+0.3,mis.t.t[1]);
   $('mname').textContent='📍 '+mis.t.name;
 }
@@ -1270,7 +1524,7 @@ function validate(){
     if(!ok)rep.errors.push('«կախված» փողոցի ծայր՝ '+k);
   }
   // 7) նշանակետերը ճանապարհի վրա են
-  for(const l of LM)if(roadDist(l.t[0],l.t[1])>8.5)rep.errors.push(`նշանակետ «${l.name}» ճանապարհի վրա չէ (${roadDist(l.t[0],l.t[1]).toFixed(1)})`);
+  for(const l of LM){const dd=Math.min(roadDist(l.t[0],l.t[1]),climbAt(l.t[0],l.t[1])[0]);if(dd>8.5)rep.errors.push(`նշանակետ «${l.name}» ճանապարհի վրա չէ (${dd.toFixed(1)})`);}
   rep.info.push(`փողոցի կողեր՝ ${edges.length}, շենքեր՝ ${landmarkBuildings.length}, բակեր՝ ${yards.length}, collider՝ ${colliders.length}, ծառեր՝ ${TREES.length}`);
   return rep;
 }
@@ -1295,7 +1549,7 @@ canvas.addEventListener('pointerdown',e=>{
 });
 canvas.addEventListener('pointermove',e=>{
   if(!cam.drag||e.pointerId!==cam.pid)return;
-  cam.off-=(e.clientX-cam.lx)*0.0062;cam.pitch=clamp(cam.pitch+(e.clientY-cam.ly)*0.0042,0.08,1.15);
+  cam.off-=(e.clientX-cam.lx)*0.0062;cam.pitch=clamp(cam.pitch+(e.clientY-cam.ly)*0.0042,-0.05,1.15);
   cam.lx=e.clientX;cam.ly=e.clientY;
 });
 const endDrag=e=>{if(e.pointerId===cam.pid){cam.drag=false;cam.last=performance.now()/1000;}};
@@ -1305,10 +1559,33 @@ addEventListener('resize',()=>{renderer.setPixelRatio(pixScale);renderer.setSize
 
 function buildWorld(){
   const msg=t=>{$('lmsg').textContent=t;};
-  buildTerrain();buildFarPeaks();
+  buildTerrain();
+  const GC=new THREE.Color(0x2d5a2f);
+
+  // ─── Շրջապատի արտացոլման քարտեզ՝ մետաղի/ապակու փայլի համար ───
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const envScene = new THREE.Scene();
+  // պարզ գրադիենտ գունդ՝ որպես կեղծ միջավայր
+  const envGeo = new THREE.SphereGeometry(100,16,12);
+  const envCols=[]; const cTop=new THREE.Color(0x9fc8ff), cBot=new THREE.Color(0x554433), cc=new THREE.Color();
+  const ep = envGeo.attributes.position;
+  for(let i=0;i<ep.count;i++){
+    const t=(ep.getY(i)/100+1)/2;
+    cc.copy(cBot).lerp(cTop, Math.pow(t,0.6));
+    envCols.push(cc.r,cc.g,cc.b);
+  }
+  envGeo.setAttribute('color', new THREE.Float32BufferAttribute(envCols,3));
+  envScene.add(new THREE.Mesh(envGeo, new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide})));
+  const envRT = pmrem.fromScene(envScene, 0, 0.1, 200);
+  scene.environment = envRT.texture;
+  pmrem.dispose();
+
+  buildFarPeaks();
   buildRoads();
-  buildSquare();buildCascade();buildOpera();buildMatenadaran();buildGallery();buildMarriott();buildUniversity();buildAvenue();
+  buildClimb();
+  buildSquare();buildCascade();buildOpera();buildMatenadaran();buildGallery();buildMarriott();buildUniversity();buildAvenue();buildMosque();buildChurch();
   const nf=placeFillers();
+  
   streetTrees();
   // ամպեր
   const cm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.92,depthWrite:false});
