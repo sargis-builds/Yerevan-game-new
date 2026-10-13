@@ -1097,64 +1097,264 @@ const wheels=[];
 let paint,glassM;
 
 function buildCar(){
+  /* ═══════════════════════════════════════════════════════════
+     MODERN SPORTS CAR v2 — (PBR, LatheGeometry, LED lights)
+     ═══════════════════════════════════════════════════════════ */
   const T=(w,h,fn,rep)=>{const t=mkTex(w,h,fn);if(rep)t.repeat.set(rep[0],rep[1]);return t;};
-  const flake=T(256,256,(g,W,H)=>{g.fillStyle='#808080';g.fillRect(0,0,W,H);for(let i=0;i<2600;i++){const v=100+Math.random()*120|0;g.fillStyle=`rgb(${v},${v},${v})`;g.fillRect(Math.random()*W,Math.random()*H,1.5,1.5);}},[5,5]);
-  const carbonT=T(64,64,(g)=>{g.fillStyle='#14161a';g.fillRect(0,0,64,64);g.fillStyle='#2e333b';for(let y=0;y<64;y+=8)for(let x=0;x<64;x+=8){if(((x+y)/8)%2===0)g.fillRect(x+1,y+1,6,3);else g.fillRect(x+1,y+4,6,3);}},[4,4]);
-  const brushed=T(128,128,(g,W,H)=>{g.fillStyle='#b9bfc7';g.fillRect(0,0,W,H);for(let i=0;i<400;i++){g.fillStyle=Math.random()<.5?'rgba(255,255,255,.14)':'rgba(0,0,0,.12)';g.fillRect(0,Math.random()*H,W,1);}});
-  const treadT=T(128,64,(g,W,H)=>{g.fillStyle='#8a8a8a';g.fillRect(0,0,W,H);g.fillStyle='#202020';for(let x=0;x<W;x+=8)g.fillRect(x,H*.2,3,H*.6);g.fillRect(0,H*.48,W,3);},[48,1]);
-  const grilleT=T(64,32,(g)=>{g.fillStyle='#0c0d10';g.fillRect(0,0,64,32);g.strokeStyle='#59616b';g.lineWidth=1.5;for(let y=0;y<32;y+=6)for(let x=(y/6)%2?0:4;x<64;x+=8){g.beginPath();g.arc(x,y,3,0,TAU);g.stroke();}});
-  const plateT=T(128,32,(g)=>{g.fillStyle='#f4f4f0';g.fillRect(0,0,128,32);g.fillStyle='#1a3f9c';g.fillRect(0,0,16,32);g.fillStyle='#fff';g.font='bold 11px sans-serif';g.fillText('AM',3,26);g.fillStyle='#111';g.font='bold 22px sans-serif';g.fillText('77 AB 777',20,24);});
-  paint=new THREE.MeshPhysicalMaterial({color:0xc4161c,metalness:.65,roughness:.32,clearcoat:1,clearcoatRoughness:.06,bumpMap:flake,bumpScale:.15,envMapIntensity:1.25});
-  glassM=new THREE.MeshPhysicalMaterial({color:0x0c1a28,metalness:.2,roughness:.03,transparent:true,opacity:.72,clearcoat:1,envMapIntensity:2.2});
-  const dark=new THREE.MeshStandardMaterial({color:0x1a1d22,roughness:.7,metalness:.2}),
-    chrome=new THREE.MeshStandardMaterial({color:0xf0f4f8,roughness:.08,metalness:1,envMapIntensity:1.6}),
-    alloy=new THREE.MeshStandardMaterial({color:0xcfd5dc,roughness:.22,metalness:1,map:brushed,envMapIntensity:1.4}),
-    carbon=new THREE.MeshStandardMaterial({map:carbonT,roughness:.35,metalness:.3}),
-    rubber=new THREE.MeshStandardMaterial({color:0x101114,roughness:.92,metalness:0,bumpMap:treadT,bumpScale:1.2,side:THREE.DoubleSide}),
-    disc=new THREE.MeshStandardMaterial({color:0x8a9099,roughness:.4,metalness:.9,map:brushed}),
-    red=new THREE.MeshStandardMaterial({color:0xd01818,roughness:.4,metalness:.3}),
-    seat=new THREE.MeshStandardMaterial({color:0x15161a,roughness:.85}),
-    lens=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfff2c8,emissiveIntensity:1.7,roughness:.05}),
-    grille=new THREE.MeshStandardMaterial({map:grilleT,roughness:.5,metalness:.6}),
-    plate=new THREE.MeshStandardMaterial({map:plateT,roughness:.5});
+
+  // ── TEXTURES ──
+  const flake=T(256,256,(g,W,H)=>{
+    g.fillStyle='#808080';g.fillRect(0,0,W,H);
+    for(let i=0;i<3000;i++){const v=100+Math.random()*120|0;g.fillStyle=`rgb(${v},${v},${v})`;g.fillRect(Math.random()*W,Math.random()*H,1.2,1.2);}
+  },[6,6]);
+
+  const carbonT=T(128,128,(g,W,H)=>{
+    g.fillStyle='#0a0c10';g.fillRect(0,0,W,H);
+    for(let y=0;y<H;y+=8)for(let x=0;x<W;x+=8){
+      const even=((x+y)/8)%2===0;
+      g.fillStyle=even?'#1a1d24':'#2a2f3a';g.fillRect(x+1,y+1,6,3);
+      g.fillStyle=even?'#2a2f3a':'#1a1d24';g.fillRect(x+1,y+4,6,3);
+    }
+  },[5,5]);
+
+  const brushed=T(256,256,(g,W,H)=>{
+    g.fillStyle='#b9bfc7';g.fillRect(0,0,W,H);
+    for(let i=0;i<800;i++){g.fillStyle=Math.random()<.5?'rgba(255,255,255,.15)':'rgba(0,0,0,.12)';g.fillRect(0,Math.random()*H,W,1);}
+  });
+
+  const treadT=T(128,128,(g,W,H)=>{
+    g.fillStyle='#1a1a1c';g.fillRect(0,0,W,H);
+    g.strokeStyle='#333';g.lineWidth=1;
+    for(let r=20;r<64;r+=4){g.beginPath();g.arc(W/2,H/2,r,0,TAU);g.stroke();}
+    g.fillStyle='#0a0a0c';
+    for(let a=0;a<TAU;a+=TAU/16){g.save();g.translate(W/2,H/2);g.rotate(a);g.fillRect(-2,30,4,34);g.restore();}
+  });
+
+  const grilleT=T(128,64,(g)=>{
+    g.fillStyle='#050608';g.fillRect(0,0,128,64);
+    g.fillStyle='#1a1c22';
+    for(let x=4;x<124;x+=8)for(let y=6;y<58;y+=10){
+      g.beginPath();
+      for(let i=0;i<6;i++){const a=i/6*TAU,px=x+Math.cos(a)*3.5,py=y+Math.sin(a)*3.5;i?g.lineTo(px,py):g.moveTo(px,py);}
+      g.closePath();g.fill();
+    }
+  });
+
+  const plateT=T(128,32,(g)=>{
+    g.fillStyle='#f4f4f0';g.fillRect(0,0,128,32);
+    g.fillStyle='#1a3f9c';g.fillRect(0,0,16,32);
+    g.fillStyle='#fff';g.font='bold 11px sans-serif';g.fillText('AM',3,26);
+    g.fillStyle='#111';g.font='bold 22px sans-serif';g.fillText('77 AB 777',20,24);
+  });
+
+  // ── MATERIALS — PBR ──
+  paint=new THREE.MeshPhysicalMaterial({
+    color:0xc4161c,
+    metalness:0.85, roughness:0.22,
+    clearcoat:1.0, clearcoatRoughness:0.04,
+    ior:1.5, reflectivity:0.6,
+    sheen:0.2, sheenColor:new THREE.Color(0xff5566), sheenRoughness:0.4,
+    envMapIntensity:1.6,
+    bumpMap:flake, bumpScale:0.015,
+  });
+
+  glassM=new THREE.MeshPhysicalMaterial({
+    color:0x050810, metalness:0.1, roughness:0.02,
+    transparent:true, opacity:0.72,
+    clearcoat:1, clearcoatRoughness:0.02, ior:1.52,
+    envMapIntensity:2.5,
+  });
+
+  const dark=new THREE.MeshStandardMaterial({color:0x0d0f12,roughness:.6,metalness:.3});
+  const chrome=new THREE.MeshStandardMaterial({color:0xf0f4f8,roughness:.05,metalness:1,envMapIntensity:2.0});
+  const alloy=new THREE.MeshStandardMaterial({color:0xb8bdc4,roughness:.15,metalness:1,map:brushed,envMapIntensity:1.6});
+  const carbon=new THREE.MeshStandardMaterial({map:carbonT,roughness:.3,metalness:.4,envMapIntensity:1.0});
+  const rubber=new THREE.MeshStandardMaterial({color:0x0a0a0c,roughness:.95,metalness:0,bumpMap:treadT,bumpScale:.5});
+  const discM=new THREE.MeshStandardMaterial({color:0x4a5058,roughness:.35,metalness:.9,map:brushed});
+  const red=new THREE.MeshStandardMaterial({color:0xcc1111,roughness:.35,metalness:.3});
+  const seat=new THREE.MeshStandardMaterial({color:0x0a0a0a,roughness:.9});
+  const lens=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfff0c8,emissiveIntensity:2.5,roughness:.05});
+  const ledWhite=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:3.0,roughness:.05});
+  const grille=new THREE.MeshStandardMaterial({map:grilleT,roughness:.4,metalness:.7,envMapIntensity:1.2});
+  const plate=new THREE.MeshStandardMaterial({map:plateT,roughness:.5});
+  const ledRed=new THREE.MeshStandardMaterial({color:0xff2222,emissive:0xff0000,emissiveIntensity:1.2,roughness:.15,transparent:true,opacity:.9});
+
   M.tail=new THREE.MeshStandardMaterial({color:0x7a0d0d,emissive:0x550000,emissiveIntensity:1.5,roughness:.2});
-  const ext=(pts,w,bev)=>{const sh=new THREE.Shape();pts.forEach((p,i)=>i?sh.lineTo(p[0],p[1]):sh.moveTo(p[0],p[1]));sh.closePath();
-    const g=new THREE.ExtrudeGeometry(sh,{depth:w-2*bev,bevelEnabled:true,bevelThickness:bev,bevelSize:bev,bevelSegments:3,curveSegments:8});
-    g.translate(0,0,-(w-2*bev)/2);g.rotateY(-Math.PI/2);g.computeVertexNormals();return g;};
+
+  // ── HELPERS ──
+  const ext=(pts,w,bev)=>{
+    const sh=new THREE.Shape();
+    pts.forEach((p,i)=>i?sh.lineTo(p[0],p[1]):sh.moveTo(p[0],p[1]));
+    sh.closePath();
+    const g=new THREE.ExtrudeGeometry(sh,{depth:w-2*bev,bevelEnabled:true,bevelThickness:bev,bevelSize:bev,bevelSegments:5,curveSegments:12});
+    g.translate(0,0,-(w-2*bev)/2);g.rotateY(-Math.PI/2);g.computeVertexNormals();return g;
+  };
   const add=(g,m,x,y,z,rx=0,ry=0,rz=0)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);chassis.add(o);return o;};
   const bx=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
-  add(ext([[-2.10,.34],[2.10,.34],[2.22,.46],[2.24,.66],[2.10,.80],[1.55,.90],[.85,.99],[-.95,.99],[-1.65,.97],[-2.12,.90],[-2.22,.70],[-2.18,.46]],1.78,.07),paint,0,0,0);
-  add(ext([[-1.12,.99],[-.62,1.40],[.30,1.42],[.95,1.00]],1.5,.03),glassM,0,0,0);
-  add(bx(1.36,.04,.85),paint,0,1.435,-.16);
-  for(const sx of[-1,1]){add(bx(.05,.5,.06),paint,sx*.74,1.2,.62,-.7);add(bx(.05,.46,.06),paint,sx*.74,1.2,-.88,.75);add(bx(.05,.44,.05),paint,sx*.75,1.2,-.1);}
-  add(bx(.45,.3,.4),seat,-.35,1.08,-.2);add(bx(.45,.3,.4),seat,.35,1.08,-.2);add(bx(1.3,.2,.3),seat,0,1.1,.72);
-  add(new THREE.TorusGeometry(.13,.02,8,16),dark,-.35,1.2,.5,-.5);
-  add(bx(1.9,.04,.35),carbon,0,.34,2.28);add(bx(1.5,.1,.3),carbon,0,.4,-2.25);
-  for(const sx of[-1,1]){add(bx(.06,.08,2.0),carbon,sx*.95,.4,0);
-    add(new THREE.CylinderGeometry(.06,.06,.3,12),chrome,sx*.45,.4,-2.3,Math.PI/2);
-    add(bx(.005,.5,.01),dark,sx*.93,.66,.95);add(bx(.005,.5,.01),dark,sx*.93,.66,-.15);add(bx(.01,.03,.16),chrome,sx*.935,.88,.1);
-    add(bx(.2,.12,.12),paint,sx*1.0,1.1,.58);add(bx(.01,.09,.1),chrome,sx*1.0,1.1,.5,0,sx*.3);
-    add(new THREE.TorusGeometry(.43,.05,8,24,Math.PI),paint,sx*.93,.36,1.45,0,Math.PI/2);add(new THREE.TorusGeometry(.43,.05,8,24,Math.PI),paint,sx*.93,.36,-1.45,0,Math.PI/2);
-    add(bx(.5,.09,.06),lens,sx*.62,.8,2.2);add(bx(.4,.025,.05),lens,sx*.62,.72,2.22);
-    add(bx(.5,.1,.05),M.tail,sx*.62,.82,-2.22);
-    add(bx(.5,.16,.3),carbon,sx*.3,.94,1.3,-.12);add(bx(.04,.2,.05),dark,sx*.8,1.17,-2.0);}
-  add(bx(.85,.17,.04),grille,0,.62,2.26);add(bx(1.7,.04,.38),carbon,0,1.2,-2.0);add(bx(.5,.13,.01),plate,0,.55,-2.26,0,Math.PI);add(bx(.5,.13,.01),plate,0,.45,2.27);
-  const tireG=new THREE.LatheGeometry([[.22,-.14],[.33,-.145],[.37,-.11],[.385,-.05],[.388,0],[.385,.05],[.37,.11],[.33,.145],[.22,.14]].map(p=>new THREE.Vector2(p[0],p[1])),28);tireG.rotateZ(Math.PI/2);
-  const barrelG=new THREE.CylinderGeometry(.25,.25,.27,32);barrelG.rotateZ(Math.PI/2);
-  const discG=new THREE.CylinderGeometry(.2,.2,.02,28);discG.rotateZ(Math.PI/2);
-  const lipG=new THREE.TorusGeometry(.25,.02,8,32);lipG.rotateY(Math.PI/2);
+
+  // ═══════════════════════════════════════════════════════════
+  //  BODY — smooth profile (ExtrudeGeometry)
+  // ═══════════════════════════════════════════════════════════
+  const bodyProfile=[
+    [-2.15,0.30],[2.15,0.30],[2.32,0.42],[2.42,0.58],[2.36,0.72],
+    [2.10,0.82],[1.55,0.90],[1.05,0.95],[0.35,0.99],[-0.45,1.00],
+    [-1.10,0.98],[-1.65,0.92],[-2.05,0.84],[-2.30,0.74],
+    [-2.42,0.60],[-2.40,0.46],[-2.30,0.34]
+  ];
+  add(ext(bodyProfile,1.80,0.06),paint,0,0,0);
+
+  // Greenhouse (glass)
+  add(ext([[-1.50,0.90],[-1.05,0.965],[-0.45,0.98],[0.30,0.97],[0.88,0.93],[0.88,0.88],[-1.50,0.88]],1.55,0.02),glassM,0,0,0);
+  // Roof panel
+  add(ext([[-1.10,0.985],[-0.45,1.00],[0.30,0.99],[0.85,0.945],[0.85,0.91],[-1.10,0.955]],1.52,0.01),paint,0,0,0);
+
+  // Hood creases
+  add(bx(0.04,0.005,1.15),dark,-0.35,0.905,1.35);
+  add(bx(0.04,0.005,1.15),dark, 0.35,0.905,1.35);
+
+  // Side skirts
+  for(const sx of[-1,1]){
+    add(bx(0.15,0.08,2.8),carbon,sx*0.90,0.32,0);
+    add(bx(0.06,0.02,2.6),dark,sx*0.98,0.34,0);
+  }
+  // Door lines
+  for(const sx of[-1,1]){
+    add(bx(0.008,0.35,0.015),dark,sx*0.905,0.68,0.35);
+    add(bx(0.008,0.35,0.015),dark,sx*0.905,0.68,-0.95);
+  }
+
+  // ── Front splitter ──
+  add(bx(1.75,0.04,0.35),carbon,0,0.28,2.20);
+  for(const sx of[-1,1])add(bx(0.06,0.10,0.30),carbon,sx*0.85,0.32,2.15);
+
+  // ── Rear diffuser ──
+  add(bx(1.70,0.04,0.45),carbon,0,0.28,-2.25);
+  for(const sx of[-1,1]){
+    add(bx(0.04,0.14,0.40),carbon,sx*0.65,0.33,-2.25);
+    add(bx(0.04,0.14,0.40),carbon,sx*0.25,0.33,-2.25);
+  }
+
+  // ── Rear spoiler ──
+  add(bx(1.55,0.03,0.25),paint,0,0.90,-2.05,-0.15);
+  for(const sx of[-1,1])add(bx(0.03,0.08,0.20),carbon,sx*0.70,0.87,-2.05);
+
+  // ═══════════════════════════════════════════════════════════
+  //  FRONT FASCIA
+  // ═══════════════════════════════════════════════════════════
+  add(bx(0.90,0.14,0.04),grille,0,0.60,2.42);
+  add(bx(0.94,0.02,0.02),chrome,0,0.68,2.43);
+  add(bx(0.94,0.02,0.02),chrome,0,0.52,2.43);
+
+  for(const sx of[-1,1]){
+    add(bx(0.35,0.10,0.03),grille,sx*0.55,0.42,2.38);
+    add(bx(0.30,0.06,0.06),carbon,sx*0.60,0.36,2.35);
+  }
+
+  // LED Headlights
+  for(const sx of[-1,1]){
+    add(bx(0.48,0.13,0.08),dark,sx*0.62,0.78,2.30);
+    add(bx(0.42,0.03,0.04),ledWhite,sx*0.62,0.81,2.35);
+    add(new THREE.CylinderGeometry(0.05,0.05,0.02,16),lens,sx*0.62,0.76,2.36,Math.PI/2);
+    add(bx(0.35,0.015,0.03),ledWhite,sx*0.62,0.72,2.34);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  REAR FASCIA
+  // ═══════════════════════════════════════════════════════════
+  add(bx(1.40,0.045,0.06),ledRed,0,0.82,-2.40);
+  add(bx(1.42,0.02,0.04),M.tail,0,0.87,-2.40);
+  add(bx(1.50,0.14,0.03),dark,0,0.82,-2.42);
+  for(const sx of[-1,1])add(bx(0.15,0.05,0.03),M.tail,sx*0.72,0.72,-2.40);
+
+  // Dual exhaust
+  for(const sx of[-1,1]){
+    add(new THREE.CylinderGeometry(0.06,0.06,0.10,16),chrome,sx*0.55,0.34,-2.35,Math.PI/2);
+    add(new THREE.CylinderGeometry(0.045,0.045,0.02,16),dark,sx*0.55,0.34,-2.30,Math.PI/2);
+  }
+
+  add(bx(0.42,0.11,0.01),plate,0,0.58,-2.43,0,Math.PI);
+  add(bx(0.42,0.11,0.01),plate,0,0.42,2.44);
+
+  // ═══════════════════════════════════════════════════════════
+  //  SIDE MIRRORS + HANDLES
+  // ═══════════════════════════════════════════════════════════
+  for(const sx of[-1,1]){
+    add(bx(0.10,0.03,0.10),dark,sx*0.90,0.98,0.75);
+    add(bx(0.16,0.08,0.14),carbon,sx*1.02,0.98,0.72,0,sx*0.2);
+    add(bx(0.14,0.06,0.01),glassM,sx*1.10,0.98,0.70,0,sx*0.2);
+    add(bx(0.12,0.03,0.025),chrome,sx*0.91,0.80,0.35);
+    add(bx(0.12,0.03,0.025),chrome,sx*0.91,0.80,-0.95);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  INTERIOR
+  // ═══════════════════════════════════════════════════════════
+  for(const sx of[-1,1]){
+    add(bx(0.40,0.10,0.40),seat,sx*0.35,0.75,-0.10,-0.1);
+    add(bx(0.40,0.55,0.10),seat,sx*0.35,1.05,-0.45,-0.15);
+    add(bx(0.22,0.12,0.10),seat,sx*0.35,1.35,-0.55,-0.15);
+  }
+  add(bx(1.30,0.15,0.30),dark,0,0.95,0.35);
+  add(new THREE.TorusGeometry(0.15,0.02,8,24),dark,-0.35,1.00,0.55,-0.5);
+  add(new THREE.TorusGeometry(0.13,0.005,6,20),chrome,-0.35,1.00,0.55,-0.5);
+  add(bx(0.25,0.15,0.50),dark,0,0.90,0.10);
+
+  // ═══════════════════════════════════════════════════════════
+  //  WHEELS — modern split-Y design + disc brakes
+  // ═══════════════════════════════════════════════════════════
+  const tireG=new THREE.LatheGeometry([
+    [0.20,-0.15],[0.28,-0.155],[0.34,-0.135],[0.375,-0.10],[0.39,-0.05],
+    [0.392,0],[0.39,0.05],[0.375,0.10],[0.34,0.135],[0.28,0.155],[0.20,0.15]
+  ].map(p=>new THREE.Vector2(p[0],p[1])),32);
+  tireG.rotateZ(Math.PI/2);
+
+  const barrelG=new THREE.CylinderGeometry(0.26,0.26,0.30,32);barrelG.rotateZ(Math.PI/2);
+  const discG=new THREE.CylinderGeometry(0.22,0.22,0.02,32);discG.rotateZ(Math.PI/2);
+  const lipG=new THREE.TorusGeometry(0.265,0.018,8,32);lipG.rotateY(Math.PI/2);
+  const spokeMainG=bx(0.030,0.22,0.05);
+  const spokeSplitG=bx(0.020,0.12,0.04);
+  const capG=new THREE.CylinderGeometry(0.045,0.045,0.03,16);capG.rotateZ(Math.PI/2);
+
   for(const[sx,sz,front]of[[1,1.45,1],[-1,1.45,1],[1,-1.45,0],[-1,-1.45,0]]){
-    const steer=new THREE.Group(),spin=new THREE.Group();steer.position.set(sx*0.93,.36,sz);steer.add(spin);
-    spin.add(new THREE.Mesh(tireG,rubber),new THREE.Mesh(barrelG,dark));
-    const lip=new THREE.Mesh(lipG,chrome);lip.position.x=sx*.13;spin.add(lip);
-    const dsk=new THREE.Mesh(discG,disc);dsk.position.x=-sx*.06;spin.add(dsk);
-    const cap=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.03,16),chrome);cap.rotation.z=Math.PI/2;cap.position.x=sx*.14;spin.add(cap);
-    for(let i=0;i<10;i++){const pv=new THREE.Group();pv.rotation.x=i/10*TAU;const sp=new THREE.Mesh(bx(.035,.2,.04),alloy);sp.position.set(sx*.11,.15,0);pv.add(sp);spin.add(pv);}
-    const cal=new THREE.Mesh(bx(.07,.14,.1),red);cal.position.set(-sx*.08,.2,.04);steer.add(cal);
+    const steer=new THREE.Group(),spin=new THREE.Group();
+    steer.position.set(sx*0.93,0.36,sz);steer.add(spin);
+
+    spin.add(new THREE.Mesh(tireG,rubber));
+    spin.add(new THREE.Mesh(barrelG,dark));
+
+    const dsk=new THREE.Mesh(discG,discM);dsk.position.x=-sx*0.06;spin.add(dsk);
+    const lip=new THREE.Mesh(lipG,chrome);lip.position.x=sx*0.14;spin.add(lip);
+    const cap=new THREE.Mesh(capG,chrome);cap.position.x=sx*0.15;spin.add(cap);
+
+    // 5 split-Y spokes
+    for(let i=0;i<5;i++){
+      const pv=new THREE.Group();pv.rotation.x=i/5*TAU;
+      const main=new THREE.Mesh(spokeMainG,alloy);main.position.set(sx*0.12,0.11,0);pv.add(main);
+      const s1=new THREE.Mesh(spokeSplitG,alloy);s1.position.set(sx*0.12,0.19,0.04);s1.rotation.x=0.25;pv.add(s1);
+      const s2=new THREE.Mesh(spokeSplitG,alloy);s2.position.set(sx*0.12,0.19,-0.04);s2.rotation.x=-0.25;pv.add(s2);
+      spin.add(pv);
+    }
+
+    // Red caliper
+    const cal=new THREE.Mesh(bx(0.06,0.15,0.10),red);cal.position.set(-sx*0.09,0.22,0);steer.add(cal);
+
+    // Drilled disc holes (visual)
+    for(let i=0;i<8;i++){
+      const a=i/8*TAU;
+      const hole=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,0.022,6),dark);
+      hole.rotation.z=Math.PI/2;
+      hole.position.set(-sx*0.06,Math.cos(a)*0.15,Math.sin(a)*0.15);
+      steer.add(hole);
+    }
+
     carRoot.add(steer);wheels.push({steer,spin,front});
   }
-  carRoot.traverse(o=>{if(o.isMesh)o.castShadow=true;});scene.add(carRoot);
-  const sm=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial());sm.visible=false;scene.add(sm);carRoot.userData.shadow=sm;
+
+  carRoot.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  scene.add(carRoot);
+
+  const sm=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial());
+  sm.visible=false;scene.add(sm);carRoot.userData.shadow=sm;
 }
 
 
